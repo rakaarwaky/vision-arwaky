@@ -6,7 +6,7 @@
         "--directory",
         "/home/raka/mcp-arwaky/vision-arwaky",
         "run",
-        "mcp-vision-arwaky"
+        "vision-arwaky"
       ]
     }
   }

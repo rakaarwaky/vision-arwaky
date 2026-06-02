@@ -3,10 +3,13 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "vision-arwaky-arwaky"
+name = "vision-arwaky"
 version = "2.0.4"
 description = "MCP server for unified image and video processing"
 requires-python = ">=3.12"
+authors = [
+    {name = "rakaarwaky", email = "arwaky90@gmail.com"}
+]
 dependencies = [
     "mcp[cli]",
     "fastmcp",
@@ -21,8 +24,8 @@ dependencies = [
 ]
 
 [project.scripts]
-vision-arwaky-arwaky = "src.mcp_entry:main"
-vision-arwaky = "src.cli_entry:cli"
+vision-arwaky = "src.mcp_entry:main"
+vision-cli = "src.cli_entry:cli"
 
 [tool.setuptools.packages.find]
 where = ["."]

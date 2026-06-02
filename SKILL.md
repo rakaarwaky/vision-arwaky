@@ -1,10 +1,10 @@
 ---
-name: vision
+name: vision-arwaky
 description: Unified Image & Video Intelligence — computer vision, OCR, video analysis, object tracking, and visual memory.
 version: 2.0.0
 ---
 
-# Vision — Unified Image & Video Intelligence
+# Vision Arwaky — Unified Image & Video Intelligence
 
 Computer vision toolkit for AI agents. Handles image analysis (now with local VLM support), OCR, video processing, object tracking, and visual memory — all running locally without cloud API calls.
 
