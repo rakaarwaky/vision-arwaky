@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "arwaky-vision"
+version = "2.0.4"
+description = "MCP server for unified image and video processing"
+requires-python = ">=3.12"
+dependencies = [
+    "mcp[cli]",
+    "fastmcp",
+    "pydantic",
+    "opencv-contrib-python-headless",
+    "pillow",
+    "numpy",
+    "pytesseract",
+    "requests",
+    "pyyaml",
+    "llama-cpp-python",
+]
+
+[project.scripts]
+mcp-vision = "src.mcp_entry:main"
+vision = "src.cli_entry:cli"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]

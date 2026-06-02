@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "vision": {
+      "command": "uv",
+      "args": [
+        "--directory",
+        "/home/raka/mcp-servers/vision",
+        "run",
+        "mcp-vision"
+      ]
+    }
+  }
+}
