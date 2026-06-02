@@ -48,7 +48,9 @@ def main():
     status = run_command(["git", "status", "--porcelain"])
     if status.stdout.strip():
         run_command(["git", "commit", "--no-verify", "-m", f"chore: bump version to {new_version}"])
-        run_command(["git", "push"])
+        run_command(["git", "tag", f"v{new_version}"])
+        run_command(["git", "push", "origin", "main"])
+        run_command(["git", "push", "origin", f"v{new_version}"])
     else:
         print("No changes to commit")
 
