@@ -1,12 +1,12 @@
 {
   "mcpServers": {
-    "vision": {
+    "vision-arwaky": {
       "command": "uv",
       "args": [
         "--directory",
-        "/home/raka/mcp-servers/vision",
+        "/home/raka/mcp-arwaky/vision-arwaky",
         "run",
-        "mcp-vision"
+        "mcp-vision-arwaky"
       ]
     }
   }

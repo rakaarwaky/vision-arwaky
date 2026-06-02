@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "arwaky-vision"
+name = "vision-arwaky-arwaky"
 version = "2.0.4"
 description = "MCP server for unified image and video processing"
 requires-python = ">=3.12"
@@ -21,8 +21,8 @@ dependencies = [
 ]
 
 [project.scripts]
-mcp-vision = "src.mcp_entry:main"
-vision = "src.cli_entry:cli"
+vision-arwaky-arwaky = "src.mcp_entry:main"
+vision-arwaky = "src.cli_entry:cli"
 
 [tool.setuptools.packages.find]
 where = ["."]
