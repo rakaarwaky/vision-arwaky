@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "vision-arwaky": {
+      "command": "uv",
+      "args": [
+        "--directory",
+        "C:/Users/Administrator/mcp-arwaky/vision-arwaky",
+        "run",
+        "vision-arwaky"
+      ]
+    }
+  }
+}
