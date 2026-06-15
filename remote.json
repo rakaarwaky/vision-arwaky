@@ -1,8 +1,0 @@
-{
-  "mcpServers": {
-    "vision-arwaky": {
-      "command": "uvx",
-      "args": ["vision-arwaky"]
-    }
-  }
-}

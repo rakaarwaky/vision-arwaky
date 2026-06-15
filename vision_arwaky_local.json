@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "vision-arwaky": {
+      "command": "/home/raka/mcp-arwaky/vision-arwaky/dist/venv/bin/vision-arwaky-mcp"
+    }
+  }
+}

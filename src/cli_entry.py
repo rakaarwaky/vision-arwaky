@@ -1,5 +1,5 @@
 import sys
-from src.surfaces import (
+from src.cli import (
     create_parser,
     cmd_analyze,
     cmd_ocr,

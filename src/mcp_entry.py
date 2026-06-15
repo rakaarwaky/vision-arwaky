@@ -1,6 +1,6 @@
 import logging
 import sys
-from src.surfaces import mcp
+from src.mcp import mcp
 
 
 def main():

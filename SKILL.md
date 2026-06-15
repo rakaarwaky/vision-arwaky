@@ -269,9 +269,9 @@ vision_list_commands(domain="video")
 | pillow | Image I/O | Yes |
 | numpy | Array operations | Yes |
 | requests | HTTP client for LLM adapter | Yes |
-| pytesseract | OCR text extraction | Optional |
-| ffmpeg (binary) | Video conversion, GIF | Optional |
-| Local LLM endpoint | VLM image analysis | Optional (LM Studio / Ollama / vLLM) |
+| pytesseract | OCR text extraction | Yes |
+| ffmpeg (binary) | Video conversion, GIF | Yes |
+| llama-cpp-python | Native VLM inference | Yes |
 
 ## Limitations
 

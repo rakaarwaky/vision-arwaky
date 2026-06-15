@@ -5,9 +5,11 @@ import os
 import tempfile
 import numpy as np
 import cv2
-from src.contract import RegistryServiceAggregate
-from src.surfaces import vision_list_commands, vision_status
-from src.taxonomy import (
+from src.image.agent_image_orchestrator import ImageOrchestrator
+from src.video.agent_video_orchestrator import VideoOrchestrator
+from src.memory.agent_memory_orchestrator import MemoryOrchestrator
+from src.mcp import vision_list_commands, vision_status
+from src.shared.vision_models_vo import (
     FilePath,
     LanguageCode,
     AnalysisPrompt,
@@ -61,7 +63,7 @@ def create_test_video(num_frames=30, width=100, height=100):
 
 class TestImageProcessing:
     def test_find_elements(self):
-        cap = RegistryServiceAggregate.get_instance().get_image_processing()
+        cap = ImageOrchestrator.get_image_processing()
         img = create_test_image()
         path = save_test_image(img)
         try:
@@ -73,7 +75,7 @@ class TestImageProcessing:
             os.unlink(path)
 
     def test_compare_identical(self):
-        cap = RegistryServiceAggregate.get_instance().get_image_processing()
+        cap = ImageOrchestrator.get_image_processing()
         img = create_test_image()
         path1 = save_test_image(img)
         path2 = save_test_image(img)
@@ -85,7 +87,7 @@ class TestImageProcessing:
             os.unlink(path2)
 
     def test_compare_different(self):
-        cap = RegistryServiceAggregate.get_instance().get_image_processing()
+        cap = ImageOrchestrator.get_image_processing()
         img1 = create_test_image(color=(255, 0, 0))
         img2 = create_test_image(color=(0, 255, 0))
         path1 = save_test_image(img1)
@@ -99,7 +101,7 @@ class TestImageProcessing:
             os.unlink(path2)
 
     def test_extract_text_no_tesseract(self):
-        cap = RegistryServiceAggregate.get_instance().get_image_processing()
+        cap = ImageOrchestrator.get_image_processing()
         img = create_test_image()
         path = save_test_image(img)
         try:
@@ -115,7 +117,7 @@ class TestImageProcessing:
 
 class TestVideoProcessing:
     def test_get_info(self):
-        cap = RegistryServiceAggregate.get_instance().get_video_processing()
+        cap = VideoOrchestrator.get_video_processing()
         path = create_test_video()
         try:
             info = cap.get_info(FilePath(value=path))
@@ -125,7 +127,7 @@ class TestVideoProcessing:
             os.unlink(path)
 
     def test_check_corruption_valid(self):
-        cap = RegistryServiceAggregate.get_instance().get_video_processing()
+        cap = VideoOrchestrator.get_video_processing()
         path = create_test_video()
         try:
             corrupted = cap.check_corruption(FilePath(value=path))
@@ -136,7 +138,7 @@ class TestVideoProcessing:
 
 class TestVideoAnalysis:
     def test_detect_scenes(self):
-        cap = RegistryServiceAggregate.get_instance().get_video_analysis()
+        cap = VideoOrchestrator.get_video_analysis()
         path = create_test_video(num_frames=30)
         try:
             scenes = cap.detect_scenes(FilePath(value=path), SceneThreshold(value=20.0))
@@ -145,7 +147,7 @@ class TestVideoAnalysis:
             os.unlink(path)
 
     def test_detect_motion(self):
-        cap = RegistryServiceAggregate.get_instance().get_video_analysis()
+        cap = VideoOrchestrator.get_video_analysis()
         path = create_test_video(num_frames=30)
         try:
             events = cap.detect_motion(FilePath(value=path), MinArea(value=100))
@@ -156,7 +158,7 @@ class TestVideoAnalysis:
 
 class TestVisualMemory:
     def test_remember_and_search(self):
-        cap = RegistryServiceAggregate.get_instance().get_visual_memory()
+        cap = MemoryOrchestrator.get_visual_memory()
         img = create_test_image()
         path = save_test_image(img)
         try:

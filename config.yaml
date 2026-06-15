@@ -1,5 +1,5 @@
 # config.yaml - Vision MCP Server configuration
-backend: "native"  # "native" (llama-cpp-python) or "external" (LM Studio / Ollama / OpenAI)
+backend: "native"  # "native" (llama-cpp-python) or "external" (OpenAI-compatible API)
 
 # Native (Direct Python In-Process) Execution
 native:
@@ -13,4 +13,4 @@ native:
 external:
   url: "http://127.0.0.1:1234/v1"
   model: "MiniCPM-V-4_6-Q8_0"
-  api_key: "lm-studio"
+  api_key: ""
