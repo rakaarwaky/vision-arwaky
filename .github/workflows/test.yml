@@ -55,3 +55,15 @@ jobs:
 
       - name: Run tests only (original test suite)
         run: uv run pytest tests/test_vision.py -v
+
+      - name: Create issue on failure
+        if: failure()
+        run: |
+          gh issue create \
+            --repo rakaarwaky/vision-arwaky \
+            --title "CI Auto-Fix: ${{ github.sha }}" \
+            --label "auto-fix-ci" \
+            --body "CI workflow failed on $(date -u).
+            Branch: ${{ github.ref_name }}
+            Commit: ${{ github.sha }}
+            Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
