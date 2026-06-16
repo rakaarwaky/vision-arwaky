@@ -14,3 +14,5 @@ venv/
 # Large Model Files
 *.gguf
 models/
+llama-server-rocm/
+.coverage

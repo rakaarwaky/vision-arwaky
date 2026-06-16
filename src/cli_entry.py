@@ -17,6 +17,7 @@ from src.cli import (
     cmd_memory_store,
     cmd_memory_search,
     cmd_memory_list,
+    cmd_test,
 )
 
 
@@ -43,6 +44,7 @@ def cli():
         "detect-motion": cmd_detect_motion,
         "track": cmd_track,
         "timeline": cmd_timeline,
+        "test": cmd_test,
     }
 
     if args.command == "memory":
@@ -56,7 +58,7 @@ def cli():
             print("vision memory: requires subcommand (store|search|list)")
             sys.exit(1)
     elif args.command in commands:
-        commands[args.command](args)
+        sys.exit(commands[args.command](args) or 0)
     else:
         parser.print_help()
         sys.exit(1)

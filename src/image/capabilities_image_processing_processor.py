@@ -90,7 +90,18 @@ class ImageProcessingProcessor(ImageProcessingProtocol):
             raise ValueError("Failed to load one or both images")
 
         if img1.shape != img2.shape:
-            img2 = self._opencv.cv2.resize(img2, (img1.shape[1], img1.shape[0]))
+            h1, w1 = img1.shape[:2]
+            h2, w2 = img2.shape[:2]
+            scale = min(w1 / w2, h1 / h2)
+            new_w, new_h = int(w2 * scale), int(h2 * scale)
+            img2 = self._opencv.cv2.resize(img2, (new_w, new_h))
+            # Center-pad if needed
+            if new_w < w1 or new_h < h1:
+                padded = self._opencv.cv2.copyMakeBorder(
+                    img2, 0, h1 - new_h, 0, w1 - new_w,
+                    self._opencv.cv2.BORDER_CONSTANT, value=[0, 0, 0]
+                )
+                img2 = padded
 
         diff = self._opencv.abs_diff(img1, img2)
         gray_diff = self._opencv.to_grayscale(diff)

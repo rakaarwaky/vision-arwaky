@@ -72,6 +72,10 @@ class VideoTimelineGenerator(VideoTimelineProtocol):
             frame_idx += frame_interval
 
         cap.release()
+        
+        # Cleanup temp files
+        import shutil
+        shutil.rmtree(tmp_dir, ignore_errors=True)
 
         return VideoTimeline(
             video_path=video_path.value,

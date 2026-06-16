@@ -11,6 +11,9 @@ import base64
 import json
 import logging
 import os
+import subprocess
+import threading
+import time
 from pathlib import Path
 from typing import Optional, TYPE_CHECKING
 import requests
@@ -57,18 +60,19 @@ class LLMVisionAdapter(LLMVisionPort):
 
         self._backend = str(self._config.get("backend", "external"))
         self._native_llm: Optional["Llama"] = None
+        self._llm_lock = threading.Lock()
+        self._server_process: Optional[subprocess.Popen] = None
+        self._bundled_port = self._find_free_port()
 
         # 2. Configure external HTTP endpoint settings
         url = base_url or os.getenv("LLAMA_API_URL") or self._get_nested_config("external", "url") or DEFAULT_URL
         self.base_url = url.rstrip("/")
         self.api_key = api_key or os.getenv("LLAMA_API_KEY") or self._get_nested_config("external", "api_key") or DEFAULT_API_KEY
         self._model = model or os.getenv("LLAMA_MODEL") or self._get_nested_config("external", "model") or ""
-        
-        self.session = requests.Session()
-        self.session.headers.update({
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json",
-        })
+
+        # Try to start bundled server if native (will override self.base_url)
+        if self._backend == "native":
+            self._maybe_start_bundled_server()
 
     @property
     def config(self) -> dict:
@@ -78,6 +82,84 @@ class LLMVisionAdapter(LLMVisionPort):
     @property
     def backend(self) -> str:
         return self._backend
+
+    @staticmethod
+    def _find_free_port() -> int:
+        """Find a free localhost port."""
+        import socket
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.bind(("127.0.0.1", 0))
+            return s.getsockname()[1]
+
+    def _get_bundled_server_path(self) -> Optional[Path]:
+        """Find the bundled llama-server binary."""
+        candidates = [
+            Path(__file__).parent.parent.parent / "llama-server-rocm" / "llama-server",
+            Path(__file__).parent.parent.parent / "packages" / "llama-server-rocm" / "llama-server",
+        ]
+        for p in candidates:
+            if p.exists():
+                return p
+        return None
+
+    def _maybe_start_bundled_server(self):
+        """Auto-start bundled llama-server binary if available."""
+        server_path = self._get_bundled_server_path()
+        if not server_path:
+            logger.info("No bundled llama-server binary found, trying llama-cpp-python")
+            return
+
+        native_cfg = self._config.get("native", {})
+        if not isinstance(native_cfg, dict):
+            native_cfg = {}
+        model = native_cfg.get("model_path", "")
+        mmproj = native_cfg.get("mmproj_path", "")
+        gpu = native_cfg.get("n_gpu_layers", -1)
+        ctx = native_cfg.get("n_ctx", 4096)
+
+        if not model or not os.path.exists(str(model)):
+            logger.warning(f"Model not found: {model}, skipping bundled server")
+            return
+
+        cmd = [
+            str(server_path),
+            "-m", str(model),
+            "-c", str(ctx),
+            "-ngl", str(gpu),
+            "--host", "127.0.0.1",
+            "--port", str(self._bundled_port),
+        ]
+        if mmproj and os.path.exists(str(mmproj)):
+            cmd += ["--mmproj", str(mmproj)]
+
+        try:
+            self._server_process = subprocess.Popen(
+                cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+            )
+            # Wait for server to be ready
+            for _ in range(30):
+                try:
+                    r = requests.get(f"http://127.0.0.1:{self._bundled_port}/health", timeout=2)
+                    if r.status_code == 200:
+                        logger.info(f"Bundled llama-server ready on port {self._bundled_port}")
+                        self.base_url = f"http://127.0.0.1:{self._bundled_port}/v1"
+                        return
+                except requests.ConnectionError:
+                    pass
+                time.sleep(1)
+            logger.warning("Bundled llama-server failed to become ready")
+        except Exception as e:
+            logger.error(f"Failed to start bundled server: {e}")
+
+    def _stop_bundled_server(self):
+        """Stop the bundled llama-server subprocess."""
+        if self._server_process:
+            self._server_process.terminate()
+            self._server_process.wait(timeout=5)
+            self._server_process = None
+
+    def __del__(self):
+        self._stop_bundled_server()
 
     @property
     def model(self) -> str:
@@ -91,7 +173,13 @@ class LLMVisionAdapter(LLMVisionPort):
         if self._model:
             return self._model
         try:
-            resp = self.session.get(f"{self.base_url}/models", timeout=10)
+            session = requests.Session()
+            session.headers.update({
+                "Authorization": f"Bearer {self.api_key}",
+                "Content-Type": "application/json",
+            })
+            resp = session.get(f"{self.base_url}/models", timeout=10)
+            session.close()
             resp.raise_for_status()
             data = resp.json()
             models = data.get("data", [])
@@ -110,9 +198,10 @@ class LLMVisionAdapter(LLMVisionPort):
         return ""
 
     def _init_native_llm(self):
-        """Lazy-load the native Llama model to keep initialization light."""
-        if self._native_llm is not None:
-            return
+        """Lazy-load the native Llama model with thread-safe lock."""
+        with self._llm_lock:
+            if self._native_llm is not None:
+                return
 
         try:
             from llama_cpp import Llama
@@ -178,11 +267,70 @@ class LLMVisionAdapter(LLMVisionPort):
         b64 = base64.b64encode(data).decode("utf-8")
         return f"data:{mime};base64,{b64}"
 
+    def _analyze_via_http(self, image_path: str, prompt: str, timeout: int = 120) -> str:
+        """Send image + prompt via HTTP to an API-compatible server."""
+        model = self.model
+        image_url = self._encode_image(image_path)
+
+        payload = {
+            "model": model,
+            "messages": [
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": prompt},
+                        {"type": "image_url", "image_url": {"url": image_url}},
+                    ],
+                }
+            ],
+            "temperature": 0.4,
+            "max_tokens": 2048,
+        }
+
+        try:
+            session = requests.Session()
+            session.headers.update({
+                "Authorization": f"Bearer {self.api_key}",
+                "Content-Type": "application/json",
+            })
+            resp = session.post(
+                f"{self.base_url}/chat/completions",
+                data=json.dumps(payload),
+                timeout=timeout,
+            )
+            session.close()
+            resp.raise_for_status()
+            data = resp.json()
+            choice = data.get("choices", [{}])[0]
+            message = choice.get("message", {})
+            content = str(message.get("content", ""))
+            if not content:
+                logger.warning(f"Empty response from LLM. Full data: {json.dumps(data)[:500]}")
+            return content
+        except requests.exceptions.ConnectionError as e:
+            logger.error(f"Cannot connect to LLM at {self.base_url}: {e}")
+            raise RuntimeError(
+                f"LLM server not reachable at {self.base_url}. "
+                "Ensure the server is running and a vision model is loaded."
+            ) from e
+        except requests.exceptions.Timeout as e:
+            logger.error(f"LLM request timed out after {timeout}s: {e}")
+            raise RuntimeError(f"LLM request timed out after {timeout}s") from e
+        except Exception as e:
+            logger.error(f"LLM request failed: {e}")
+            raise RuntimeError(f"LLM request failed: {e}") from e
+
     def analyze_image(self, image_path: str, prompt: str, timeout: int = 120) -> str:
         """Send image + prompt to VLM and return the text response."""
+        # If bundled server is active, use it via HTTP
+        if self._server_process and self._server_process.poll() is None:
+            return self._analyze_via_http(image_path, prompt, timeout)
+
+        # Otherwise try llama-cpp-python native
         if self.backend == "native":
             self._init_native_llm()
-            llm = self._native_llm
+            with self._llm_lock:
+                llm = self._native_llm
             if llm is None:
                 raise RuntimeError("Native VLM was not initialized")
 
@@ -215,48 +363,4 @@ class LLMVisionAdapter(LLMVisionPort):
                 logger.error(f"Native VLM inference failed: {e}")
                 raise RuntimeError(f"Native VLM inference failed: {e}") from e
         else:
-            # External HTTP API mode (original)
-            model = self.model
-            image_url = self._encode_image(image_path)
-
-            payload = {
-                "model": model,
-                "messages": [
-                    {
-                        "role": "user",
-                        "content": [
-                            {"type": "text", "text": prompt},
-                            {"type": "image_url", "image_url": {"url": image_url}},
-                        ],
-                    }
-                ],
-                "temperature": 0.4,
-                "max_tokens": 2048,
-            }
-
-            try:
-                resp = self.session.post(
-                    f"{self.base_url}/chat/completions",
-                    data=json.dumps(payload),
-                    timeout=timeout,
-                )
-                resp.raise_for_status()
-                data = resp.json()
-                choice = data.get("choices", [{}])[0]
-                message = choice.get("message", {})
-                content = str(message.get("content", ""))
-                if not content:
-                    logger.warning(f"Empty response from LLM. Full data: {json.dumps(data)[:500]}")
-                return content
-            except requests.exceptions.ConnectionError as e:
-                logger.error(f"Cannot connect to LLM at {self.base_url}: {e}")
-                raise RuntimeError(
-                    f"Local LLM server not reachable at {self.base_url}. "
-                    "Ensure your LLM server is running and a vision model is loaded."
-                ) from e
-            except requests.exceptions.Timeout as e:
-                logger.error(f"LLM request timed out after {timeout}s: {e}")
-                raise RuntimeError(f"LLM request timed out after {timeout}s") from e
-            except Exception as e:
-                logger.error(f"LLM request failed: {e}")
-                raise RuntimeError(f"LLM request failed: {e}") from e
+            return self._analyze_via_http(image_path, prompt, timeout)

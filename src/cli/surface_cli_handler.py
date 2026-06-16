@@ -76,5 +76,10 @@ def create_parser() -> argparse.ArgumentParser:
     mem_search.add_argument("--max-distance", type=int, default=15, help="Max hamming distance")
 
     mem_sub.add_parser("list", help="List all stored images")
+    
+    # --- Test command ---
+    test_parser = subparsers.add_parser("test", help="Run vision-arwaky test suite")
+    test_parser.add_argument("--image", default=None, help="Path to test image (optional)")
+    test_parser.add_argument("--verbose", "-v", action="store_true", help="Verbose output")
 
     return parser

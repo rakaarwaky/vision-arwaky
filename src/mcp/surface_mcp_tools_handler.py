@@ -55,8 +55,14 @@ def _resolve_llm_readiness(
         return llm_ready
     try:
         base_url = getattr(adapter, "base_url", DEFAULT_URL)
-        session = getattr(adapter, "session")
+        import requests
+        session = requests.Session()
+        session.headers.update({
+            "Authorization": f"Bearer {getattr(adapter, 'api_key', '')}",
+            "Content-Type": "application/json",
+        })
         resp = session.get(f"{base_url}/models", timeout=5)
+        session.close()
         deps["llm_endpoint"] = "OK"
         return resp.status_code == 200
     except Exception:

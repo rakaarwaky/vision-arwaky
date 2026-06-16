@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "vision-arwaky"
-version = "2.0.6"
+version = "2.0.7"
 description = "MCP server for unified image and video processing"
 requires-python = ">=3.12"
 authors = [
@@ -21,6 +21,7 @@ dependencies = [
     "requests",
     "pyyaml",
     "llama-cpp-python",
+    "textual>=2.0.0",
 ]
 
 [project.scripts]

@@ -11,254 +11,142 @@ Computer vision toolkit for AI agents. Handles image analysis (now with local VL
 ## Architecture
 
 ```
-MCP Layer:  5 Hydra meta-tools (token-efficient)
-CLI Layer:  14 commands (unlimited, zero token cost)
-VLM Layer:  Local LLM adapter (LM Studio, Ollama, vLLM) for AI image understanding
+CLI Layer:  15 commands (analyze, ocr, video-info, extract-frames, etc.)
+MCP Layer:  5 Hydra meta-tools (vision_execute, vision_help, etc.)
+TUI Layer:  Textual-based config manager (vision-arwaky-tui)
+VLM Layer:  Local LLM adapter for AI image understanding
 SKILL.md:   This file (discovery layer)
 ```
+
+## Entry Points
+
+| Command | Purpose |
+|---------|---------|
+| `vision-arwaky-cli` | CLI interface — all commands |
+| `vision-arwaky-mcp` | MCP server for AI agents |
+| `vision-arwaky-tui` | Textual-based config & system management |
 
 ## MCP Tools (5 Hydra)
 
 | Tool | Purpose |
 |------|---------|
-| `vision_execute` | Execute ANY vision command (main entry point) |
+| `vision_execute` | Execute ANY vision command (main entry) |
 | `vision_list_commands` | List available commands by domain |
-| `vision_help` | Read SKILL.md documentation |
+| `vision_help` | Read this SKILL.md documentation |
 | `vision_status` | Check dependencies and capabilities |
 | `vision_cancel` | Cancel running operations |
 
-## VLM / Local LLM Image Analysis 
+## VLM / Local LLM Image Analysis
 
-The `analyze` command now supports open-ended visual questions via a local vision-capable LLM. When a `prompt` is provided, the server sends the image + prompt to your local LLM endpoint. If the LLM is unavailable, it gracefully falls back to OCR + UI element detection.
+The `analyze` command sends an image + prompt to the local LLM endpoint.
+If LLM unavailable, falls back to OCR + UI element detection.
+
+**Supports:** any OpenAI-compatible API (llama-server, LM Studio, Ollama, vLLM)
+or native llama-cpp-python in-process.
 
 ### Configuration
 
-Set environment variables before running:
-
-```bash
-export LM_STUDIO_URL="http://127.0.0.1:1234/v1"   # OpenAI-compatible endpoint
-export LM_STUDIO_MODEL="qwopus3.5-9b-v3@q6_k"      # Optional: specific model
-export LM_STUDIO_API_KEY="lm-studio"               # Optional: api key
+```yaml
+backend: "native"  # "native" (llama-cpp-python) or "external" (API server)
+native:
+  model_path: "models/model.gguf"
+  mmproj_path: "models/mmproj.gguf"
+  n_gpu_layers: -1
+external:
+  url: "http://localhost:8080/v1"
 ```
 
-Or pass inline:
-```bash
-LM_STUDIO_URL=http://localhost:11434/v1 LM_STUDIO_MODEL=llava vision analyze --image photo.png --prompt "Describe this scene"
-```
+### Bundled ROCm binary
 
-### Supported Backends
-- **LM Studio** — load any vision-capable GGUF model, enable server, use default URL
-- **Ollama** — `ollama run llava`, set `LM_STUDIO_URL=http://localhost:11434/v1`
-- **vLLM** — any OpenAI-compatible vision endpoint
+If `llama-server-rocm/llama-server` exists, native mode auto-spawns it as
+subprocess with ROCm GPU acceleration — no manual server setup needed.
 
-### CLI Usage
-
-```bash
-# AI-powered visual analysis (requires local VLM running)
-vision analyze --image clothing.png --prompt "Describe colors, patterns, and fabric style"
-
-# Fallback analysis (OCR + elements) when no prompt given or LLM unreachable
-vision analyze --image screenshot.png
-```
-
-### MCP Usage
+## CLI Usage — Image
 
 ```
-# Ask a visual question
-vision_execute(
-    command="analyze",
-    image="/path/to/photo.png",
-    prompt="What objects are in this image and what are their colors?"
-)
+analyze — AI visual analysis (image or video)
+  args: --image, [--prompt]
+  output: {"source": "llm"|"opencv", "text": "...", "model": "..."}
+  note: If --image is a video (.mp4/.mov/.avi/.mkv), automatically extracts
+  the middle frame and analyzes it.
 
-# Returns when LLM available:
-# {
-#   "source": "llm",
-#   "text": "detailed description...",
-#   "model": "qwopus3.5-9b-v3@q6_k",
-#   "elements": [],
-#   "error": null
-# }
+ocr — Extract text via Tesseract OCR
+  args: --image, [--lang] (default: eng)
+  output: plain text
 
-# Returns when LLM unavailable (fallback):
-# {
-#   "source": "opencv",
-#   "text": "OCR text...",
-#   "elements": [{"label":"ui_element","bbox":{...}}],
-#   "error": "Local LLM server not reachable..."
-# }
+elements — Find UI elements (buttons, inputs, etc.)
+  args: --image
+  output: [{"label": "ui_element", "bbox": {...}}, ...]
+
+compare — Compare two screenshots, find differences
+  args: --image1, --image2
+  output: {"identical": bool, "differences": [...], "phash_diff": bool}
 ```
 
-## CLI Commands (14)
-
-### Image Analysis
-
-```bash
-# AI visual analysis with local VLM (requires LLM endpoint + vision model)
-vision analyze --image photo.png --prompt "Describe the clothing design"
-
-# Fallback: OCR + UI element detection (no LLM required)
-vision analyze --image screenshot.png
-
-# Extract text via OCR (English default, supports any Tesseract lang)
-vision ocr --image scan.jpg
-vision ocr --image scan.jpg --lang ind   # Indonesian
-
-# Find UI elements (buttons, inputs, etc)
-vision elements --image screenshot.png
-
-# Compare two screenshots, find differences
-vision compare --image1 before.png --image2 after.png
-```
-
-### Video Processing
-
-```bash
-# Get video metadata (fps, frame count, resolution)
-vision video-info --video recording.mp4
-
-# Extract frames at interval (default: 1 per second)
-vision extract-frames --video recording.mp4
-vision extract-frames --video recording.mp4 --interval 0.5
-
-# Convert video format
-vision convert --input recording.mov --output recording.mp4
-
-# Check if video is corrupted
-vision check-corruption --video recording.mp4
-
-# Create GIF from video segment
-vision create-gif --video recording.mp4 --output clip.gif --start 10 --duration 5
-```
-
-### Video Analysis
-
-```bash
-# Detect scene changes (threshold: 0-100, default 30)
-vision detect-scenes --video recording.mp4
-vision detect-scenes --video recording.mp4 --threshold 50
-
-# Detect motion events (min-area: pixel area, default 500)
-vision detect-motion --video recording.mp4
-vision detect-motion --video recording.mp4 --min-area 1000
-
-# Track object through video (bbox: X,Y,W,H)
-vision track --video recording.mp4 --bbox 100,50,200,150
-vision track --video recording.mp4 --bbox 100,50,200,150 --max-frames 500
-
-# Generate agent-readable video timeline
-vision timeline --video recording.mp4
-vision timeline --video recording.mp4 --interval 10
-```
-
-### Visual Memory
-
-```bash
-# Store image with label
-vision memory store --image logo.png --label "company logo"
-
-# Find similar images by perceptual hash
-vision memory search --query unknown.png
-vision memory search --query unknown.png --max-distance 10
-
-# List all stored images
-vision memory list
-```
-
-## MCP Usage Examples
-
-### Via vision_execute (Hydra)
+## CLI Usage — Video
 
 ```
-# AI visual analysis with custom prompt
-vision_execute(command="analyze", image="/path/to/screenshot.png", prompt="What UI components do you see?")
+video-info — Get video metadata
+  args: --video
+  output: {"fps": 30.0, "frame_count": 353, "width": 720, "height": 1280}
+  note: Duration can be calculated as frame_count / fps
 
-# Fallback analysis (no prompt = OCR + elements)
-vision_execute(command="analyze", image="/path/to/screenshot.png")
+extract-frames — Extract frames at interval
+  args: --video, [--interval] (default: 1.0 second)
+  output: ["/path/to/video_frame_0001.jpg", ...]
+  IMPORTANT: Frames are saved in the SAME directory as the source video,
+  with naming pattern: {video_filename}_frame_%04d.jpg
 
-# OCR text extraction
-vision_execute(command="ocr", image="/path/to/scan.jpg", lang="ind")
+convert — Convert video format
+  args: --input, --output
+  output: {"success": true|false}
 
-# Compare images
-vision_execute(command="compare", image1="/path/to/before.png", image2="/path/to/after.png")
+check-corruption — Check if video file is corrupted
+  args: --video
+  output: {"corrupted": true|false}
 
-# Video scene detection
-vision_execute(command="detect-scenes", video="/path/to/video.mp4", threshold=40.0)
+create-gif — Create GIF from video segment
+  args: --video, --output, [--start], [--duration]
+  output: {"success": true|false}
 
-# Track object
-vision_execute(command="track", video="/path/to/video.mp4", bbox="100,50,200,150")
+detect-scenes — Detect scene changes via histogram comparison
+  args: --video, [--threshold] (0-100, default: 30)
+  output: [{"timestamp": 1.5, "score": 0.85}, ...]
+  how: Converts each frame to HSV, compares color histogram correlation.
+  Low correlation = scene change. Lower threshold = more sensitive.
 
-# Store in visual memory
-vision_execute(command="memory-store", image="/path/to/photo.png", label="my photo")
+detect-motion — Detect motion events via frame differencing
+  args: --video, [--min-area] (default: 500 pixels)
+  output: [{"timestamp": 2.0, "magnitude": 0.05, "direction": 45.0, "region": {...}}, ...]
+  how: Frame differencing (absdiff) → binary threshold → contour detection.
+  Filters out contours below min-area. Higher min-area = less sensitive.
 
-# Find similar images
-vision_execute(command="memory-search", query="/path/to/query.png", max_distance=10)
+track — Track object through video (OpenCV KCF/CSRT)
+  args: --video, --bbox (X,Y,W,H), [--max-frames] (default: 300)
+  output: [{"x": 100, "y": 50, "width": 200, "height": 150}, ...]
+
+timeline — Generate agent-readable video timeline
+  args: --video, [--interval] (default: 5 seconds)
+  output: {"video_path": "...", "total_frames": 353, "fps": 30.0, "key_frames": [...]}
+
+memory — Visual memory operations
+  subcommands:
+    store   — Store image by perceptual hash. args: --image, --label
+    search  — Find similar images. args: --query, [--max-distance]
+    list    — List all stored images
 ```
 
-### Via vision_list_commands
+## CLI Usage — Test
 
 ```
-# List all commands
-vision_list_commands()
-
-# List only image commands
-vision_list_commands(domain="image")
-
-# List only video commands
-vision_list_commands(domain="video")
-```
-
-## Common Workflows
-
-### AI Visual Analysis (VLM)
-```
-1. Ensure LM Studio / Ollama is running with a vision model loaded
-2. vision_execute(
-     command="analyze",
-     image="design.png",
-     prompt="Describe colors, patterns, and materials in detail"
-   )
-3. Returns: {source: "llm", text: "detailed analysis...", model: "..."}
-4. If LLM unreachable: auto-fallback to {source: "opencv", text: "...", error: "..."}
-```
-
-### Screenshot Comparison (before/after)
-```
-1. vision_execute(command="compare", image1="before.png", image2="after.png")
-2. Returns: {identical, differences: [{x,y,width,height}], phash_diff}
-3. If not identical: vision_execute(command="analyze", image="after.png")
-```
-
-### Video Content Summary
-```
-1. vision_execute(command="video-info", video="recording.mp4")
-2. vision_execute(command="detect-scenes", video="recording.mp4")
-3. vision_execute(command="timeline", video="recording.mp4", interval=5)
-4. For each key frame: vision_execute(command="analyze", image=frame_path)
-```
-
-### OCR Document Processing
-```
-1. vision_execute(command="ocr", image="document.jpg", lang="eng")
-2. Returns: extracted text string
-3. Process text with LLM for structured data extraction
-```
-
-### Visual Search (find duplicates)
-```
-1. vision_execute(command="memory-store", image="photo1.png", label="vacation")
-2. vision_execute(command="memory-store", image="photo2.png", label="work")
-3. vision_execute(command="memory-search", query="unknown.png", max_distance=15)
-4. Returns: similar images sorted by hamming distance
-```
-
-### Object Tracking in Video
-```
-1. vision_execute(command="extract-frames", video="surveillance.mp4", interval=1.0)
-2. vision_execute(command="analyze", image="frame_0001.jpg")
-3. Identify target bbox from analysis
-4. vision_execute(command="track", video="surveillance.mp4", bbox="100,50,200,150")
-5. Returns: list of bounding boxes showing object movement
+test — Run test suite + AI vision analysis
+  args: [--image], [--verbose]
+  Runs pytest on tests/, then analyzes test.jpeg with VLM,
+  then analyzes test.mp4 using smart sampling pipeline:
+    1. Scene detection — frame pada scene change
+    2. Motion detection — frame dengan motion tertinggi
+    3. Uniform sampling — tiap 30 frame
+  Output: JSON with video metadata, per-frame analyses, and summary
 ```
 
 ## Dependencies
@@ -272,23 +160,13 @@ vision_list_commands(domain="video")
 | pytesseract | OCR text extraction | Yes |
 | ffmpeg (binary) | Video conversion, GIF | Yes |
 | llama-cpp-python | Native VLM inference | Yes |
+| textual | TUI framework | Yes |
 
 ## Limitations
 
-- OCR requires Tesseract binary installed (`apt install tesseract-ocr`)
-- Video operations require FFmpeg binary (`apt install ffmpeg`)
+- OCR requires Tesseract binary installed (`dnf install tesseract`)
+- Video operations require FFmpeg binary (`dnf install ffmpeg`)
 - Object tracking uses OpenCV KCF/CSRT (not deep learning)
 - Visual memory uses perceptual hash (not neural embeddings)
 - VLM analysis requires a running local LLM server with a vision-capable model
 - LLM fallback to OCR occurs automatically if the endpoint is unreachable
-
-## Status Check
-
-```
-vision_status() → returns dependency status for all capabilities
-```
-
-The status response now includes:
-- `dependencies`: opencv, pillow, numpy, pytesseract, ffmpeg, requests
-- `capabilities`: image_analysis, ocr, video_processing, visual_memory, **llm_vision**
-- `llm_vision` indicates whether a local LLM endpoint is reachable and ready for VLM analysis

@@ -5,6 +5,7 @@ from .surface_cli_commands_handler import (
     cmd_check_corruption, cmd_create_gif, cmd_detect_scenes,
     cmd_detect_motion, cmd_track, cmd_timeline,
     cmd_memory_store, cmd_memory_search, cmd_memory_list,
+    cmd_test,
 )
 
 __all__ = [
@@ -14,4 +15,5 @@ __all__ = [
     "cmd_check_corruption", "cmd_create_gif", "cmd_detect_scenes",
     "cmd_detect_motion", "cmd_track", "cmd_timeline",
     "cmd_memory_store", "cmd_memory_search", "cmd_memory_list",
+    "cmd_test",
 ]
