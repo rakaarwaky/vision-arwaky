@@ -31,21 +31,20 @@ jobs:
         run: uv python install ${{ matrix.python-version }}
 
       - name: Install project
-        run: uv pip install --system -e . --no-deps
-
-      - name: Install runtime deps
-        run: uv pip install --system opencv-contrib-python-headless pillow numpy pytesseract requests pyyaml
+        run: uv sync --no-dev
+        
+      - name: Install additional deps (not in pyproject.toml)
+        run: uv pip install opencv-contrib-python-headless pytesseract
 
       - name: Generate test fixtures
         run: |
-          python3 -c "
+          uv run python3 -c "
           import cv2, numpy as np, os
           os.makedirs('tests/fixtures', exist_ok=True)
           img = np.zeros((200, 200, 3), dtype=np.uint8)
           cv2.rectangle(img, (30, 30), (170, 170), (255, 255, 255), -1)
           cv2.putText(img, 'TEST', (50, 120), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 255, 0), 3)
           cv2.imwrite('tests/fixtures/test.jpeg', img)
-          # Create a small test video (10 frames)
           out = cv2.VideoWriter('tests/fixtures/test.mp4',
                                 cv2.VideoWriter_fourcc(*'mp4v'), 10, (100, 100))
           for i in range(10):
@@ -55,4 +54,4 @@ jobs:
           "
 
       - name: Run tests only (original test suite)
-        run: uv run --system pytest tests/test_vision.py -v
+        run: uv run pytest tests/test_vision.py -v
