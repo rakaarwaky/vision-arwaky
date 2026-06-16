@@ -34,7 +34,7 @@ jobs:
         run: uv sync --no-dev
         
       - name: Install additional deps (not in pyproject.toml)
-        run: uv pip install opencv-contrib-python-headless pytesseract
+        run: uv pip install opencv-contrib-python-headless pytesseract pytest
 
       - name: Generate test fixtures
         run: |
@@ -54,10 +54,12 @@ jobs:
           "
 
       - name: Run tests only (original test suite)
-        run: uv run pytest tests/test_vision.py -v
+        run: uv run python3 -m pytest tests/test_vision.py -v
 
       - name: Create issue on failure
         if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           gh issue create \
             --repo rakaarwaky/vision-arwaky \
