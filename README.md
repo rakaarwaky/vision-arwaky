@@ -128,5 +128,5 @@ pip install -e . --no-deps
 uv run pytest tests/ -v
 
 # Build MCP server
-bash script/build.sh
+bash script/install.sh
 ```

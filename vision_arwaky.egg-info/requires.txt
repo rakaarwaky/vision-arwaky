@@ -1,0 +1,11 @@
+mcp[cli]
+fastmcp
+pydantic
+opencv-contrib-python-headless
+pillow
+numpy
+pytesseract
+requests
+pyyaml
+llama-cpp-python
+textual>=2.0.0
