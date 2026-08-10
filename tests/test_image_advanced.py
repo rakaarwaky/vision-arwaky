@@ -116,21 +116,21 @@ class TestLLMVisionAdapter:
         assert adapter.model is not None
 
     def test_adapter_find_free_port(self):
-        from modules.image.src.infrastructure_llm_vision_adapter import LLMVisionAdapter
+        from modules.image.src.capabilities_llm_vision_adapter import LLMVisionAdapter
         port = LLMVisionAdapter._find_free_port()
         assert isinstance(port, int)
         assert port > 0
         assert port < 65536
 
     def test_adapter_bundled_path(self):
-        from modules.image.src.infrastructure_llm_vision_adapter import LLMVisionAdapter
+        from modules.image.src.capabilities_llm_vision_adapter import LLMVisionAdapter
         path = LLMVisionAdapter._get_bundled_server_path(LLMVisionAdapter)
         assert path is None or path.exists()
 
 
 class TestTesseractAdapter:
     def test_extract_text_nonexistent(self):
-        from modules.image.src.infrastructure_tesseract_ocr_adapter import TesseractOCRAdapter
+        from modules.image.src.capabilities_tesseract_ocr_adapter import TesseractOCRAdapter
         from modules.shared.src.common.taxonomy_vision_models_vo import FilePath, LanguageCode
         adapter = TesseractOCRAdapter()
         with pytest.raises((RuntimeError, FileNotFoundError)):

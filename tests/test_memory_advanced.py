@@ -55,8 +55,8 @@ class TestMemoryOrchestrator:
 class TestVisualMemoryStore:
     def test_remember_and_find(self):
         from modules.memory.src.capabilities_visual_memory_repository import VisualMemoryStore
-        from modules.opencv.src.infrastructure_opencv_image_adapter import OpenCVImageAdapter
-        from modules.system_utils.src.infrastructure_system_utils_util import SystemUtilsUtil
+        from modules.opencv.src.capabilities_opencv_image_adapter import OpenCVImageAdapter
+        from modules.system_utils.src.capabilities_system_utils_util import SystemUtilsUtil
         from modules.shared.src.common.taxonomy_vision_models_vo import FilePath, MemoryLabel, DistanceThreshold
         
         store = VisualMemoryStore(OpenCVImageAdapter(), SystemUtilsUtil())
@@ -76,8 +76,8 @@ class TestVisualMemoryStore:
 
     def test_remember_nonexistent(self):
         from modules.memory.src.capabilities_visual_memory_repository import VisualMemoryStore
-        from modules.opencv.src.infrastructure_opencv_image_adapter import OpenCVImageAdapter
-        from modules.system_utils.src.infrastructure_system_utils_util import SystemUtilsUtil
+        from modules.opencv.src.capabilities_opencv_image_adapter import OpenCVImageAdapter
+        from modules.system_utils.src.capabilities_system_utils_util import SystemUtilsUtil
         from modules.shared.src.common.taxonomy_vision_models_vo import FilePath, MemoryLabel
         import pytest
         
@@ -95,25 +95,25 @@ class TestVisualMemoryStore:
 
 class TestSystemUtils:
     def test_system_utils_init(self):
-        from modules.system_utils.src.infrastructure_system_utils_util import SystemUtilsUtil
+        from modules.system_utils.src.capabilities_system_utils_util import SystemUtilsUtil
         utils = SystemUtilsUtil()
         assert utils is not None
         assert hasattr(utils, "FFMPEG_PATH")
 
     def test_opencv_adapter_properties(self):
-        from modules.opencv.src.infrastructure_opencv_image_adapter import OpenCVImageAdapter
+        from modules.opencv.src.capabilities_opencv_image_adapter import OpenCVImageAdapter
         adapter = OpenCVImageAdapter()
         assert adapter.cv2 is not None
         assert adapter.np is not None
 
     def test_opencv_read_image(self):
-        from modules.opencv.src.infrastructure_opencv_image_adapter import OpenCVImageAdapter
+        from modules.opencv.src.capabilities_opencv_image_adapter import OpenCVImageAdapter
         adapter = OpenCVImageAdapter()
         result = adapter.read_image("nonexistent.png")
         assert result is None
 
     def test_opencv_dimensions(self):
-        from modules.opencv.src.infrastructure_opencv_image_adapter import OpenCVImageAdapter
+        from modules.opencv.src.capabilities_opencv_image_adapter import OpenCVImageAdapter
         import numpy as np
         adapter = OpenCVImageAdapter()
         img = np.zeros((50, 100, 3), dtype=np.uint8)
@@ -122,14 +122,14 @@ class TestSystemUtils:
         assert h == 50
 
     def test_opencv_grayscale(self):
-        from modules.opencv.src.infrastructure_opencv_image_adapter import OpenCVImageAdapter
+        from modules.opencv.src.capabilities_opencv_image_adapter import OpenCVImageAdapter
         import numpy as np
         adapter = OpenCVImageAdapter()
         gray = adapter.to_grayscale(np.zeros((10, 10, 3), dtype=np.uint8))
         assert len(gray.shape) == 2
 
     def test_opencv_edges_and_contours(self):
-        from modules.opencv.src.infrastructure_opencv_image_adapter import OpenCVImageAdapter
+        from modules.opencv.src.capabilities_opencv_image_adapter import OpenCVImageAdapter
         import numpy as np
         adapter = OpenCVImageAdapter()
         gray = np.zeros((100, 100), dtype=np.uint8)
@@ -144,7 +144,7 @@ class TestSystemUtils:
         assert h > 0
 
     def test_opencv_abs_diff(self):
-        from modules.opencv.src.infrastructure_opencv_image_adapter import OpenCVImageAdapter
+        from modules.opencv.src.capabilities_opencv_image_adapter import OpenCVImageAdapter
         import numpy as np
         adapter = OpenCVImageAdapter()
         i1 = np.zeros((10, 10, 3), dtype=np.uint8)
@@ -153,7 +153,7 @@ class TestSystemUtils:
         assert diff.sum() > 0
 
     def test_opencv_phash(self):
-        from modules.opencv.src.infrastructure_opencv_image_adapter import OpenCVImageAdapter
+        from modules.opencv.src.capabilities_opencv_image_adapter import OpenCVImageAdapter
         import numpy as np
         adapter = OpenCVImageAdapter()
         img = np.random.randint(0, 255, (100, 100, 3), dtype=np.uint8)

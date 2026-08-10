@@ -1,6 +1,6 @@
 import sys
-from modules.cli.src.surface_cli_handler import create_parser
-from modules.cli.src.surface_cli_commands_handler import (
+from modules.cli.src.surface_cli_controller import create_parser
+from modules.cli.src.surface_cli_command import (
     cmd_analyze,
     cmd_ocr,
     cmd_elements,

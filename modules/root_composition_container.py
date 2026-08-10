@@ -15,35 +15,35 @@ def _load_module(module_path: str, class_name: str) -> type:
 
 def build_opencv() -> Any:
     cls = _load_module(
-        "modules.opencv.src.infrastructure_opencv_image_adapter", "OpenCVImageAdapter"
+        "modules.opencv.src.capabilities_opencv_image_adapter", "OpenCVImageAdapter"
     )
     return cls()
 
 
 def build_tesseract() -> Any:
     cls = _load_module(
-        "modules.image.src.infrastructure_tesseract_ocr_adapter", "TesseractOCRAdapter"
+        "modules.image.src.capabilities_tesseract_ocr_adapter", "TesseractOCRAdapter"
     )
     return cls()
 
 
 def build_llm() -> Any:
     cls = _load_module(
-        "modules.image.src.infrastructure_llm_vision_adapter", "LLMVisionAdapter"
+        "modules.image.src.capabilities_llm_vision_adapter", "LLMVisionAdapter"
     )
     return cls()
 
 
 def build_ffmpeg() -> Any:
     cls = _load_module(
-        "modules.video.src.infrastructure_ffmpeg_video_adapter", "FFmpegVideoAdapter"
+        "modules.video.src.capabilities_ffmpeg_video_adapter", "FFmpegVideoAdapter"
     )
     return cls()
 
 
 def build_utils() -> Any:
     cls = _load_module(
-        "modules.system_utils.src.infrastructure_system_utils_util", "SystemUtilsUtil"
+        "modules.system_utils.src.capabilities_system_utils_util", "SystemUtilsUtil"
     )
     return cls()
 

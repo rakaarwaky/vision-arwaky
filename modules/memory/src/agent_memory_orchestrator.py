@@ -14,13 +14,13 @@ class MemoryOrchestrator(RegistryServiceAggregate):
 
     @staticmethod
     def get_opencv():
-        module = importlib.import_module("modules.opencv.src.infrastructure_opencv_image_adapter")
+        module = importlib.import_module("modules.opencv.src.capabilities_opencv_image_adapter")
         cls = getattr(module, "OpenCVImageAdapter")
         return cls()
 
     @staticmethod
     def get_utils():
-        module = importlib.import_module("modules.system_utils.src.infrastructure_system_utils_util")
+        module = importlib.import_module("modules.system_utils.src.capabilities_system_utils_util")
         cls = getattr(module, "SystemUtilsUtil")
         return cls()
 

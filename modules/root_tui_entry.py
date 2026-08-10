@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """TUI entry point for vision-arwaky configuration."""
 
-from modules.cli.src.surface_tui_handler import tui_main
+from modules.cli.src.surface_tui_component import tui_main
 
 
 def main():

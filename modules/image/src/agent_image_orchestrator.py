@@ -13,19 +13,19 @@ class ImageOrchestrator(RegistryServiceAggregate):
 
     @staticmethod
     def get_opencv():
-        module = importlib.import_module("modules.opencv.src.infrastructure_opencv_image_adapter")
+        module = importlib.import_module("modules.opencv.src.capabilities_opencv_image_adapter")
         cls = getattr(module, "OpenCVImageAdapter")
         return cls()
 
     @staticmethod
     def get_tesseract():
-        module = importlib.import_module("modules.image.src.infrastructure_tesseract_ocr_adapter")
+        module = importlib.import_module("modules.image.src.capabilities_tesseract_ocr_adapter")
         cls = getattr(module, "TesseractOCRAdapter")
         return cls()
 
     @staticmethod
     def get_llm():
-        module = importlib.import_module("modules.image.src.infrastructure_llm_vision_adapter")
+        module = importlib.import_module("modules.image.src.capabilities_llm_vision_adapter")
         cls = getattr(module, "LLMVisionAdapter")
         return cls()
 

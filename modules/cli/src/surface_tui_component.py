@@ -258,7 +258,7 @@ class StatusScreen(Screen):
 
     def refresh_status(self) -> None:
         try:
-            from modules.mcp.src.surface_mcp_tools_handler import vision_status
+            from modules.mcp.src.surface_mcp_action import vision_status
             result = json.loads(vision_status())
             cfg = result.get("configuration", {})
             deps = result.get("dependencies", {})
@@ -332,7 +332,7 @@ class TestScreen(Screen):
         results.append(("Test image created", True))
 
         # 2. OpenCV read
-        from modules.opencv.src.infrastructure_opencv_image_adapter import OpenCVImageAdapter
+        from modules.opencv.src.capabilities_opencv_image_adapter import OpenCVImageAdapter
         ocv = OpenCVImageAdapter()
         img_read = ocv.read_image(path)
         results.append(("OpenCV read", img_read is not None))

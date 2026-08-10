@@ -17,13 +17,13 @@ class VideoOrchestrator(RegistryServiceAggregate):
 
     @staticmethod
     def get_opencv():
-        module = importlib.import_module("modules.opencv.src.infrastructure_opencv_image_adapter")
+        module = importlib.import_module("modules.opencv.src.capabilities_opencv_image_adapter")
         cls = getattr(module, "OpenCVImageAdapter")
         return cls()
 
     @staticmethod
     def get_ffmpeg():
-        module = importlib.import_module("modules.video.src.infrastructure_ffmpeg_video_adapter")
+        module = importlib.import_module("modules.video.src.capabilities_ffmpeg_video_adapter")
         cls = getattr(module, "FFmpegVideoAdapter")
         return cls()
 

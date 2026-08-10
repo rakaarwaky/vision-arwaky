@@ -8,7 +8,7 @@ import cv2
 from modules.image.src.agent_image_orchestrator import ImageOrchestrator
 from modules.video.src.agent_video_orchestrator import VideoOrchestrator
 from modules.memory.src.agent_memory_orchestrator import MemoryOrchestrator
-from modules.mcp.src.surface_mcp_tools_handler import vision_list_commands, vision_status
+from modules.mcp.src.surface_mcp_action import vision_list_commands, vision_status
 from modules.shared.src.common.taxonomy_vision_models_vo import (
     FilePath,
     LanguageCode,

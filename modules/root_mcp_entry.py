@@ -1,7 +1,7 @@
 import logging
 import sys
 from mcp.server.fastmcp import FastMCP
-from modules.mcp.src.surface_mcp_tools_handler import (
+from modules.mcp.src.surface_mcp_action import (
     vision_execute,
     vision_list_commands,
     vision_help,

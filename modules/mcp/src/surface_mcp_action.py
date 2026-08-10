@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 from typing import Any
 from mcp.server.fastmcp import FastMCP
-from .surface_mcp_handler import _check_dependencies, _check_native_vlm
+from .surface_mcp_controller import _check_dependencies, _check_native_vlm
 from modules.image.src.agent_image_orchestrator import ImageOrchestrator
 from modules.video.src.agent_video_orchestrator import VideoOrchestrator
 from modules.memory.src.agent_memory_orchestrator import MemoryOrchestrator

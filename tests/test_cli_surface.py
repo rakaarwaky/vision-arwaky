@@ -6,20 +6,20 @@ import pytest
 
 class TestCLIHandler:
     def test_create_parser(self):
-        from modules.cli.src.surface_cli_handler import create_parser
+        from modules.cli.src.surface_cli_controller import create_parser
         parser = create_parser()
         assert parser is not None
         assert parser.prog == "vision"
 
     def test_parser_image_commands(self):
-        from modules.cli.src.surface_cli_handler import create_parser
+        from modules.cli.src.surface_cli_controller import create_parser
         parser = create_parser()
         for cmd in ["analyze", "ocr", "elements", "compare"]:
             sub = parser._subparsers._group_actions[0].choices.get(cmd)
             assert sub is not None, f"Missing command: {cmd}"
 
     def test_parser_video_commands(self):
-        from modules.cli.src.surface_cli_handler import create_parser
+        from modules.cli.src.surface_cli_controller import create_parser
         parser = create_parser()
         for cmd in ["video-info", "extract-frames", "convert", "check-corruption",
                      "create-gif", "detect-scenes", "detect-motion", "track", "timeline"]:
@@ -27,13 +27,13 @@ class TestCLIHandler:
             assert sub is not None, f"Missing command: {cmd}"
 
     def test_parser_test_command(self):
-        from modules.cli.src.surface_cli_handler import create_parser
+        from modules.cli.src.surface_cli_controller import create_parser
         parser = create_parser()
         sub = parser._subparsers._group_actions[0].choices.get("test")
         assert sub is not None
 
     def test_parser_memory_subcommands(self):
-        from modules.cli.src.surface_cli_handler import create_parser
+        from modules.cli.src.surface_cli_controller import create_parser
         parser = create_parser()
         mem = parser._subparsers._group_actions[0].choices.get("memory")
         assert mem is not None
@@ -45,7 +45,7 @@ class TestCLIHandler:
 class TestMCPHandler:
     def test_check_dependencies(self):
         import shutil
-        from modules.mcp.src.surface_mcp_handler import _check_dependencies
+        from modules.mcp.src.surface_mcp_controller import _check_dependencies
         deps = _check_dependencies(shutil)
         assert isinstance(deps, dict)
         assert "opencv" in deps
@@ -53,7 +53,7 @@ class TestMCPHandler:
         assert "ffmpeg" in deps
 
     def test_list_commands(self):
-        from modules.mcp.src.surface_mcp_tools_handler import vision_list_commands
+        from modules.mcp.src.surface_mcp_action import vision_list_commands
         result = vision_list_commands()
         data = json.loads(result)
         assert "image" in data
@@ -61,45 +61,45 @@ class TestMCPHandler:
         assert "memory" in data
 
     def test_list_commands_image(self):
-        from modules.mcp.src.surface_mcp_tools_handler import vision_list_commands
+        from modules.mcp.src.surface_mcp_action import vision_list_commands
         result = vision_list_commands(domain="image")
         data = json.loads(result)
         assert len(data) == 4
 
     def test_help_all(self):
-        from modules.mcp.src.surface_mcp_tools_handler import vision_help
+        from modules.mcp.src.surface_mcp_action import vision_help
         result = vision_help()
         assert len(result) > 100
 
     def test_cancel_empty(self):
-        from modules.mcp.src.surface_mcp_tools_handler import vision_cancel
+        from modules.mcp.src.surface_mcp_action import vision_cancel
         result = json.loads(vision_cancel())
         assert "active_jobs" in result
 
     def test_cancel_unknown(self):
-        from modules.mcp.src.surface_mcp_tools_handler import vision_cancel
+        from modules.mcp.src.surface_mcp_action import vision_cancel
         result = json.loads(vision_cancel(job_id="invalid"))
         assert "error" in result
 
 
 class TestMCPExecute:
     def test_execute_analyze_no_image(self):
-        from modules.mcp.src.surface_mcp_tools_handler import vision_execute
+        from modules.mcp.src.surface_mcp_action import vision_execute
         result = json.loads(vision_execute(command="analyze"))
         assert "error" in result
 
     def test_execute_unknown_command(self):
-        from modules.mcp.src.surface_mcp_tools_handler import vision_execute
+        from modules.mcp.src.surface_mcp_action import vision_execute
         result = json.loads(vision_execute(command="nonexistent"))
         assert "error" in result
 
     def test_execute_ocr_no_image(self):
-        from modules.mcp.src.surface_mcp_tools_handler import vision_execute
+        from modules.mcp.src.surface_mcp_action import vision_execute
         result = json.loads(vision_execute(command="ocr"))
         assert "error" in result
 
     def test_execute_elements_no_image(self):
-        from modules.mcp.src.surface_mcp_tools_handler import vision_execute
+        from modules.mcp.src.surface_mcp_action import vision_execute
         result = json.loads(vision_execute(command="elements"))
         assert "error" in result
 
@@ -121,6 +121,6 @@ class TestCLIEntry:
 class TestTracking:
     def test_tracking_import(self):
         from modules.tracking.src.capabilities_object_tracking_tracker import ObjectTrackingTracker
-        from modules.opencv.src.infrastructure_opencv_image_adapter import OpenCVImageAdapter
+        from modules.opencv.src.capabilities_opencv_image_adapter import OpenCVImageAdapter
         tracker = ObjectTrackingTracker(OpenCVImageAdapter())
         assert tracker is not None
