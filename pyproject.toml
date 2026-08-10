@@ -25,9 +25,9 @@ dependencies = [
 ]
 
 [project.scripts]
-vision-arwaky-mcp = "src.mcp_entry:main"
-vision-arwaky-cli = "src.cli_entry:cli"
-vision-arwaky-tui = "src.tui_entry:main"
+vision-arwaky-mcp = "modules.root_mcp_entry:main"
+vision-arwaky-cli = "modules.root_cli_entry:cli"
+vision-arwaky-tui = "modules.root_tui_entry:main"
 
 [tool.setuptools.packages.find]
 where = ["."]

@@ -10,11 +10,11 @@ import pytest
 
 class TestVideoTimeline:
     def test_timeline_init(self):
-        from src.video.capabilities_video_timeline_generator import VideoTimelineGenerator
-        from src.opencv.infrastructure_opencv_image_adapter import OpenCVImageAdapter
-        from src.video.capabilities_video_processing_processor import VideoProcessingProcessor
-        from src.video.capabilities_video_analysis_analyzer import VideoAnalysisAnalyzer
-        from src.video.infrastructure_ffmpeg_video_adapter import FFmpegVideoAdapter
+        from modules.video.src.capabilities_video_timeline_generator import VideoTimelineGenerator
+        from modules.opencv.src.infrastructure_opencv_image_adapter import OpenCVImageAdapter
+        from modules.video.src.capabilities_video_processing_processor import VideoProcessingProcessor
+        from modules.video.src.capabilities_video_analysis_analyzer import VideoAnalysisAnalyzer
+        from modules.video.src.infrastructure_ffmpeg_video_adapter import FFmpegVideoAdapter
         
         gen = VideoTimelineGenerator(
             OpenCVImageAdapter(),
@@ -25,12 +25,12 @@ class TestVideoTimeline:
 
     def test_timeline_empty_video(self):
         import asyncio
-        from src.video.capabilities_video_timeline_generator import VideoTimelineGenerator
-        from src.opencv.infrastructure_opencv_image_adapter import OpenCVImageAdapter
-        from src.video.capabilities_video_processing_processor import VideoProcessingProcessor
-        from src.video.capabilities_video_analysis_analyzer import VideoAnalysisAnalyzer
-        from src.video.infrastructure_ffmpeg_video_adapter import FFmpegVideoAdapter
-        from src.shared.vision_models_vo import FilePath, IntervalSeconds
+        from modules.video.src.capabilities_video_timeline_generator import VideoTimelineGenerator
+        from modules.opencv.src.infrastructure_opencv_image_adapter import OpenCVImageAdapter
+        from modules.video.src.capabilities_video_processing_processor import VideoProcessingProcessor
+        from modules.video.src.capabilities_video_analysis_analyzer import VideoAnalysisAnalyzer
+        from modules.video.src.infrastructure_ffmpeg_video_adapter import FFmpegVideoAdapter
+        from modules.shared.src.common.taxonomy_vision_models_vo import FilePath, IntervalSeconds
         
         gen = VideoTimelineGenerator(
             OpenCVImageAdapter(),
@@ -46,8 +46,8 @@ class TestVideoTimeline:
 
 class TestTesseractEdge:
     def test_extract_text_with_path(self):
-        from src.image.infrastructure_tesseract_ocr_adapter import TesseractOCRAdapter
-        from src.shared.vision_models_vo import FilePath, LanguageCode
+        from modules.image.src.infrastructure_tesseract_ocr_adapter import TesseractOCRAdapter
+        from modules.shared.src.common.taxonomy_vision_models_vo import FilePath, LanguageCode
         import tempfile, os
         # Create a simple image with text-like features using OpenCV
         fd, path = tempfile.mkstemp(suffix=".png")
@@ -74,7 +74,7 @@ class TestTesseractEdge:
 
 class TestAgentOrchestratorEdge:
     def test_orchestrator_getters(self):
-        from src.image.agent_image_orchestrator import ImageOrchestrator
+        from modules.image.src.agent_image_orchestrator import ImageOrchestrator
         ocv = ImageOrchestrator.get_opencv()
         assert ocv is not None
         tess = ImageOrchestrator.get_tesseract()
@@ -85,7 +85,7 @@ class TestAgentOrchestratorEdge:
         assert proc is not None
 
     def test_video_orchestrator_getters(self):
-        from src.video.agent_video_orchestrator import VideoOrchestrator
+        from modules.video.src.agent_video_orchestrator import VideoOrchestrator
         ocv = VideoOrchestrator.get_opencv()
         assert ocv is not None
         ffmpeg = VideoOrchestrator.get_ffmpeg()
@@ -102,8 +102,8 @@ class TestAgentOrchestratorEdge:
 
 class TestOpenCVAdapter:
     def test_write_image(self):
-        from src.opencv.infrastructure_opencv_image_adapter import OpenCVImageAdapter
-        from src.shared.vision_models_vo import FilePath
+        from modules.opencv.src.infrastructure_opencv_image_adapter import OpenCVImageAdapter
+        from modules.shared.src.common.taxonomy_vision_models_vo import FilePath
         import tempfile, os
         
         adapter = OpenCVImageAdapter()
@@ -118,7 +118,7 @@ class TestOpenCVAdapter:
             os.unlink(path)
 
     def test_video_capture(self):
-        from src.opencv.infrastructure_opencv_image_adapter import OpenCVImageAdapter
+        from modules.opencv.src.infrastructure_opencv_image_adapter import OpenCVImageAdapter
         import tempfile, os
         
         adapter = OpenCVImageAdapter()
@@ -128,7 +128,7 @@ class TestOpenCVAdapter:
         cap.release()
 
     def test_optical_flow(self):
-        from src.opencv.infrastructure_opencv_image_adapter import OpenCVImageAdapter
+        from modules.opencv.src.infrastructure_opencv_image_adapter import OpenCVImageAdapter
         import numpy as np
         import cv2
         
@@ -144,7 +144,7 @@ class TestOpenCVAdapter:
             pass
 
     def test_histogram_compare(self):
-        from src.opencv.infrastructure_opencv_image_adapter import OpenCVImageAdapter
+        from modules.opencv.src.infrastructure_opencv_image_adapter import OpenCVImageAdapter
         import numpy as np
         
         adapter = OpenCVImageAdapter()
@@ -156,19 +156,19 @@ class TestOpenCVAdapter:
 
 class TestSystemUtilsEdge:
     def test_util_init(self):
-        from src.system_utils.infrastructure_system_utils_util import SystemUtilsUtil
+        from modules.system_utils.src.infrastructure_system_utils_util import SystemUtilsUtil
         u = SystemUtilsUtil()
         assert u.FFMPEG_PATH is not None
 
     def test_read_image_with_str(self):
-        from src.opencv.infrastructure_opencv_image_adapter import OpenCVImageAdapter
+        from modules.opencv.src.infrastructure_opencv_image_adapter import OpenCVImageAdapter
         adapter = OpenCVImageAdapter()
         result = adapter.read_image("/nonexistent/file.jpg")
         assert result is None
 
     def test_get_video_capture_with_filepath(self):
-        from src.opencv.infrastructure_opencv_image_adapter import OpenCVImageAdapter
-        from src.shared.vision_models_vo import FilePath
+        from modules.opencv.src.infrastructure_opencv_image_adapter import OpenCVImageAdapter
+        from modules.shared.src.common.taxonomy_vision_models_vo import FilePath
         
         adapter = OpenCVImageAdapter()
         cap = adapter.get_video_capture(FilePath(value="/nonexistent.mp4"))
@@ -176,7 +176,7 @@ class TestSystemUtilsEdge:
         cap.release()
 
     def test_write_image_with_str(self):
-        from src.opencv.infrastructure_opencv_image_adapter import OpenCVImageAdapter
+        from modules.opencv.src.infrastructure_opencv_image_adapter import OpenCVImageAdapter
         import numpy as np
         import tempfile, os
         
@@ -193,9 +193,9 @@ class TestSystemUtilsEdge:
 
 class TestTracking:
     def test_tracker_init(self):
-        from src.tracking.capabilities_object_tracking_tracker import ObjectTrackingTracker
-        from src.opencv.infrastructure_opencv_image_adapter import OpenCVImageAdapter
-        from src.shared.vision_models_vo import FilePath, BoundingBox, MaxFrames
+        from modules.tracking.src.capabilities_object_tracking_tracker import ObjectTrackingTracker
+        from modules.opencv.src.infrastructure_opencv_image_adapter import OpenCVImageAdapter
+        from modules.shared.src.common.taxonomy_vision_models_vo import FilePath, BoundingBox, MaxFrames
         
         tracker = ObjectTrackingTracker(OpenCVImageAdapter())
         assert tracker is not None

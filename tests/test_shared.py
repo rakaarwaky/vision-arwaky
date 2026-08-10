@@ -5,7 +5,7 @@ import tempfile
 import numpy as np
 import cv2
 from pathlib import Path
-from src.shared.vision_models_vo import (
+from modules.shared.src.common.taxonomy_vision_models_vo import (
     BoundingBox, Detection, MotionEvent, SceneChange, MemoryEntry,
     VideoTimeline, VisionAnalysis, FilePath, LanguageCode, OcrText,
     CommandName, CommandOutput, MemoryLabel, DistanceThreshold,
@@ -67,21 +67,21 @@ class TestProtocolInstantiation:
     """Test that protocols/ports can be subclassed and used."""
 
     def test_opencv_port_interface(self):
-        from src.shared.opencv_image_port import OpenCVImagePort
+        from modules.shared.src.common.contract_opencv_image_protocol import OpenCVImagePort
         assert callable(OpenCVImagePort.read_image)
 
     def test_image_processing_protocol(self):
-        from src.shared.image_processing_protocol import ImageProcessingProtocol
+        from modules.shared.src.common.contract_image_processing_protocol import ImageProcessingProtocol
         assert callable(ImageProcessingProtocol.analyze_screenshot)
 
     def test_llm_vision_port(self):
-        from src.shared.llm_vision_port import LLMVisionPort
+        from modules.shared.src.common.contract_llm_vision_protocol import LLMVisionPort
         assert callable(LLMVisionPort.analyze_image)
 
     def test_video_processing_protocol(self):
-        from src.shared.video_processing_protocol import VideoProcessingProtocol
+        from modules.shared.src.common.contract_video_processing_protocol import VideoProcessingProtocol
         assert callable(VideoProcessingProtocol.extract_frames)
 
     def test_visual_memory_protocol(self):
-        from src.shared.visual_memory_protocol import VisualMemoryProtocol
+        from modules.shared.src.common.contract_visual_memory_protocol import VisualMemoryProtocol
         assert callable(VisualMemoryProtocol.remember_image)

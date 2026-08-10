@@ -14,12 +14,12 @@ def create_test_image():
 
 class TestMemoryOrchestrator:
     def test_get_visual_memory(self):
-        from src.memory.agent_memory_orchestrator import MemoryOrchestrator
+        from modules.memory.src.agent_memory_orchestrator import MemoryOrchestrator
         mem = MemoryOrchestrator.get_visual_memory()
         assert mem is not None
 
     def test_execute_memory_store(self):
-        from src.memory.agent_memory_orchestrator import MemoryOrchestrator
+        from modules.memory.src.agent_memory_orchestrator import MemoryOrchestrator
         img = create_test_image()
         fd, path = tempfile.mkstemp(suffix=".png")
         os.close(fd)
@@ -31,7 +31,7 @@ class TestMemoryOrchestrator:
             os.unlink(path)
 
     def test_execute_memory_search(self):
-        from src.memory.agent_memory_orchestrator import MemoryOrchestrator
+        from modules.memory.src.agent_memory_orchestrator import MemoryOrchestrator
         img = create_test_image()
         fd, path = tempfile.mkstemp(suffix=".png")
         os.close(fd)
@@ -43,21 +43,21 @@ class TestMemoryOrchestrator:
             os.unlink(path)
 
     def test_execute_memory_list(self):
-        from src.memory.agent_memory_orchestrator import MemoryOrchestrator
+        from modules.memory.src.agent_memory_orchestrator import MemoryOrchestrator
         result = MemoryOrchestrator.execute_memory_cmd("memory-list", {})
         assert result is not None
 
     def test_execute_memory_unknown(self):
-        from src.memory.agent_memory_orchestrator import MemoryOrchestrator
+        from modules.memory.src.agent_memory_orchestrator import MemoryOrchestrator
         assert MemoryOrchestrator.execute_memory_cmd("nonexistent", {}) is None
 
 
 class TestVisualMemoryStore:
     def test_remember_and_find(self):
-        from src.memory.capabilities_visual_memory_repository import VisualMemoryStore
-        from src.opencv.infrastructure_opencv_image_adapter import OpenCVImageAdapter
-        from src.system_utils.infrastructure_system_utils_util import SystemUtilsUtil
-        from src.shared.vision_models_vo import FilePath, MemoryLabel, DistanceThreshold
+        from modules.memory.src.capabilities_visual_memory_repository import VisualMemoryStore
+        from modules.opencv.src.infrastructure_opencv_image_adapter import OpenCVImageAdapter
+        from modules.system_utils.src.infrastructure_system_utils_util import SystemUtilsUtil
+        from modules.shared.src.common.taxonomy_vision_models_vo import FilePath, MemoryLabel, DistanceThreshold
         
         store = VisualMemoryStore(OpenCVImageAdapter(), SystemUtilsUtil())
         img = create_test_image()
@@ -75,10 +75,10 @@ class TestVisualMemoryStore:
             os.unlink(path)
 
     def test_remember_nonexistent(self):
-        from src.memory.capabilities_visual_memory_repository import VisualMemoryStore
-        from src.opencv.infrastructure_opencv_image_adapter import OpenCVImageAdapter
-        from src.system_utils.infrastructure_system_utils_util import SystemUtilsUtil
-        from src.shared.vision_models_vo import FilePath, MemoryLabel
+        from modules.memory.src.capabilities_visual_memory_repository import VisualMemoryStore
+        from modules.opencv.src.infrastructure_opencv_image_adapter import OpenCVImageAdapter
+        from modules.system_utils.src.infrastructure_system_utils_util import SystemUtilsUtil
+        from modules.shared.src.common.taxonomy_vision_models_vo import FilePath, MemoryLabel
         import pytest
         
         store = VisualMemoryStore(OpenCVImageAdapter(), SystemUtilsUtil())
@@ -86,7 +86,7 @@ class TestVisualMemoryStore:
             store.remember_image(FilePath(value="/nonexistent.png"), MemoryLabel(value="test"))
 
     def test_hamming_distance(self):
-        from src.memory.capabilities_visual_memory_repository import VisualMemoryStore
+        from modules.memory.src.capabilities_visual_memory_repository import VisualMemoryStore
         d = VisualMemoryStore._hamming_distance("1010", "1011")
         assert d == 1
         d = VisualMemoryStore._hamming_distance("1010", "0101")
@@ -95,25 +95,25 @@ class TestVisualMemoryStore:
 
 class TestSystemUtils:
     def test_system_utils_init(self):
-        from src.system_utils.infrastructure_system_utils_util import SystemUtilsUtil
+        from modules.system_utils.src.infrastructure_system_utils_util import SystemUtilsUtil
         utils = SystemUtilsUtil()
         assert utils is not None
         assert hasattr(utils, "FFMPEG_PATH")
 
     def test_opencv_adapter_properties(self):
-        from src.opencv.infrastructure_opencv_image_adapter import OpenCVImageAdapter
+        from modules.opencv.src.infrastructure_opencv_image_adapter import OpenCVImageAdapter
         adapter = OpenCVImageAdapter()
         assert adapter.cv2 is not None
         assert adapter.np is not None
 
     def test_opencv_read_image(self):
-        from src.opencv.infrastructure_opencv_image_adapter import OpenCVImageAdapter
+        from modules.opencv.src.infrastructure_opencv_image_adapter import OpenCVImageAdapter
         adapter = OpenCVImageAdapter()
         result = adapter.read_image("nonexistent.png")
         assert result is None
 
     def test_opencv_dimensions(self):
-        from src.opencv.infrastructure_opencv_image_adapter import OpenCVImageAdapter
+        from modules.opencv.src.infrastructure_opencv_image_adapter import OpenCVImageAdapter
         import numpy as np
         adapter = OpenCVImageAdapter()
         img = np.zeros((50, 100, 3), dtype=np.uint8)
@@ -122,14 +122,14 @@ class TestSystemUtils:
         assert h == 50
 
     def test_opencv_grayscale(self):
-        from src.opencv.infrastructure_opencv_image_adapter import OpenCVImageAdapter
+        from modules.opencv.src.infrastructure_opencv_image_adapter import OpenCVImageAdapter
         import numpy as np
         adapter = OpenCVImageAdapter()
         gray = adapter.to_grayscale(np.zeros((10, 10, 3), dtype=np.uint8))
         assert len(gray.shape) == 2
 
     def test_opencv_edges_and_contours(self):
-        from src.opencv.infrastructure_opencv_image_adapter import OpenCVImageAdapter
+        from modules.opencv.src.infrastructure_opencv_image_adapter import OpenCVImageAdapter
         import numpy as np
         adapter = OpenCVImageAdapter()
         gray = np.zeros((100, 100), dtype=np.uint8)
@@ -144,7 +144,7 @@ class TestSystemUtils:
         assert h > 0
 
     def test_opencv_abs_diff(self):
-        from src.opencv.infrastructure_opencv_image_adapter import OpenCVImageAdapter
+        from modules.opencv.src.infrastructure_opencv_image_adapter import OpenCVImageAdapter
         import numpy as np
         adapter = OpenCVImageAdapter()
         i1 = np.zeros((10, 10, 3), dtype=np.uint8)
@@ -153,7 +153,7 @@ class TestSystemUtils:
         assert diff.sum() > 0
 
     def test_opencv_phash(self):
-        from src.opencv.infrastructure_opencv_image_adapter import OpenCVImageAdapter
+        from modules.opencv.src.infrastructure_opencv_image_adapter import OpenCVImageAdapter
         import numpy as np
         adapter = OpenCVImageAdapter()
         img = np.random.randint(0, 255, (100, 100, 3), dtype=np.uint8)
