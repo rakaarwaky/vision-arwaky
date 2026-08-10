@@ -7,11 +7,11 @@ from .contract_video_analysis_protocol import VideoAnalysisProtocol
 from modules.shared.src.video.contract_object_tracking_protocol import ObjectTrackingProtocol
 from .contract_visual_memory_protocol import VisualMemoryProtocol
 from .contract_video_timeline_protocol import VideoTimelineProtocol
-from .contract_opencv_image_protocol import OpenCVImagePort
-from .contract_tesseract_ocr_protocol import TesseractOCRPort
-from .contract_ffmpeg_video_protocol import FFmpegVideoPort
-from .contract_llm_vision_protocol import LLMVisionPort
-from .contract_system_utils_protocol import SystemUtilsPort
+from .contract_opencv_image_protocol import OpenCVImageProtocol
+from .contract_tesseract_ocr_protocol import TesseractOCRProtocol
+from .contract_ffmpeg_video_protocol import FFmpegVideoProtocol
+from .contract_llm_vision_protocol import LLMVisionProtocol
+from .contract_system_utils_protocol import SystemUtilsProtocol
 
 
 class RegistryServiceAggregate(ABC):
@@ -31,31 +31,31 @@ class RegistryServiceAggregate(ABC):
 
     @staticmethod
     @abstractmethod
-    def get_utils() -> SystemUtilsPort:
+    def get_utils() -> SystemUtilsProtocol:
         """Instantiate concrete Utils adapter dynamically."""
         ...
 
     @staticmethod
     @abstractmethod
-    def get_opencv() -> OpenCVImagePort:
+    def get_opencv() -> OpenCVImageProtocol:
         """Instantiate concrete OpenCV adapter dynamically."""
         ...
 
     @staticmethod
     @abstractmethod
-    def get_tesseract() -> TesseractOCRPort:
+    def get_tesseract() -> TesseractOCRProtocol:
         """Instantiate concrete Tesseract adapter dynamically."""
         ...
 
     @staticmethod
     @abstractmethod
-    def get_ffmpeg() -> FFmpegVideoPort:
+    def get_ffmpeg() -> FFmpegVideoProtocol:
         """Instantiate concrete FFmpeg adapter dynamically."""
         ...
 
     @staticmethod
     @abstractmethod
-    def get_llm() -> LLMVisionPort:
+    def get_llm() -> LLMVisionProtocol:
         """Instantiate concrete LLM adapter dynamically."""
         ...
 

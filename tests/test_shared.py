@@ -67,16 +67,16 @@ class TestProtocolInstantiation:
     """Test that protocols/ports can be subclassed and used."""
 
     def test_opencv_port_interface(self):
-        from modules.shared.src.common.contract_opencv_image_protocol import OpenCVImagePort
-        assert callable(OpenCVImagePort.read_image)
+        from modules.shared.src.common.contract_opencv_image_protocol import OpenCVImageProtocol
+        assert callable(OpenCVImageProtocol.read_image)
 
     def test_image_processing_protocol(self):
         from modules.shared.src.common.contract_image_processing_protocol import ImageProcessingProtocol
         assert callable(ImageProcessingProtocol.analyze_screenshot)
 
     def test_llm_vision_port(self):
-        from modules.shared.src.common.contract_llm_vision_protocol import LLMVisionPort
-        assert callable(LLMVisionPort.analyze_image)
+        from modules.shared.src.common.contract_llm_vision_protocol import LLMVisionProtocol
+        assert callable(LLMVisionProtocol.analyze_image)
 
     def test_video_processing_protocol(self):
         from modules.shared.src.common.contract_video_processing_protocol import VideoProcessingProtocol

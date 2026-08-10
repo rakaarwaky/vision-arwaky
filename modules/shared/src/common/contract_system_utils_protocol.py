@@ -2,7 +2,7 @@ from modules.shared.src.common.taxonomy_vision_models_vo import FilePath
 from abc import ABC, abstractmethod
 
 
-class SystemUtilsPort(ABC):
+class SystemUtilsProtocol(ABC):
     """Abstract port defining system utilities and helper functions."""
 
     @property

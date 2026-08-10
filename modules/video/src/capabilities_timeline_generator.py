@@ -4,7 +4,7 @@ import os
 import tempfile
 from typing import List
 from modules.shared.src.common.contract_video_timeline_protocol import VideoTimelineProtocol
-from modules.shared.src.common.contract_opencv_image_protocol import OpenCVImagePort
+from modules.shared.src.common.contract_opencv_image_protocol import OpenCVImageProtocol
 from modules.shared.src.common.contract_video_processing_protocol import VideoProcessingProtocol
 from modules.shared.src.common.contract_video_analysis_protocol import VideoAnalysisProtocol
 from modules.shared.src.common.taxonomy_vision_models_vo import VideoTimeline, FilePath, IntervalSeconds
@@ -15,7 +15,7 @@ class VideoTimelineGenerator(VideoTimelineProtocol):
 
     def __init__(
         self,
-        opencv_port: OpenCVImagePort,
+        opencv_port: OpenCVImageProtocol,
         video_cap: VideoProcessingProtocol,
         analysis_cap: VideoAnalysisProtocol,
     ):

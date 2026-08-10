@@ -2,7 +2,7 @@ from modules.shared.src.common.taxonomy_vision_models_vo import FilePath
 from abc import ABC, abstractmethod
 
 
-class OpenCVImagePort(ABC):
+class OpenCVImageProtocol(ABC):
     """Abstract port defining OpenCV image and video operations."""
 
     @property

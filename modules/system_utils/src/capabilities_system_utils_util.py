@@ -1,12 +1,12 @@
 import os
 import logging
-from modules.shared.src.common.contract_system_utils_protocol import SystemUtilsPort
+from modules.shared.src.common.contract_system_utils_protocol import SystemUtilsProtocol
 from modules.shared.src.common.taxonomy_vision_models_vo import BoundingBox
 
 logger = logging.getLogger("mcp_server.infrastructure.utils")
 
 
-class SystemUtilsUtil(SystemUtilsPort):
+class SystemUtilsUtil(SystemUtilsProtocol):
     """Concrete implementation of system utilities."""
 
     _taxonomy_marker = BoundingBox

@@ -5,8 +5,8 @@ import json
 from pathlib import Path
 from typing import List
 from modules.shared.src.common.contract_visual_memory_protocol import VisualMemoryProtocol
-from modules.shared.src.common.contract_opencv_image_protocol import OpenCVImagePort
-from modules.shared.src.common.contract_system_utils_protocol import SystemUtilsPort
+from modules.shared.src.common.contract_opencv_image_protocol import OpenCVImageProtocol
+from modules.shared.src.common.contract_system_utils_protocol import SystemUtilsProtocol
 from modules.shared.src.common.taxonomy_vision_models_vo import MemoryEntry, FilePath, MemoryLabel, DistanceThreshold
 
 
@@ -36,7 +36,7 @@ class VisualMemoryStore(VisualMemoryProtocol):
     MEMORY_DIR = os.path.join(os.path.expanduser("~/.cache"), "vision-arwaky", "memory")
     INDEX_FILE = os.path.join(MEMORY_DIR, "index.json")
 
-    def __init__(self, opencv_port: OpenCVImagePort, utils_port: SystemUtilsPort):
+    def __init__(self, opencv_port: OpenCVImageProtocol, utils_port: SystemUtilsProtocol):
         self._opencv = opencv_port
         self._utils = utils_port
         os.makedirs(self.MEMORY_DIR, exist_ok=True)

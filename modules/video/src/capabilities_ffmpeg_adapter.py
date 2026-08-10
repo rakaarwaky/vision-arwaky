@@ -1,13 +1,13 @@
 import asyncio
 import logging
-from modules.shared.src.common.contract_ffmpeg_video_protocol import FFmpegVideoPort
+from modules.shared.src.common.contract_ffmpeg_video_protocol import FFmpegVideoProtocol
 from modules.shared.src.common.taxonomy_vision_models_vo import FilePath, TimeSegment, VideoTimeline
 from modules.system_utils.src.capabilities_system_utils_util import SystemUtilsUtil
 
 logger = logging.getLogger("mcp_server.infrastructure.ffmpeg")
 
 
-class FFmpegVideoAdapter(FFmpegVideoPort):
+class FFmpegVideoAdapter(FFmpegVideoProtocol):
     """Infrastructure adapter for FFmpeg operations."""
 
     _taxonomy_marker = VideoTimeline

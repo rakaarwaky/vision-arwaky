@@ -17,7 +17,7 @@ import time
 from pathlib import Path
 from typing import Optional, TYPE_CHECKING
 import requests
-from modules.shared.src.common.contract_llm_vision_protocol import LLMVisionPort
+from modules.shared.src.common.contract_llm_vision_protocol import LLMVisionProtocol
 from modules.shared.src.common.taxonomy_vision_models_vo import VisionAnalysis
 
 if TYPE_CHECKING:
@@ -29,7 +29,7 @@ DEFAULT_URL = "http://127.0.0.1:1234/v1"
 DEFAULT_API_KEY = ""
 
 
-class LLMVisionAdapter(LLMVisionPort):
+class LLMVisionAdapter(LLMVisionProtocol):
     """Adapter for vision-capable local LLM."""
 
     _taxonomy_marker = VisionAnalysis

@@ -1,8 +1,8 @@
 from typing import Dict, Any, List
 from modules.shared.src.common.contract_image_processing_protocol import ImageProcessingProtocol
-from modules.shared.src.common.contract_opencv_image_protocol import OpenCVImagePort
-from modules.shared.src.common.contract_tesseract_ocr_protocol import TesseractOCRPort
-from modules.shared.src.common.contract_llm_vision_protocol import LLMVisionPort
+from modules.shared.src.common.contract_opencv_image_protocol import OpenCVImageProtocol
+from modules.shared.src.common.contract_tesseract_ocr_protocol import TesseractOCRProtocol
+from modules.shared.src.common.contract_llm_vision_protocol import LLMVisionProtocol
 from modules.shared.src.common.taxonomy_vision_models_vo import BoundingBox, Detection, VisionAnalysis, FilePath, LanguageCode, AnalysisPrompt, OcrText
 
 
@@ -11,9 +11,9 @@ class ImageProcessingProcessor(ImageProcessingProtocol):
 
     def __init__(
         self,
-        opencv_port: OpenCVImagePort,
-        tesseract_port: TesseractOCRPort,
-        llm_port: LLMVisionPort,
+        opencv_port: OpenCVImageProtocol,
+        tesseract_port: TesseractOCRProtocol,
+        llm_port: LLMVisionProtocol,
     ):
         self._opencv = opencv_port
         self._tesseract = tesseract_port

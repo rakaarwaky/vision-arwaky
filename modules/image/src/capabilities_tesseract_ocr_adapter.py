@@ -1,11 +1,11 @@
 import logging
-from modules.shared.src.common.contract_tesseract_ocr_protocol import TesseractOCRPort
+from modules.shared.src.common.contract_tesseract_ocr_protocol import TesseractOCRProtocol
 from modules.shared.src.common.taxonomy_vision_models_vo import FilePath, LanguageCode, VisionAnalysis
 
 logger = logging.getLogger("mcp_server.infrastructure.tesseract")
 
 
-class TesseractOCRAdapter(TesseractOCRPort):
+class TesseractOCRAdapter(TesseractOCRProtocol):
     """Infrastructure adapter for OCR operations via Tesseract."""
 
     _taxonomy_marker = VisionAnalysis

@@ -1,14 +1,14 @@
 from typing import List
 from modules.shared.src.common.contract_video_processing_protocol import VideoProcessingProtocol
-from modules.shared.src.common.contract_opencv_image_protocol import OpenCVImagePort
-from modules.shared.src.common.contract_ffmpeg_video_protocol import FFmpegVideoPort
+from modules.shared.src.common.contract_opencv_image_protocol import OpenCVImageProtocol
+from modules.shared.src.common.contract_ffmpeg_video_protocol import FFmpegVideoProtocol
 from modules.shared.src.common.taxonomy_vision_models_vo import VideoTimeline, FilePath, TimeSegment, IntervalSeconds, VideoInfo
 
 
 class VideoProcessingProcessor(VideoProcessingProtocol):
     """Capability for extracting frames, converting video formats, and generating GIFs."""
 
-    def __init__(self, opencv_port: OpenCVImagePort, ffmpeg_port: FFmpegVideoPort):
+    def __init__(self, opencv_port: OpenCVImageProtocol, ffmpeg_port: FFmpegVideoProtocol):
         _ = VideoTimeline
         self._opencv = opencv_port
         self._ffmpeg = ffmpeg_port

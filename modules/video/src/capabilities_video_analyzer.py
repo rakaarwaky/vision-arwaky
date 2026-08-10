@@ -5,14 +5,14 @@ import numpy
 import cv2
 from typing import List
 from modules.shared.src.common.contract_video_analysis_protocol import VideoAnalysisProtocol
-from modules.shared.src.common.contract_opencv_image_protocol import OpenCVImagePort
+from modules.shared.src.common.contract_opencv_image_protocol import OpenCVImageProtocol
 from modules.shared.src.common.taxonomy_vision_models_vo import SceneChange, MotionEvent, BoundingBox, FilePath, SceneThreshold, MinArea
 
 
 class VideoAnalysisAnalyzer(VideoAnalysisProtocol):
     """Analyze video for scene changes and motion events."""
 
-    def __init__(self, opencv_port: OpenCVImagePort):
+    def __init__(self, opencv_port: OpenCVImageProtocol):
         self._opencv = opencv_port
 
     def detect_scenes(self, video_path: FilePath, threshold: SceneThreshold) -> List[SceneChange]:

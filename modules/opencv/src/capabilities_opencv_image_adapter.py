@@ -3,13 +3,13 @@ import numpy
 import cv2 as _cv2
 from typing import Optional, Tuple
 import logging
-from modules.shared.src.common.contract_opencv_image_protocol import OpenCVImagePort
+from modules.shared.src.common.contract_opencv_image_protocol import OpenCVImageProtocol
 from modules.shared.src.common.taxonomy_vision_models_vo import BoundingBox, FilePath
 
 logger = logging.getLogger("mcp_server.infrastructure.opencv")
 
 
-class OpenCVImageAdapter(OpenCVImagePort):
+class OpenCVImageAdapter(OpenCVImageProtocol):
     """Infrastructure adapter for OpenCV operations."""
 
     _taxonomy_marker = BoundingBox

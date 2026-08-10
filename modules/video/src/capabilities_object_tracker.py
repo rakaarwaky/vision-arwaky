@@ -3,14 +3,14 @@
 import cv2
 from typing import List
 from modules.shared.src.video.contract_object_tracking_protocol import ObjectTrackingProtocol
-from modules.shared.src.common.contract_opencv_image_protocol import OpenCVImagePort
+from modules.shared.src.common.contract_opencv_image_protocol import OpenCVImageProtocol
 from modules.shared.src.common.taxonomy_vision_models_vo import BoundingBox, FilePath, MaxFrames
 
 
 class ObjectTrackingTracker(ObjectTrackingProtocol):
     """Track objects through video frames using OpenCV trackers."""
 
-    def __init__(self, opencv_port: OpenCVImagePort):
+    def __init__(self, opencv_port: OpenCVImageProtocol):
         self._opencv = opencv_port
 
     def _create_tracker(self):

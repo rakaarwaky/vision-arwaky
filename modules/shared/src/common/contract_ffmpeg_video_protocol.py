@@ -3,7 +3,7 @@ from modules.shared.src.common.taxonomy_vision_models_vo import FilePath
 from modules.shared.src.common.taxonomy_vision_models_vo import TimeSegment
 
 
-class FFmpegVideoPort(ABC):
+class FFmpegVideoProtocol(ABC):
     """Abstract port defining FFmpeg video conversion and GIF creation services."""
 
     @abstractmethod

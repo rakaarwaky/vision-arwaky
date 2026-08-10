@@ -2,7 +2,7 @@ from modules.shared.src.common.taxonomy_vision_models_vo import FilePath
 from abc import ABC, abstractmethod
 
 
-class LLMVisionPort(ABC):
+class LLMVisionProtocol(ABC):
     """Abstract port for local VLM image analysis capabilities."""
 
     @property
