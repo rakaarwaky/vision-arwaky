@@ -1,6 +1,12 @@
 from abc import ABC, abstractmethod
 from typing import List
-from modules.shared.src.common.taxonomy_vision_models_vo import MemoryEntry, FilePath, MemoryLabel, DistanceThreshold
+
+from modules.shared.src.common.taxonomy_vision_models_vo import MemoryEntry
+from modules.shared.src.common.taxonomy_vision_models_vo import (
+    DistanceThreshold,
+    FilePath,
+    MemoryLabel,
+)
 
 
 class VisualMemoryProtocol(ABC):

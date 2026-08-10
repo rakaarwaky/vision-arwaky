@@ -1,9 +1,10 @@
 from abc import ABC, abstractmethod
-from modules.shared.src.common.taxonomy_vision_models_vo import CommandOutput, CommandName, CommandOutput
+
+from modules.shared.src.common.taxonomy_vision_models_vo import CommandName, CommandOutput
 from .contract_image_processing_protocol import ImageProcessingProtocol
 from .contract_video_processing_protocol import VideoProcessingProtocol
 from .contract_video_analysis_protocol import VideoAnalysisProtocol
-from .contract_object_tracking_protocol import ObjectTrackingProtocol
+from modules.shared.src.video.contract_object_tracking_protocol import ObjectTrackingProtocol
 from .contract_visual_memory_protocol import VisualMemoryProtocol
 from .contract_video_timeline_protocol import VideoTimelineProtocol
 from .contract_opencv_image_protocol import OpenCVImagePort

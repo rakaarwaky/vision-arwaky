@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from modules.shared.src.common.taxonomy_vision_models_vo import FilePath, TimeSegment
+from modules.shared.src.common.taxonomy_vision_models_vo import FilePath
+from modules.shared.src.common.taxonomy_vision_models_vo import TimeSegment
 
 
 class FFmpegVideoPort(ABC):

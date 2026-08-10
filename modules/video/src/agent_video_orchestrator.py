@@ -23,7 +23,7 @@ class VideoOrchestrator(RegistryServiceAggregate):
 
     @staticmethod
     def get_ffmpeg():
-        module = importlib.import_module("modules.video.src.capabilities_ffmpeg_video_adapter")
+        module = importlib.import_module("modules.video.src.capabilities_ffmpeg_adapter")
         cls = getattr(module, "FFmpegVideoAdapter")
         return cls()
 
@@ -38,7 +38,7 @@ class VideoOrchestrator(RegistryServiceAggregate):
 
     @staticmethod
     def get_video_analysis():
-        cap_mod = importlib.import_module("modules.video.src.capabilities_video_analysis_analyzer")
+        cap_mod = importlib.import_module("modules.video.src.capabilities_video_analyzer")
         cap_cls = getattr(cap_mod, "VideoAnalysisAnalyzer")
         return cap_cls(
             opencv_port=VideoOrchestrator.get_opencv(),
@@ -56,7 +56,7 @@ class VideoOrchestrator(RegistryServiceAggregate):
 
     @staticmethod
     def get_object_tracking():
-        cap_mod = importlib.import_module("modules.tracking.src.capabilities_object_tracking_tracker")
+        cap_mod = importlib.import_module("modules.video.src.capabilities_object_tracker")
         cap_cls = getattr(cap_mod, "ObjectTrackingTracker")
         return cap_cls(
             opencv_port=VideoOrchestrator.get_opencv(),

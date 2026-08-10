@@ -3,7 +3,7 @@
 from abc import ABC, abstractmethod
 from typing import List
 
-from modules.shared.src.common.taxonomy_common_vo import DistanceThreshold, FilePath, MemoryLabel
+from modules.shared.src.common.taxonomy_vision_models_vo import DistanceThreshold, FilePath, MemoryLabel
 from modules.shared.src.memory.taxonomy_memory_vo import MemoryEntry
 
 

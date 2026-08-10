@@ -120,7 +120,7 @@ class TestCLIEntry:
 
 class TestTracking:
     def test_tracking_import(self):
-        from modules.tracking.src.capabilities_object_tracking_tracker import ObjectTrackingTracker
+        from modules.video.src.capabilities_object_tracker import ObjectTrackingTracker
         from modules.opencv.src.capabilities_opencv_image_adapter import OpenCVImageAdapter
         tracker = ObjectTrackingTracker(OpenCVImageAdapter())
         assert tracker is not None

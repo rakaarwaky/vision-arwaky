@@ -3,7 +3,7 @@
 from abc import ABC, abstractmethod
 from typing import List
 
-from modules.shared.src.common.taxonomy_common_vo import FilePath
+from modules.shared.src.common.taxonomy_vision_models_vo import FilePath
 from modules.shared.src.video.taxonomy_video_vo import (
     IntervalSeconds,
     MaxFrames,
