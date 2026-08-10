@@ -57,7 +57,7 @@ def build_image_processing(opencv: Any, tesseract: Any, llm: Any) -> Any:
 
 def build_video_processing(opencv: Any, ffmpeg: Any) -> Any:
     cls = _load_module(
-        "modules.video.src.capabilities_video_processing_processor", "VideoProcessingProcessor"
+        "modules.video.src.capabilities_video_processor", "VideoProcessingProcessor"
     )
     return cls(opencv_port=opencv, ffmpeg_port=ffmpeg)
 
@@ -71,7 +71,7 @@ def build_video_analysis(opencv: Any) -> Any:
 
 def build_video_timeline(opencv: Any, video_proc: Any, analysis: Any) -> Any:
     cls = _load_module(
-        "modules.video.src.capabilities_video_timeline_generator", "VideoTimelineGenerator"
+        "modules.video.src.capabilities_timeline_generator", "VideoTimelineGenerator"
     )
     return cls(opencv_port=opencv, video_cap=video_proc, analysis_cap=analysis)
 

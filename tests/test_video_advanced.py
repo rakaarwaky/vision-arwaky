@@ -23,7 +23,7 @@ def create_test_video(num_frames=10):
 
 class TestVideoProcessingProcessor:
     def test_get_info(self):
-        from modules.video.src.capabilities_video_processing_processor import VideoProcessingProcessor
+        from modules.video.src.capabilities_video_processor import VideoProcessingProcessor
         from modules.opencv.src.capabilities_opencv_image_adapter import OpenCVImageAdapter
         from modules.video.src.capabilities_ffmpeg_adapter import FFmpegVideoAdapter
         from modules.shared.src.common.taxonomy_vision_models_vo import FilePath
@@ -38,7 +38,7 @@ class TestVideoProcessingProcessor:
             os.unlink(path)
 
     def test_check_corruption(self):
-        from modules.video.src.capabilities_video_processing_processor import VideoProcessingProcessor
+        from modules.video.src.capabilities_video_processor import VideoProcessingProcessor
         from modules.opencv.src.capabilities_opencv_image_adapter import OpenCVImageAdapter
         from modules.video.src.capabilities_ffmpeg_adapter import FFmpegVideoAdapter
         from modules.shared.src.common.taxonomy_vision_models_vo import FilePath
@@ -51,7 +51,7 @@ class TestVideoProcessingProcessor:
             os.unlink(path)
 
     def test_check_corruption_nonexistent(self):
-        from modules.video.src.capabilities_video_processing_processor import VideoProcessingProcessor
+        from modules.video.src.capabilities_video_processor import VideoProcessingProcessor
         from modules.opencv.src.capabilities_opencv_image_adapter import OpenCVImageAdapter
         from modules.video.src.capabilities_ffmpeg_adapter import FFmpegVideoAdapter
         from modules.shared.src.common.taxonomy_vision_models_vo import FilePath

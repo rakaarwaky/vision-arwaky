@@ -29,7 +29,7 @@ class VideoOrchestrator(RegistryServiceAggregate):
 
     @staticmethod
     def get_video_processing():
-        cap_mod = importlib.import_module("modules.video.src.capabilities_video_processing_processor")
+        cap_mod = importlib.import_module("modules.video.src.capabilities_video_processor")
         cap_cls = getattr(cap_mod, "VideoProcessingProcessor")
         return cap_cls(
             opencv_port=VideoOrchestrator.get_opencv(),
@@ -46,7 +46,7 @@ class VideoOrchestrator(RegistryServiceAggregate):
 
     @staticmethod
     def get_video_timeline():
-        cap_mod = importlib.import_module("modules.video.src.capabilities_video_timeline_generator")
+        cap_mod = importlib.import_module("modules.video.src.capabilities_timeline_generator")
         cap_cls = getattr(cap_mod, "VideoTimelineGenerator")
         return cap_cls(
             opencv_port=VideoOrchestrator.get_opencv(),

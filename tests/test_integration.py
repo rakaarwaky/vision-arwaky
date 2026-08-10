@@ -10,9 +10,9 @@ import pytest
 
 class TestVideoTimeline:
     def test_timeline_init(self):
-        from modules.video.src.capabilities_video_timeline_generator import VideoTimelineGenerator
+        from modules.video.src.capabilities_timeline_generator import VideoTimelineGenerator
         from modules.opencv.src.capabilities_opencv_image_adapter import OpenCVImageAdapter
-        from modules.video.src.capabilities_video_processing_processor import VideoProcessingProcessor
+        from modules.video.src.capabilities_video_processor import VideoProcessingProcessor
         from modules.video.src.capabilities_video_analyzer import VideoAnalysisAnalyzer
         from modules.video.src.capabilities_ffmpeg_adapter import FFmpegVideoAdapter
         
@@ -25,9 +25,9 @@ class TestVideoTimeline:
 
     def test_timeline_empty_video(self):
         import asyncio
-        from modules.video.src.capabilities_video_timeline_generator import VideoTimelineGenerator
+        from modules.video.src.capabilities_timeline_generator import VideoTimelineGenerator
         from modules.opencv.src.capabilities_opencv_image_adapter import OpenCVImageAdapter
-        from modules.video.src.capabilities_video_processing_processor import VideoProcessingProcessor
+        from modules.video.src.capabilities_video_processor import VideoProcessingProcessor
         from modules.video.src.capabilities_video_analyzer import VideoAnalysisAnalyzer
         from modules.video.src.capabilities_ffmpeg_adapter import FFmpegVideoAdapter
         from modules.shared.src.common.taxonomy_vision_models_vo import FilePath, IntervalSeconds
