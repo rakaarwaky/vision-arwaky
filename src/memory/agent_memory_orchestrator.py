@@ -25,7 +25,7 @@ class MemoryOrchestrator:
 
     @staticmethod
     def get_visual_memory():
-        cap_mod = importlib.import_module("src.memory.capabilities_visual_memory_store")
+        cap_mod = importlib.import_module("src.memory.capabilities_visual_memory_repository")
         cap_cls = getattr(cap_mod, "VisualMemoryStore")
         return cap_cls(
             opencv_port=MemoryOrchestrator.get_opencv(),

@@ -54,7 +54,7 @@ class TestMemoryOrchestrator:
 
 class TestVisualMemoryStore:
     def test_remember_and_find(self):
-        from src.memory.capabilities_visual_memory_store import VisualMemoryStore
+        from src.memory.capabilities_visual_memory_repository import VisualMemoryStore
         from src.opencv.infrastructure_opencv_image_adapter import OpenCVImageAdapter
         from src.system_utils.infrastructure_system_utils_util import SystemUtilsUtil
         from src.shared.vision_models_vo import FilePath, MemoryLabel, DistanceThreshold
@@ -75,7 +75,7 @@ class TestVisualMemoryStore:
             os.unlink(path)
 
     def test_remember_nonexistent(self):
-        from src.memory.capabilities_visual_memory_store import VisualMemoryStore
+        from src.memory.capabilities_visual_memory_repository import VisualMemoryStore
         from src.opencv.infrastructure_opencv_image_adapter import OpenCVImageAdapter
         from src.system_utils.infrastructure_system_utils_util import SystemUtilsUtil
         from src.shared.vision_models_vo import FilePath, MemoryLabel
@@ -86,7 +86,7 @@ class TestVisualMemoryStore:
             store.remember_image(FilePath(value="/nonexistent.png"), MemoryLabel(value="test"))
 
     def test_hamming_distance(self):
-        from src.memory.capabilities_visual_memory_store import VisualMemoryStore
+        from src.memory.capabilities_visual_memory_repository import VisualMemoryStore
         d = VisualMemoryStore._hamming_distance("1010", "1011")
         assert d == 1
         d = VisualMemoryStore._hamming_distance("1010", "0101")

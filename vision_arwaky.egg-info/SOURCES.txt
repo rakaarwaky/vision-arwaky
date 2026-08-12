@@ -4,6 +4,8 @@ src/__init__.py
 src/cli_entry.py
 src/mcp_entry.py
 src/py.typed
+src/root_container.py
+src/surface_mcp_action.py
 src/tui_entry.py
 src/cli/__init__.py
 src/cli/surface_cli_commands_handler.py
@@ -16,7 +18,6 @@ src/image/infrastructure_llm_vision_adapter.py
 src/image/infrastructure_tesseract_ocr_adapter.py
 src/mcp/__init__.py
 src/mcp/surface_mcp_handler.py
-src/mcp/surface_mcp_tools_handler.py
 src/memory/__init__.py
 src/memory/agent_memory_orchestrator.py
 src/memory/capabilities_visual_memory_store.py

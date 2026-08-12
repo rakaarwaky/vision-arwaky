@@ -1,4 +1,4 @@
-"""Visual memory: store and retrieve images by perceptual hash."""
+"""Visual memory repository: store and retrieve images by perceptual hash."""
 
 import os
 import json
