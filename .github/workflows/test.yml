@@ -137,10 +137,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install lint-arwaky-cli
+      - name: Install lint-arwaky-cli (pre-built binary)
         run: |
-          cargo install --git https://github.com/rakaarwaky/lint-arwaky \
-            --tag v2.0.0 --package lint_arwaky-arwaky --bin lint-arwaky-cli --locked
+          curl -fsSL \
+            https://github.com/rakaarwaky/lint-arwaky/releases/download/v3.5.0/lint-arwaky-cli \
+            -o "$RUNNER_TEMP/lint-arwaky-cli"
+          chmod +x "$RUNNER_TEMP/lint-arwaky-cli"
+          sudo mv "$RUNNER_TEMP/lint-arwaky-cli" /usr/local/bin/lint-arwaky-cli
+          lint-arwaky-cli version
 
       - name: Install Python deps for import scan
         run: |
