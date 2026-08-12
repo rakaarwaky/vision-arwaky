@@ -15,7 +15,9 @@ class ImageProcessingProtocol(ABC):
     """Abstract protocol defining Image Processing capabilities."""
 
     @abstractmethod
-    def analyze_screenshot(self, image_path: FilePath, prompt: AnalysisPrompt) -> VisionAnalysis:
+    def analyze_screenshot(
+        self, image_path: FilePath, prompt: AnalysisPrompt
+    ) -> VisionAnalysis:
         """Analyze screenshot for UI elements and text descriptions."""
 
     @abstractmethod

@@ -31,7 +31,9 @@ class ImageProcessingProcessor(ImageProcessingProtocol):
         self._tesseract = tesseract_port
         self._llm = llm_port
 
-    def analyze_screenshot(self, image_path: FilePath, prompt: AnalysisPrompt) -> VisionAnalysis:
+    def analyze_screenshot(
+        self, image_path: FilePath, prompt: AnalysisPrompt
+    ) -> VisionAnalysis:
         """Analyze screenshot for UI elements and text.
 
         If prompt is provided and a local VLM is available, use LLM for
@@ -56,7 +58,6 @@ class ImageProcessingProcessor(ImageProcessingProtocol):
                     elements=self.find_elements(image_path),
                     error=str(e),
                 )
-
 
         # Default: OCR + element detection
         text = self.extract_text(image_path, LanguageCode(value="eng")).value
@@ -115,8 +116,13 @@ class ImageProcessingProcessor(ImageProcessingProtocol):
             # Center-pad if needed
             if new_w < w1 or new_h < h1:
                 padded = self._opencv.cv2.copyMakeBorder(
-                    img2, 0, h1 - new_h, 0, w1 - new_w,
-                    self._opencv.cv2.BORDER_CONSTANT, value=[0, 0, 0]
+                    img2,
+                    0,
+                    h1 - new_h,
+                    0,
+                    w1 - new_w,
+                    self._opencv.cv2.BORDER_CONSTANT,
+                    value=[0, 0, 0],
                 )
                 img2 = padded
 
@@ -143,4 +149,3 @@ class ImageProcessingProcessor(ImageProcessingProtocol):
             phash_diff=hash1 != hash2,
             differences=differences,
         )
-

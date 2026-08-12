@@ -34,7 +34,9 @@ class VideoTimelineGenerator(VideoTimelineProtocol):
         self._video_cap = video_cap
         self._analysis_cap = analysis_cap
 
-    async def generate_timeline(self, video_path: FilePath, interval: IntervalSeconds) -> VideoTimeline:
+    async def generate_timeline(
+        self, video_path: FilePath, interval: IntervalSeconds
+    ) -> VideoTimeline:
         """Generate a timeline with key frames at regular intervals."""
         cap = self._opencv.get_video_capture(video_path.value)
         if not cap.isOpened():
@@ -67,24 +69,29 @@ class VideoTimelineGenerator(VideoTimelineProtocol):
             # Compute basic stats
             gray = self._opencv.to_grayscale(frame)
             brightness = float(gray.mean())
-            sharpness = float(self._opencv.cv2.Laplacian(gray, self._opencv.cv2.CV_64F).var())
+            sharpness = float(
+                self._opencv.cv2.Laplacian(gray, self._opencv.cv2.CV_64F).var()
+            )
 
             timestamp = frame_idx / fps if fps > 0 else 0
 
-            key_frames.append({
-                "frame_index": frame_idx,
-                "timestamp": round(timestamp, 2),
-                "path": frame_path,
-                "brightness": round(brightness, 2),
-                "sharpness": round(sharpness, 2),
-            })
+            key_frames.append(
+                {
+                    "frame_index": frame_idx,
+                    "timestamp": round(timestamp, 2),
+                    "path": frame_path,
+                    "brightness": round(brightness, 2),
+                    "sharpness": round(sharpness, 2),
+                }
+            )
 
             frame_idx += frame_interval
 
         cap.release()
-        
+
         # Cleanup temp files
         import shutil
+
         shutil.rmtree(tmp_dir, ignore_errors=True)
 
         return VideoTimeline(

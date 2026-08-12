@@ -78,9 +78,7 @@ class VideoOrchestrator(RegistryServiceAggregate):
         elif command.value == "convert":
             inp = FilePath(value=kwargs["input_path"])
             out = FilePath(value=kwargs["output_path"])
-            res = run_async(
-                self._video_processing.convert_format(inp, out)
-            )
+            res = run_async(self._video_processing.convert_format(inp, out))
             return CommandOutput(value=json.dumps({"success": res}))
         elif command.value == "check-corruption":
             res = self._video_processing.check_corruption(
@@ -93,9 +91,7 @@ class VideoOrchestrator(RegistryServiceAggregate):
             start = float(kwargs["start"]) if kwargs["start"] else None
             duration = float(kwargs["duration"]) if kwargs["duration"] else None
             segment = TimeSegment(start=start, duration=duration)
-            res = run_async(
-                self._video_processing.create_gif(vid, out, segment)
-            )
+            res = run_async(self._video_processing.create_gif(vid, out, segment))
             return CommandOutput(value=json.dumps({"success": res}))
         elif command.value == "detect-scenes":
             vid = FilePath(value=kwargs["video"])

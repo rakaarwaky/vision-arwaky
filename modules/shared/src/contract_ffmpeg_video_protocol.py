@@ -7,7 +7,7 @@ class FFmpegVideoProtocol(ABC):
     """Abstract port defining FFmpeg video conversion and GIF creation services."""
 
     @abstractmethod
-    async def run(self, args, capture_output = True):
+    async def run(self, args, capture_output=True):
         """Run FFmpeg command asynchronously with given arguments."""
 
     @abstractmethod

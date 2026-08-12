@@ -40,9 +40,7 @@ def get_dispatcher() -> RegistryServiceAggregate:
 def _execute_in_process(command: str, kwargs: dict) -> str:
     """Route command to the appropriate feature orchestrator via the facade."""
     try:
-        result = get_dispatcher().execute_in_process(
-            CommandName(value=command), kwargs
-        )
+        result = get_dispatcher().execute_in_process(CommandName(value=command), kwargs)
         return result.value
     except (KeyError, TypeError, ValueError, RuntimeError, OSError) as e:
         return json.dumps({"error": str(e)})
@@ -126,26 +124,90 @@ def vision_list_commands(domain: str = "") -> str:
     """
     commands = {
         "image": [
-            {"command": "analyze", "args": "image, [prompt]", "desc": "Analyze screenshot for UI elements and text"},
-            {"command": "ocr", "args": "image, [lang]", "desc": "Extract text from image using OCR"},
-            {"command": "elements", "args": "image", "desc": "Find UI elements (buttons, inputs)"},
-            {"command": "compare", "args": "image1, image2", "desc": "Compare two screenshots"},
+            {
+                "command": "analyze",
+                "args": "image, [prompt]",
+                "desc": "Analyze screenshot for UI elements and text",
+            },
+            {
+                "command": "ocr",
+                "args": "image, [lang]",
+                "desc": "Extract text from image using OCR",
+            },
+            {
+                "command": "elements",
+                "args": "image",
+                "desc": "Find UI elements (buttons, inputs)",
+            },
+            {
+                "command": "compare",
+                "args": "image1, image2",
+                "desc": "Compare two screenshots",
+            },
         ],
         "video": [
-            {"command": "video-info", "args": "video", "desc": "Get video metadata (fps, frames, size)"},
-            {"command": "extract-frames", "args": "video, [interval]", "desc": "Extract frames at interval"},
-            {"command": "convert", "args": "input_path, output_path", "desc": "Convert video format"},
-            {"command": "check-corruption", "args": "video", "desc": "Check if video is corrupted"},
-            {"command": "create-gif", "args": "video, output_path, [start, duration]", "desc": "Create GIF from video"},
-            {"command": "detect-scenes", "args": "video, [threshold]", "desc": "Detect scene changes"},
-            {"command": "detect-motion", "args": "video, [min-area]", "desc": "Detect motion events"},
-            {"command": "track", "args": "video, bbox, [max-frames]", "desc": "Track object through video"},
-            {"command": "timeline", "args": "video, [interval]", "desc": "Generate video timeline"},
+            {
+                "command": "video-info",
+                "args": "video",
+                "desc": "Get video metadata (fps, frames, size)",
+            },
+            {
+                "command": "extract-frames",
+                "args": "video, [interval]",
+                "desc": "Extract frames at interval",
+            },
+            {
+                "command": "convert",
+                "args": "input_path, output_path",
+                "desc": "Convert video format",
+            },
+            {
+                "command": "check-corruption",
+                "args": "video",
+                "desc": "Check if video is corrupted",
+            },
+            {
+                "command": "create-gif",
+                "args": "video, output_path, [start, duration]",
+                "desc": "Create GIF from video",
+            },
+            {
+                "command": "detect-scenes",
+                "args": "video, [threshold]",
+                "desc": "Detect scene changes",
+            },
+            {
+                "command": "detect-motion",
+                "args": "video, [min-area]",
+                "desc": "Detect motion events",
+            },
+            {
+                "command": "track",
+                "args": "video, bbox, [max-frames]",
+                "desc": "Track object through video",
+            },
+            {
+                "command": "timeline",
+                "args": "video, [interval]",
+                "desc": "Generate video timeline",
+            },
         ],
         "memory": [
-            {"command": "memory-store", "args": "image, label", "desc": "Store image in visual memory"},
-            {"command": "memory-search", "args": "query, [max-distance]", "desc": "Find similar images"},
-            {"command": "memory-list", "args": "(none)", "desc": "List all stored images"},
+            {
+                "command": "memory-store",
+                "args": "image, label",
+                "desc": "Store image in visual memory",
+            },
+            {
+                "command": "memory-search",
+                "args": "query, [max-distance]",
+                "desc": "Find similar images",
+            },
+            {
+                "command": "memory-list",
+                "args": "(none)",
+                "desc": "List all stored images",
+            },
         ],
     }
 
@@ -183,7 +245,9 @@ def vision_status() -> str:
     """Check vision server status, dependencies, and capabilities."""
     project_root = Path(VISION_PROJECT)
     user_config = Path.home() / ".config" / "vision-arwaky" / "config.yaml"
-    config_path = user_config if user_config.exists() else (project_root / "config.yaml")
+    config_path = (
+        user_config if user_config.exists() else (project_root / "config.yaml")
+    )
     deps = _check_dependencies(shutil)
 
     # Read backend from config
@@ -192,6 +256,7 @@ def vision_status() -> str:
     if config_path.exists():
         try:
             import yaml
+
             with open(config_path) as f:
                 cfg_data = yaml.safe_load(f) or {}
             selected_backend = str(cfg_data.get("backend", "external"))
@@ -200,15 +265,21 @@ def vision_status() -> str:
                 model_rel = str(native_cfg.get("model_path", ""))
                 mmproj_rel = str(native_cfg.get("mmproj_path", ""))
                 native_files = {
-                    "model_file": "FOUND" if (project_root / model_rel).exists() else "MISSING",
-                    "mmproj_file": "FOUND" if (project_root / mmproj_rel).exists() else "MISSING",
+                    "model_file": "FOUND"
+                    if (project_root / model_rel).exists()
+                    else "MISSING",
+                    "mmproj_file": "FOUND"
+                    if (project_root / mmproj_rel).exists()
+                    else "MISSING",
                 }
         except (OSError, ValueError) as e:
             native_files["config_error"] = str(e)
 
     status_cfg: dict[str, Any] = {
         "config_yaml_detected": config_path.exists(),
-        "config_source": "~/.config/vision-arwaky/" if user_config.exists() else "project root",
+        "config_source": "~/.config/vision-arwaky/"
+        if user_config.exists()
+        else "project root",
         "selected_backend": selected_backend,
         "native_files": native_files,
     }
@@ -222,6 +293,7 @@ def vision_status() -> str:
     else:
         try:
             import requests
+
             base_url = DEFAULT_URL
             resp = requests.get(f"{base_url}/models", timeout=5)
             deps["llm_endpoint"] = "OK"
@@ -259,10 +331,12 @@ def vision_cancel(job_id: str = "") -> str:
     if not job_id:
         if not _active_processes:
             return json.dumps({"active_jobs": 0, "message": "No active jobs"})
-        return json.dumps({
-            "active_jobs": len(_active_processes),
-            "jobs": list(_active_processes.keys()),
-        })
+        return json.dumps(
+            {
+                "active_jobs": len(_active_processes),
+                "jobs": list(_active_processes.keys()),
+            }
+        )
 
     if job_id in _active_processes:
         proc = _active_processes.pop(job_id)

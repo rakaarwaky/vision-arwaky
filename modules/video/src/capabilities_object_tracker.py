@@ -1,6 +1,5 @@
 """Object tracking using OpenCV tracking algorithms."""
 
-
 import cv2
 
 from modules.shared.src.contract_object_tracking_protocol import (
@@ -74,7 +73,12 @@ class ObjectTrackingTracker(ObjectTrackingProtocol):
             cap.release()
             return []
 
-        bbox_tuple = (initial_box.x, initial_box.y, initial_box.width, initial_box.height)
+        bbox_tuple = (
+            initial_box.x,
+            initial_box.y,
+            initial_box.width,
+            initial_box.height,
+        )
         ok = tracker.init(frame, bbox_tuple)
 
         # OpenCV 4.x init returns None on success, not True

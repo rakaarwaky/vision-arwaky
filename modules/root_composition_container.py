@@ -15,8 +15,15 @@ from modules.video.src.root_video_container import build_video_feature
 
 IMAGE_COMMANDS = {"analyze", "ocr", "elements", "compare"}
 VIDEO_COMMANDS = {
-    "video-info", "extract-frames", "convert", "check-corruption",
-    "create-gif", "detect-scenes", "detect-motion", "track", "timeline",
+    "video-info",
+    "extract-frames",
+    "convert",
+    "check-corruption",
+    "create-gif",
+    "detect-scenes",
+    "detect-motion",
+    "track",
+    "timeline",
 }
 
 
@@ -26,7 +33,9 @@ class RootDispatcher(RegistryServiceAggregate):
     def __init__(self, graph: dict[str, Any]):
         self._graph = graph
 
-    def execute_in_process(self, command: CommandName, kwargs: dict[str, Any]) -> CommandOutput:
+    def execute_in_process(
+        self, command: CommandName, kwargs: dict[str, Any]
+    ) -> CommandOutput:
         if command.value in IMAGE_COMMANDS:
             return self._graph["image_orchestrator"].execute_in_process(command, kwargs)
         if command.value in VIDEO_COMMANDS:
@@ -43,7 +52,6 @@ def build() -> dict[str, Any]:
 
     graph = {
         "opencv": opencv,
-
         "tesseract": image_feature["tesseract"],
         "llm": image_feature["llm"],
         "image_processing": image_feature["image_processing"],

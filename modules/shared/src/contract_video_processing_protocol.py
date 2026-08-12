@@ -15,7 +15,9 @@ class VideoProcessingProtocol(ABC):
     _taxonomy_marker = VisionAnalysis
 
     @abstractmethod
-    async def extract_frames(self, video_path: FilePath, interval: IntervalSeconds) -> list[FilePath]:
+    async def extract_frames(
+        self, video_path: FilePath, interval: IntervalSeconds
+    ) -> list[FilePath]:
         """Extract key frame images from a video at periodic intervals."""
 
     @abstractmethod

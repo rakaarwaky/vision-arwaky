@@ -1,5 +1,5 @@
-
 """Integration and edge case tests for remaining coverage gaps."""
+
 import os
 import tempfile
 
@@ -20,7 +20,7 @@ class TestVideoTimeline:
         from modules.video.src.capabilities_video_processor import (
             VideoProcessingProcessor,
         )
-        
+
         gen = VideoTimelineGenerator(
             OpenCVImageAdapter(),
             VideoProcessingProcessor(OpenCVImageAdapter(), FFmpegVideoAdapter()),
@@ -46,14 +46,18 @@ class TestVideoTimeline:
         from modules.video.src.capabilities_video_processor import (
             VideoProcessingProcessor,
         )
-        
+
         gen = VideoTimelineGenerator(
             OpenCVImageAdapter(),
             VideoProcessingProcessor(OpenCVImageAdapter(), FFmpegVideoAdapter()),
             VideoAnalysisAnalyzer(OpenCVImageAdapter()),
         )
         # Non-existent video should return empty timeline, not crash
-        tl = asyncio.run(gen.generate_timeline(FilePath(value="/nonexistent.mp4"), IntervalSeconds(value=5.0)))
+        tl = asyncio.run(
+            gen.generate_timeline(
+                FilePath(value="/nonexistent.mp4"), IntervalSeconds(value=5.0)
+            )
+        )
         assert tl.total_frames == 0
         assert tl.fps == 0.0
         assert tl.key_frames == []
@@ -65,19 +69,24 @@ class TestTesseractEdge:
             TesseractOCRAdapter,
         )
         from modules.shared.src.taxonomy_vision_models_vo import FilePath, LanguageCode
+
         # Create a simple image with text-like features using OpenCV
         fd, path = tempfile.mkstemp(suffix=".png")
         os.close(fd)
         try:
             img = np.ones((100, 100, 3), dtype=np.uint8) * 255
-            cv2.putText(img, "Hello", (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
+            cv2.putText(
+                img, "Hello", (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2
+            )
             cv2.imwrite(path, img)
-            
+
             adapter = TesseractOCRAdapter()
             # This may raise RuntimeError if tesseract binary doesn't return text
             # but should not crash with other errors
             try:
-                result = adapter.extract_text(FilePath(value=path), LanguageCode(value="eng"))
+                result = adapter.extract_text(
+                    FilePath(value=path), LanguageCode(value="eng")
+                )
                 assert result is not None
             except RuntimeError:
                 pass  # Acceptable if OCR fails
@@ -162,7 +171,7 @@ class TestOpenCVAdapter:
             OpenCVImageAdapter,
         )
         from modules.shared.src.taxonomy_vision_models_vo import FilePath
-        
+
         adapter = OpenCVImageAdapter()
         img = np.zeros((50, 50, 3), dtype=np.uint8)
         fd, path = tempfile.mkstemp(suffix=".png")
@@ -178,7 +187,7 @@ class TestOpenCVAdapter:
         from modules.opencv.src.capabilities_opencv_image_adapter import (
             OpenCVImageAdapter,
         )
-        
+
         adapter = OpenCVImageAdapter()
         # Should handle non-existent video gracefully
         cap = adapter.get_video_capture("/nonexistent.mp4")
@@ -192,7 +201,7 @@ class TestOpenCVAdapter:
         from modules.opencv.src.capabilities_opencv_image_adapter import (
             OpenCVImageAdapter,
         )
-        
+
         adapter = OpenCVImageAdapter()
         prev = np.ones((100, 100), dtype=np.uint8) * 100
         nxt = np.ones((100, 100), dtype=np.uint8) * 100
@@ -210,7 +219,7 @@ class TestOpenCVAdapter:
         from modules.opencv.src.capabilities_opencv_image_adapter import (
             OpenCVImageAdapter,
         )
-        
+
         adapter = OpenCVImageAdapter()
         h1 = np.array([[0.1, 0.2, 0.3]], dtype=np.float32)
         h2 = np.array([[0.1, 0.2, 0.3]], dtype=np.float32)
@@ -221,14 +230,15 @@ class TestOpenCVAdapter:
 class TestSystemUtilsEdge:
     def test_util_init(self):
         from modules.shared.src.utility_system_utils import get_ffmpeg_path
+
         path = get_ffmpeg_path()
         assert path is not None
-
 
     def test_read_image_with_str(self):
         from modules.opencv.src.capabilities_opencv_image_adapter import (
             OpenCVImageAdapter,
         )
+
         adapter = OpenCVImageAdapter()
         result = adapter.read_image("/nonexistent/file.jpg")
         assert result is None
@@ -238,7 +248,7 @@ class TestSystemUtilsEdge:
             OpenCVImageAdapter,
         )
         from modules.shared.src.taxonomy_vision_models_vo import FilePath
-        
+
         adapter = OpenCVImageAdapter()
         cap = adapter.get_video_capture(FilePath(value="/nonexistent.mp4"))
         assert not cap.isOpened()
@@ -250,7 +260,7 @@ class TestSystemUtilsEdge:
         from modules.opencv.src.capabilities_opencv_image_adapter import (
             OpenCVImageAdapter,
         )
-        
+
         adapter = OpenCVImageAdapter()
         img = np.zeros((10, 10, 3), dtype=np.uint8)
         fd, path = tempfile.mkstemp(suffix=".png")
@@ -273,14 +283,14 @@ class TestTracking:
             MaxFrames,
         )
         from modules.video.src.capabilities_object_tracker import ObjectTrackingTracker
-        
+
         tracker = ObjectTrackingTracker(OpenCVImageAdapter())
         assert tracker is not None
-        
+
         # Tracking on non-existent video returns empty list or raises
         result = tracker.track_object(
             FilePath(value="/nonexistent.mp4"),
             BoundingBox(x=10, y=10, width=50, height=50),
-            MaxFrames(value=10)
+            MaxFrames(value=10),
         )
         assert isinstance(result, list)

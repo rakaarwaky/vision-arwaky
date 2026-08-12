@@ -1,4 +1,5 @@
 """Tests for shared/contract layer — all protocols, ports, and models."""
+
 import json
 
 from modules.shared.src.taxonomy_vision_models_vo import (
@@ -33,7 +34,11 @@ class TestVisionModels:
         assert d["x"] == 10
 
     def test_detection(self):
-        d = Detection(label="button", confidence=0.95, bbox=BoundingBox(x=0, y=0, width=50, height=50))
+        d = Detection(
+            label="button",
+            confidence=0.95,
+            bbox=BoundingBox(x=0, y=0, width=50, height=50),
+        )
         assert d.label == "button"
         assert d.confidence == 0.95
 
@@ -78,22 +83,24 @@ class TestProtocolInstantiation:
         from modules.shared.src.contract_opencv_image_protocol import (
             OpenCVImageProtocol,
         )
+
         assert callable(OpenCVImageProtocol.read_image)
 
     def test_image_processing_protocol(self):
         from modules.shared.src.contract_image_processing_protocol import (
             ImageProcessingProtocol,
         )
+
         assert callable(ImageProcessingProtocol.analyze_screenshot)
 
     def test_llm_vision_port(self):
         from modules.shared.src.contract_llm_vision_protocol import LLMVisionProtocol
+
         assert callable(LLMVisionProtocol.analyze_image)
 
     def test_video_processing_protocol(self):
         from modules.shared.src.contract_video_processing_protocol import (
             VideoProcessingProtocol,
         )
+
         assert callable(VideoProcessingProtocol.extract_frames)
-
-

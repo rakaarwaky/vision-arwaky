@@ -60,12 +60,12 @@ class LLMVisionAdapter(LLMVisionProtocol):
         if config_path.exists():
             try:
                 import yaml
+
                 with open(config_path, "r") as f:
                     self._config = yaml.safe_load(f) or {}
                 logger.info(f"Loaded config from {config_path}")
             except (OSError, ValueError) as e:
                 logger.warning(f"Failed to read config: {e}. Falling back to defaults.")
-
 
         self._backend = str(self._config.get("backend", "external"))
         self._native_llm: Llama | None = None
@@ -74,10 +74,25 @@ class LLMVisionAdapter(LLMVisionProtocol):
         self._bundled_port = self._find_free_port()
 
         # 2. Configure external HTTP endpoint settings
-        url = base_url or os.getenv("LLAMA_API_URL") or self._get_nested_config("external", "url") or DEFAULT_URL
+        url = (
+            base_url
+            or os.getenv("LLAMA_API_URL")
+            or self._get_nested_config("external", "url")
+            or DEFAULT_URL
+        )
         self.base_url = url.rstrip("/")
-        self.api_key = api_key or os.getenv("LLAMA_API_KEY") or self._get_nested_config("external", "api_key") or DEFAULT_API_KEY
-        self._model = model or os.getenv("LLAMA_MODEL") or self._get_nested_config("external", "model") or ""
+        self.api_key = (
+            api_key
+            or os.getenv("LLAMA_API_KEY")
+            or self._get_nested_config("external", "api_key")
+            or DEFAULT_API_KEY
+        )
+        self._model = (
+            model
+            or os.getenv("LLAMA_MODEL")
+            or self._get_nested_config("external", "model")
+            or ""
+        )
 
         # Try to start bundled server if native (will override self.base_url)
         if self._backend == "native":
@@ -96,6 +111,7 @@ class LLMVisionAdapter(LLMVisionProtocol):
     def _find_free_port() -> int:
         """Find a free localhost port."""
         import socket
+
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.bind(("127.0.0.1", 0))
             return s.getsockname()[1]
@@ -104,7 +120,10 @@ class LLMVisionAdapter(LLMVisionProtocol):
         """Find the bundled llama-server binary."""
         candidates = [
             Path(__file__).parent.parent.parent / "llama-server-rocm" / "llama-server",
-            Path(__file__).parent.parent.parent / "packages" / "llama-server-rocm" / "llama-server",
+            Path(__file__).parent.parent.parent
+            / "packages"
+            / "llama-server-rocm"
+            / "llama-server",
         ]
         for p in candidates:
             if p.exists():
@@ -132,11 +151,16 @@ class LLMVisionAdapter(LLMVisionProtocol):
 
         cmd = [
             str(server_path),
-            "-m", str(model),
-            "-c", str(ctx),
-            "-ngl", str(gpu),
-            "--host", "127.0.0.1",
-            "--port", str(self._bundled_port),
+            "-m",
+            str(model),
+            "-c",
+            str(ctx),
+            "-ngl",
+            str(gpu),
+            "--host",
+            "127.0.0.1",
+            "--port",
+            str(self._bundled_port),
         ]
         if mmproj and os.path.exists(str(mmproj)):
             cmd += ["--mmproj", str(mmproj)]
@@ -148,9 +172,13 @@ class LLMVisionAdapter(LLMVisionProtocol):
             # Wait for server to be ready
             for _ in range(30):
                 try:
-                    r = requests.get(f"http://127.0.0.1:{self._bundled_port}/health", timeout=2)
+                    r = requests.get(
+                        f"http://127.0.0.1:{self._bundled_port}/health", timeout=2
+                    )
                     if r.status_code == 200:
-                        logger.info(f"Bundled llama-server ready on port {self._bundled_port}")
+                        logger.info(
+                            f"Bundled llama-server ready on port {self._bundled_port}"
+                        )
                         self.base_url = f"http://127.0.0.1:{self._bundled_port}/v1"
                         return
                 except requests.ConnectionError:
@@ -159,7 +187,6 @@ class LLMVisionAdapter(LLMVisionProtocol):
             logger.warning("Bundled llama-server failed to become ready")
         except (OSError, RuntimeError, subprocess.SubprocessError) as e:
             logger.error(f"Failed to start bundled server: {e}")
-
 
     def _stop_bundled_server(self):
         """Stop the bundled llama-server subprocess."""
@@ -171,24 +198,27 @@ class LLMVisionAdapter(LLMVisionProtocol):
     def __del__(self):
         self._stop_bundled_server()
 
-
     @property
     def model(self) -> ModelName:
         if self._backend == "native":
             native_cfg = self._config.get("native")
             if not isinstance(native_cfg, dict):
                 native_cfg = {}
-            model_rel_path = str(native_cfg.get("model_path", "models/MiniCPM-V-4_6-Q8_0.gguf"))
+            model_rel_path = str(
+                native_cfg.get("model_path", "models/MiniCPM-V-4_6-Q8_0.gguf")
+            )
             return ModelName(value=os.path.basename(model_rel_path))
 
         if self._model:
             return ModelName(value=self._model)
         try:
             session = requests.Session()
-            session.headers.update({
-                "Authorization": f"Bearer {self.api_key}",
-                "Content-Type": "application/json",
-            })
+            session.headers.update(
+                {
+                    "Authorization": f"Bearer {self.api_key}",
+                    "Content-Type": "application/json",
+                }
+            )
             resp = session.get(f"{self.base_url}/models", timeout=10)
             session.close()
             resp.raise_for_status()
@@ -232,8 +262,12 @@ class LLMVisionAdapter(LLMVisionProtocol):
         if not isinstance(native_cfg, dict):
             native_cfg = {}
 
-        model_rel_path = str(native_cfg.get("model_path", "models/MiniCPM-V-4_6-Q8_0.gguf"))
-        mmproj_rel_path = str(native_cfg.get("mmproj_path", "models/mmproj-MiniCPM-V-4.6-F16.gguf"))
+        model_rel_path = str(
+            native_cfg.get("model_path", "models/MiniCPM-V-4_6-Q8_0.gguf")
+        )
+        mmproj_rel_path = str(
+            native_cfg.get("mmproj_path", "models/mmproj-MiniCPM-V-4.6-F16.gguf")
+        )
 
         model_path = project_root / model_rel_path
         mmproj_path = project_root / mmproj_rel_path
@@ -253,7 +287,9 @@ class LLMVisionAdapter(LLMVisionProtocol):
         n_threads = int(native_cfg.get("n_threads", 4))
         n_gpu_layers = int(native_cfg.get("n_gpu_layers", -1))
 
-        logger.info(f"Initializing native llama-cpp-python VLM. Model: {model_rel_path}, Projector: {mmproj_rel_path}")
+        logger.info(
+            f"Initializing native llama-cpp-python VLM. Model: {model_rel_path}, Projector: {mmproj_rel_path}"
+        )
 
         try:
             chat_handler = MiniCPMv26ChatHandler(clip_model_path=str(mmproj_path))
@@ -263,7 +299,7 @@ class LLMVisionAdapter(LLMVisionProtocol):
                 n_ctx=n_ctx,
                 n_threads=n_threads,
                 n_gpu_layers=n_gpu_layers,
-                verbose=False
+                verbose=False,
             )
             logger.info("Native llama-cpp-python VLM successfully initialized.")
         except Exception as e:
@@ -279,7 +315,9 @@ class LLMVisionAdapter(LLMVisionProtocol):
         b64 = base64.b64encode(data).decode("utf-8")
         return f"data:{mime};base64,{b64}"
 
-    def _analyze_via_http(self, image_path: str, prompt: str, timeout: int = 120) -> str:
+    def _analyze_via_http(
+        self, image_path: str, prompt: str, timeout: int = 120
+    ) -> str:
         """Send image + prompt via HTTP to an API-compatible server."""
         model = self.model.value
         image_url = self._encode_image(image_path)
@@ -301,10 +339,12 @@ class LLMVisionAdapter(LLMVisionProtocol):
 
         try:
             session = requests.Session()
-            session.headers.update({
-                "Authorization": f"Bearer {self.api_key}",
-                "Content-Type": "application/json",
-            })
+            session.headers.update(
+                {
+                    "Authorization": f"Bearer {self.api_key}",
+                    "Content-Type": "application/json",
+                }
+            )
             resp = session.post(
                 f"{self.base_url}/chat/completions",
                 data=json.dumps(payload),
@@ -317,7 +357,9 @@ class LLMVisionAdapter(LLMVisionProtocol):
             message = choice.get("message", {})
             content = str(message.get("content", ""))
             if not content:
-                logger.warning(f"Empty response from LLM. Full data: {json.dumps(data)[:500]}")
+                logger.warning(
+                    f"Empty response from LLM. Full data: {json.dumps(data)[:500]}"
+                )
             return content
         except requests.exceptions.ConnectionError as e:
             logger.error(f"Cannot connect to LLM at {self.base_url}: {e}")
@@ -359,23 +401,21 @@ class LLMVisionAdapter(LLMVisionProtocol):
             messages = [
                 {
                     "role": "system",
-                    "content": "You are an assistant who perfectly describes images and helps AI agents understand UI layouts."
+                    "content": "You are an assistant who perfectly describes images and helps AI agents understand UI layouts.",
                 },
                 {
                     "role": "user",
                     "content": [
                         {"type": "text", "text": prompt_str},
-                        {"type": "image_url", "image_url": {"url": image_url}}
-                    ]
-                }
+                        {"type": "image_url", "image_url": {"url": image_url}},
+                    ],
+                },
             ]
 
             logger.info("Running native VLM inference (in-process)...")
             try:
                 response = llm.create_chat_completion(
-                    messages=messages,
-                    temperature=0.4,
-                    max_tokens=1024
+                    messages=messages, temperature=0.4, max_tokens=1024
                 )
                 content = str(response["choices"][0]["message"]["content"])
                 return content
@@ -384,4 +424,3 @@ class LLMVisionAdapter(LLMVisionProtocol):
                 raise RuntimeError(f"Native VLM inference failed: {e}") from e
         else:
             return self._analyze_via_http(path_str, prompt_str, timeout)
-

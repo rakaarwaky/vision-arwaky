@@ -25,6 +25,7 @@ def load_config() -> dict:
         return {}
     try:
         import yaml
+
         with open(p) as f:
             return yaml.safe_load(f) or {}
     except (OSError, yaml.YAMLError):
@@ -34,6 +35,7 @@ def load_config() -> dict:
 def save_config(data: dict) -> Path:
     """Persist config dict to the active (or default) config path."""
     import yaml
+
     p = find_config()
     if not p:
         p = CONFIG_PATHS[0]

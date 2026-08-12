@@ -51,7 +51,9 @@ class ImageOrchestrator(RegistryServiceAggregate):
             prompt_val = kwargs.get("prompt")
             prompt = AnalysisPrompt(value=prompt_val)
             return CommandOutput(
-                value=json.dumps(cap.analyze_screenshot(img, prompt).model_dump(), indent=2)
+                value=json.dumps(
+                    cap.analyze_screenshot(img, prompt).model_dump(), indent=2
+                )
             )
         elif command.value == "ocr":
             img = FilePath(value=kwargs["image"])
@@ -61,7 +63,9 @@ class ImageOrchestrator(RegistryServiceAggregate):
         elif command.value == "elements":
             img = FilePath(value=kwargs["image"])
             return CommandOutput(
-                value=json.dumps([e.model_dump() for e in cap.find_elements(img)], indent=2)
+                value=json.dumps(
+                    [e.model_dump() for e in cap.find_elements(img)], indent=2
+                )
             )
         elif command.value == "compare":
             img1 = FilePath(value=kwargs["image1"])

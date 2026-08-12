@@ -1,0 +1,11 @@
+bot:
+  enabled: true
+  comment_mode: on_signal
+  ignore_paths:   # mirror .codacy.yaml
+    - "tests/**"
+    - "scripts/**"
+    - "*.md"
+  health_gate:
+    mode: advisory
+    min_new_file_score: 7.0
+    block_on_introduced: false

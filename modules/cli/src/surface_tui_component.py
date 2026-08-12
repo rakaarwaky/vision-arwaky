@@ -45,6 +45,7 @@ def get_dispatcher() -> RegistryServiceAggregate:
 
 # ── Screens ───────────────────────────────────────────────
 
+
 class MainMenu(Screen):
     BINDINGS: ClassVar[list[BindingType]] = [
         Binding("1", "go_config", "Configuration"),
@@ -57,7 +58,9 @@ class MainMenu(Screen):
     def compose(self) -> ComposeResult:
         yield Header()
         yield Vertical(
-            Static("\n[bold yellow]VISION ARWAKY[/] — Configuration Manager\n", id="title"),
+            Static(
+                "\n[bold yellow]VISION ARWAKY[/] — Configuration Manager\n", id="title"
+            ),
             Button("⚙  Configuration", id="btn_config", variant="primary"),
             Button("📦 Model Manager", id="btn_models", variant="default"),
             Button("📊 System Status", id="btn_status", variant="default"),
@@ -108,17 +111,33 @@ class ConfigScreen(Screen):
         yield ScrollableContainer(
             Static("[bold yellow]Configuration[/]\n", id="title"),
             Label("Backend:"),
-            Select([("native", "native"), ("external", "external")], value=backend, id="backend"),
+            Select(
+                [("native", "native"), ("external", "external")],
+                value=backend,
+                id="backend",
+            ),
             Label("Native - Model Path:"),
-            Input(str(native.get("model_path", "")), id="model_path", placeholder="/path/to/model.gguf"),
+            Input(
+                str(native.get("model_path", "")),
+                id="model_path",
+                placeholder="/path/to/model.gguf",
+            ),
             Label("Native - MMProj:"),
-            Input(str(native.get("mmproj_path", "")), id="mmproj", placeholder="/path/to/mmproj.gguf"),
+            Input(
+                str(native.get("mmproj_path", "")),
+                id="mmproj",
+                placeholder="/path/to/mmproj.gguf",
+            ),
             Label("GPU Layers (-1=all, 0=CPU):"),
             Input(str(native.get("n_gpu_layers", -1)), id="gpu_layers"),
             Label("Threads:"),
             Input(str(native.get("n_threads", 4)), id="threads"),
             Label("External URL:"),
-            Input(str(ext.get("url", "")), id="ext_url", placeholder="http://localhost:8080/v1"),
+            Input(
+                str(ext.get("url", "")),
+                id="ext_url",
+                placeholder="http://localhost:8080/v1",
+            ),
             Label("External Model:"),
             Input(str(ext.get("model", "")), id="ext_model"),
             Horizontal(
@@ -168,7 +187,9 @@ class ModelScreen(Screen):
         yield Vertical(
             Static("[bold yellow]Model Manager[/]\n", id="title"),
             Static("Scanning for models...", id="model_list"),
-            Input(placeholder="Browse directory (e.g. /home/raka/models)", id="browse_dir"),
+            Input(
+                placeholder="Browse directory (e.g. /home/raka/models)", id="browse_dir"
+            ),
             Horizontal(
                 Button("🔍 Scan", id="scan", variant="primary"),
                 Button("⬅ Back", id="back"),
@@ -191,7 +212,9 @@ class ModelScreen(Screen):
 
         container = self.query_one("#model_list", Static)
         if not models:
-            container.update("[yellow]No models found.[/]\nClick [bold]Browse[/] or enter a path.")
+            container.update(
+                "[yellow]No models found.[/]\nClick [bold]Browse[/] or enter a path."
+            )
             return
 
         lines = [f"Found [bold]{len(models)}[/] model(s):\n"]
@@ -219,7 +242,10 @@ class ModelScreen(Screen):
 
 
 class StatusScreen(Screen):
-    BINDINGS: ClassVar[list[BindingType]] = [Binding("escape", "go_back", "Back"), Binding("r", "refresh", "Refresh")]
+    BINDINGS: ClassVar[list[BindingType]] = [
+        Binding("escape", "go_back", "Back"),
+        Binding("r", "refresh", "Refresh"),
+    ]
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -269,8 +295,10 @@ class StatusScreen(Screen):
 
             caps = {
                 "image_analysis": deps_status.get("opencv") == "OK",
-                "ocr": deps_status.get("pytesseract") == "OK" and deps_status.get("pillow") == "OK",
-                "video_processing": deps_status.get("opencv") == "OK" and deps_status.get("ffmpeg") == "OK",
+                "ocr": deps_status.get("pytesseract") == "OK"
+                and deps_status.get("pillow") == "OK",
+                "video_processing": deps_status.get("opencv") == "OK"
+                and deps_status.get("ffmpeg") == "OK",
             }
 
             lines = [
@@ -301,13 +329,19 @@ class StatusScreen(Screen):
 
 
 class TestScreen(Screen):
-    BINDINGS: ClassVar[list[BindingType]] = [Binding("escape", "go_back", "Back"), Binding("r", "run_test", "Run Test")]
+    BINDINGS: ClassVar[list[BindingType]] = [
+        Binding("escape", "go_back", "Back"),
+        Binding("r", "run_test", "Run Test"),
+    ]
 
     def compose(self) -> ComposeResult:
         yield Header()
         yield ScrollableContainer(
             Static("[bold yellow]Quick Test[/]\n", id="title"),
-            Static("Press [bold]R[/] or click [bold]Run Test[/] to execute.", id="test_output"),
+            Static(
+                "Press [bold]R[/] or click [bold]Run Test[/] to execute.",
+                id="test_output",
+            ),
             Horizontal(
                 Button("▶ Run Test (R)", id="run", variant="primary"),
                 Button("⬅ Back", id="back"),
@@ -334,6 +368,7 @@ class TestScreen(Screen):
         fd, path = tempfile.mkstemp(suffix=".png")
         os.close(fd)
         import cv2
+
         img = numpy.zeros((200, 200, 3), dtype=numpy.uint8)
         cv2.rectangle(img, (30, 30), (170, 170), (255, 255, 255), -1)
         cv2.putText(img, "TEST", (50, 120), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 3)
@@ -343,9 +378,9 @@ class TestScreen(Screen):
         # 2. UI elements
         try:
             elements = json.loads(
-                get_dispatcher().execute_in_process(
-                    CommandName(value="elements"), {"image": path}
-                ).value
+                get_dispatcher()
+                .execute_in_process(CommandName(value="elements"), {"image": path})
+                .value
             )
             results.append(("UI element detection", isinstance(elements, list)))
         except _UI_EXCEPTIONS:
@@ -378,7 +413,9 @@ class TestScreen(Screen):
         for name, ok in results:
             icon = "✅" if ok else "❌"
             lines.append(f"  {icon} {name}")
-        lines.append(f"\n[bold]{'All OK!' if all(r[1] for r in results) else 'Some checks failed'}[/]")
+        lines.append(
+            f"\n[bold]{'All OK!' if all(r[1] for r in results) else 'Some checks failed'}[/]"
+        )
 
         output.update("\n".join(lines))
 
@@ -390,6 +427,7 @@ class TestScreen(Screen):
 
 
 # ── App ────────────────────────────────────────────────────
+
 
 class VisionTUI(App):
     TITLE = "Vision Arwaky Config"

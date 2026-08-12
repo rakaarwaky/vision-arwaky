@@ -1,5 +1,5 @@
-
 """Advanced tests for image processing — orchestrator, LLM adapter, tesseract."""
+
 import json
 import os
 import tempfile
@@ -81,6 +81,7 @@ class TestImageOrchestrator:
         path = save_test_image(img)
         try:
             from modules.shared.src.taxonomy_vision_models_vo import FilePath
+
             elements = proc.find_elements(FilePath(value=path))
             assert isinstance(elements, list)
         finally:
@@ -168,6 +169,7 @@ class TestImageOrchestrator:
 class TestLLMVisionAdapter:
     def test_adapter_properties(self):
         from modules.image.src.capabilities_llm_vision_adapter import LLMVisionAdapter
+
         adapter = LLMVisionAdapter()
         assert adapter.config is not None
         assert isinstance(adapter.backend.value, str)
@@ -175,6 +177,7 @@ class TestLLMVisionAdapter:
 
     def test_adapter_find_free_port(self):
         from modules.image.src.capabilities_llm_vision_adapter import LLMVisionAdapter
+
         port = LLMVisionAdapter._find_free_port()
         assert isinstance(port, int)
         assert port > 0
@@ -182,6 +185,7 @@ class TestLLMVisionAdapter:
 
     def test_adapter_bundled_path(self):
         from modules.image.src.capabilities_llm_vision_adapter import LLMVisionAdapter
+
         path = LLMVisionAdapter._get_bundled_server_path(LLMVisionAdapter)
         assert path is None or path.exists()
 
@@ -192,6 +196,9 @@ class TestTesseractAdapter:
             TesseractOCRAdapter,
         )
         from modules.shared.src.taxonomy_vision_models_vo import FilePath, LanguageCode
+
         adapter = TesseractOCRAdapter()
         with pytest.raises((RuntimeError, FileNotFoundError)):
-            adapter.extract_text(FilePath(value="/nonexistent.png"), LanguageCode(value="eng"))
+            adapter.extract_text(
+                FilePath(value="/nonexistent.png"), LanguageCode(value="eng")
+            )

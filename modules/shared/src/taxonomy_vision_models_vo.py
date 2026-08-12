@@ -1,4 +1,3 @@
-
 from pydantic import BaseModel, Field
 
 
@@ -64,9 +63,15 @@ class VisionAnalysis(BaseModel):
 
     source: str = Field(..., description="Analysis source: 'llm' or 'opencv'")
     text: str = Field(..., description="Analytical description or OCR text")
-    elements: list[Detection] = Field(default_factory=list, description="Detected UI elements (opencv only)")
-    model: str | None = Field(default=None, description="LLM model used when source='llm'")
-    error: str | None = Field(default=None, description="Error message if analysis failed")
+    elements: list[Detection] = Field(
+        default_factory=list, description="Detected UI elements (opencv only)"
+    )
+    model: str | None = Field(
+        default=None, description="LLM model used when source='llm'"
+    )
+    error: str | None = Field(
+        default=None, description="Error message if analysis failed"
+    )
 
 
 class FilePath(BaseModel):

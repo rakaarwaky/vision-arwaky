@@ -1,5 +1,5 @@
-
 """Advanced tests for video processing."""
+
 import json
 import os
 import tempfile
@@ -64,7 +64,7 @@ class TestVideoProcessingProcessor:
         from modules.video.src.capabilities_video_processor import (
             VideoProcessingProcessor,
         )
-        
+
         proc = VideoProcessingProcessor(OpenCVImageAdapter(), FFmpegVideoAdapter())
         path = create_test_video()
         try:
@@ -83,7 +83,7 @@ class TestVideoProcessingProcessor:
         from modules.video.src.capabilities_video_processor import (
             VideoProcessingProcessor,
         )
-        
+
         proc = VideoProcessingProcessor(OpenCVImageAdapter(), FFmpegVideoAdapter())
         path = create_test_video()
         try:
@@ -100,7 +100,7 @@ class TestVideoProcessingProcessor:
         from modules.video.src.capabilities_video_processor import (
             VideoProcessingProcessor,
         )
-        
+
         proc = VideoProcessingProcessor(OpenCVImageAdapter(), FFmpegVideoAdapter())
         # Non-existent file - corrupted or exception
         try:
@@ -120,11 +120,13 @@ class TestVideoAnalysis:
             SceneThreshold,
         )
         from modules.video.src.capabilities_video_analyzer import VideoAnalysisAnalyzer
-        
+
         proc = VideoAnalysisAnalyzer(OpenCVImageAdapter())
         path = create_test_video(30)
         try:
-            scenes = proc.detect_scenes(FilePath(value=path), SceneThreshold(value=30.0))
+            scenes = proc.detect_scenes(
+                FilePath(value=path), SceneThreshold(value=30.0)
+            )
             assert isinstance(scenes, list)
         finally:
             os.unlink(path)
@@ -135,7 +137,7 @@ class TestVideoAnalysis:
         )
         from modules.shared.src.taxonomy_vision_models_vo import FilePath, MinArea
         from modules.video.src.capabilities_video_analyzer import VideoAnalysisAnalyzer
-        
+
         proc = VideoAnalysisAnalyzer(OpenCVImageAdapter())
         path = create_test_video(30)
         try:
@@ -199,5 +201,6 @@ class TestObjectTracking:
             OpenCVImageAdapter,
         )
         from modules.video.src.capabilities_object_tracker import ObjectTrackingTracker
+
         tracker = ObjectTrackingTracker(OpenCVImageAdapter())
         assert tracker is not None

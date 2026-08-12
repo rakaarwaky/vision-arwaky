@@ -1,4 +1,3 @@
-
 from modules.shared.src.contract_ffmpeg_video_protocol import FFmpegVideoProtocol
 from modules.shared.src.contract_opencv_image_protocol import OpenCVImageProtocol
 from modules.shared.src.contract_video_processing_protocol import (
@@ -16,22 +15,34 @@ from modules.shared.src.taxonomy_vision_models_vo import (
 class VideoProcessingProcessor(VideoProcessingProtocol):
     """Capability for extracting frames, converting video formats, and generating GIFs."""
 
-    def __init__(self, opencv_port: OpenCVImageProtocol, ffmpeg_port: FFmpegVideoProtocol):
+    def __init__(
+        self, opencv_port: OpenCVImageProtocol, ffmpeg_port: FFmpegVideoProtocol
+    ):
         _ = VideoTimeline
         self._opencv = opencv_port
         self._ffmpeg = ffmpeg_port
 
-    async def extract_frames(self, video_path: FilePath, interval: IntervalSeconds) -> list[FilePath]:
+    async def extract_frames(
+        self, video_path: FilePath, interval: IntervalSeconds
+    ) -> list[FilePath]:
         """Extract frames from video at specific interval."""
         import glob
         import os
+
         output_pattern = f"{video_path.value}_frame_%04d.jpg"
         # Remove stale frames first
         for stale in glob.glob(output_pattern.replace("%04d", "*")):
             os.remove(stale)
 
         # ffmpeg -i input -vf fps=1/interval output_%04d.jpg
-        args = ["-i", video_path.value, "-vf", f"fps=1/{interval.value}", "-y", output_pattern]
+        args = [
+            "-i",
+            video_path.value,
+            "-vf",
+            f"fps=1/{interval.value}",
+            "-y",
+            output_pattern,
+        ]
         await self._ffmpeg.run(args)
         # Return ACTUAL files that exist on disk — never mock
         extracted = sorted(glob.glob(output_pattern.replace("%04d", "*")))

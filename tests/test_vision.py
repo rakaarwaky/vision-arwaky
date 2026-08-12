@@ -18,6 +18,7 @@ from modules.shared.src.taxonomy_vision_models_vo import (
 
 # ── Helpers ──────────────────────────────────────────────────
 
+
 def build_image_capabilities():
     """Build image processor + orchestrator via DI."""
     from modules.image.src.capabilities_image_processing_processor import (
@@ -59,6 +60,7 @@ def build_video_capabilities():
     video_analysis = VideoAnalysisAnalyzer(opencv)
     return video_proc, video_analysis
 
+
 def create_test_image(width=100, height=100, color=(255, 0, 0)):
     """Create a test image."""
     img = np.zeros((height, width, 3), dtype=np.uint8)
@@ -95,6 +97,7 @@ def create_test_video(num_frames=30, width=100, height=100):
 
 # ── Image Tests ──────────────────────────────────────────────
 
+
 class TestImageProcessing:
     def test_find_elements(self):
         _, cap = build_image_capabilities()
@@ -114,7 +117,9 @@ class TestImageProcessing:
         path1 = save_test_image(img)
         path2 = save_test_image(img)
         try:
-            result = cap.compare_screenshots(FilePath(value=path1), FilePath(value=path2))
+            result = cap.compare_screenshots(
+                FilePath(value=path1), FilePath(value=path2)
+            )
             assert result.identical is True
         finally:
             os.unlink(path1)
@@ -127,7 +132,9 @@ class TestImageProcessing:
         path1 = save_test_image(img1)
         path2 = save_test_image(img2)
         try:
-            result = cap.compare_screenshots(FilePath(value=path1), FilePath(value=path2))
+            result = cap.compare_screenshots(
+                FilePath(value=path1), FilePath(value=path2)
+            )
             assert result.identical is False
             assert len(result.differences) > 0
         finally:
@@ -148,6 +155,7 @@ class TestImageProcessing:
 
 
 # ── Video Tests ──────────────────────────────────────────────
+
 
 class TestVideoProcessing:
     def test_get_info(self):
@@ -192,6 +200,7 @@ class TestVideoAnalysis:
 
 # ── MCP Tool Tests ───────────────────────────────────────────
 
+
 class TestMCPTools:
     def test_list_commands(self):
         result = vision_list_commands()
@@ -210,4 +219,3 @@ class TestMCPTools:
         data = json.loads(result)
         assert "dependencies" in data
         assert "capabilities" in data
-

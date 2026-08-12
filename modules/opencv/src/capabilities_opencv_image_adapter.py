@@ -41,7 +41,9 @@ class OpenCVImageAdapter(OpenCVImageProtocol):
     def to_grayscale(self, image: numpy.ndarray) -> numpy.ndarray:
         return _cv2.cvtColor(image, _cv2.COLOR_BGR2GRAY)
 
-    def detect_edges(self, image: numpy.ndarray, t1: int = 50, t2: int = 150) -> numpy.ndarray:
+    def detect_edges(
+        self, image: numpy.ndarray, t1: int = 50, t2: int = 150
+    ) -> numpy.ndarray:
         return _cv2.Canny(image, t1, t2)
 
     def find_contours(self, edges: numpy.ndarray) -> list:
@@ -60,7 +62,9 @@ class OpenCVImageAdapter(OpenCVImageProtocol):
     def abs_diff(self, img1: numpy.ndarray, img2: numpy.ndarray) -> numpy.ndarray:
         return _cv2.absdiff(img1, img2)
 
-    def calc_optical_flow(self, prev: numpy.ndarray, next_img: numpy.ndarray) -> numpy.ndarray:
+    def calc_optical_flow(
+        self, prev: numpy.ndarray, next_img: numpy.ndarray
+    ) -> numpy.ndarray:
         flow: numpy.ndarray | None = None
         result = _cv2.calcOpticalFlowFarneback(
             prev, next_img, flow, 0.5, 3, 15, 3, 5, 1.2, 0
@@ -92,5 +96,6 @@ class OpenCVImageAdapter(OpenCVImageProtocol):
         except (AttributeError, RuntimeError, TypeError, ValueError) as e:
             logger.warning(f"pHash computation failed, using basic hash: {e}")
             return str(hash(image.tobytes()))
+
 
 # Mark numpy usage for static AST scanners

@@ -25,7 +25,9 @@ class VideoAnalysisAnalyzer(VideoAnalysisProtocol):
     def __init__(self, opencv_port: OpenCVImageProtocol):
         self._opencv = opencv_port
 
-    def detect_scenes(self, video_path: FilePath, threshold: SceneThreshold) -> list[SceneChange]:
+    def detect_scenes(
+        self, video_path: FilePath, threshold: SceneThreshold
+    ) -> list[SceneChange]:
         """Detect scene changes by comparing consecutive frame histograms."""
         cap = self._opencv.get_video_capture(video_path.value)
         if not cap.isOpened():
@@ -52,10 +54,12 @@ class VideoAnalysisAnalyzer(VideoAnalysisProtocol):
                 # Low correlation = scene change
                 if score < (1.0 - thresh_val / 100.0):
                     timestamp = frame_idx / fps if fps > 0 else frame_idx
-                    scenes.append(SceneChange(
-                        timestamp=round(timestamp, 2),
-                        score=round(1.0 - score, 4),
-                    ))
+                    scenes.append(
+                        SceneChange(
+                            timestamp=round(timestamp, 2),
+                            score=round(1.0 - score, 4),
+                        )
+                    )
 
             prev_hist = hist
             frame_idx += 1
@@ -63,7 +67,9 @@ class VideoAnalysisAnalyzer(VideoAnalysisProtocol):
         cap.release()
         return scenes
 
-    def detect_motion(self, video_path: FilePath, min_area: MinArea) -> list[MotionEvent]:
+    def detect_motion(
+        self, video_path: FilePath, min_area: MinArea
+    ) -> list[MotionEvent]:
         """Detect significant motion events using frame differencing."""
         cap = self._opencv.get_video_capture(video_path.value)
         if not cap.isOpened():
@@ -86,11 +92,13 @@ class VideoAnalysisAnalyzer(VideoAnalysisProtocol):
             if prev_gray is not None:
                 delta = cv2.absdiff(prev_gray, gray)
                 thresh = cv2.threshold(delta, 25, 255, cv2.THRESH_BINARY)[1]
-                
+
                 # Use standard 3x3 structuring element kernel instead of None
                 kernel = numpy.ones((3, 3), dtype=numpy.uint8)
                 thresh = cv2.dilate(thresh, kernel, iterations=2)
-                contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+                contours, _ = cv2.findContours(
+                    thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+                )
 
                 for cnt in contours:
                     area = cv2.contourArea(cnt)
@@ -109,17 +117,20 @@ class VideoAnalysisAnalyzer(VideoAnalysisProtocol):
                         cy = int(moments["m01"] / moments["m00"]) - y - h // 2
                         direction = round(numpy.degrees(numpy.arctan2(cy, cx)) % 360, 1)
 
-                    events.append(MotionEvent(
-                        timestamp=round(timestamp, 2),
-                        magnitude=round(magnitude, 6),
-                        direction=direction,
-                        region=BoundingBox(x=x, y=y, width=w, height=h),
-                    ))
+                    events.append(
+                        MotionEvent(
+                            timestamp=round(timestamp, 2),
+                            magnitude=round(magnitude, 6),
+                            direction=direction,
+                            region=BoundingBox(x=x, y=y, width=w, height=h),
+                        )
+                    )
 
             prev_gray = gray
             frame_idx += 1
 
         cap.release()
         return events
+
 
 # Mark numpy usage for static AST scanners

@@ -38,9 +38,7 @@ def get_dispatcher() -> RegistryServiceAggregate:
 
 def _execute(command: str, kwargs: dict[str, Any]) -> str:
     """Execute a command through the injected aggregate facade."""
-    return get_dispatcher().execute_in_process(
-        CommandName(value=command), kwargs
-    ).value
+    return get_dispatcher().execute_in_process(CommandName(value=command), kwargs).value
 
 
 def _extract_middle_frame(file_path: str) -> str | None:
@@ -77,13 +75,18 @@ def cmd_analyze(args) -> int:
         thumb = _extract_middle_frame(file_path)
         if thumb is not None:
             try:
-                result = _execute("analyze", {"image": thumb, "prompt": prompt.value if prompt else None})
+                result = _execute(
+                    "analyze",
+                    {"image": thumb, "prompt": prompt.value if prompt else None},
+                )
                 print(result)
                 return 0
             finally:
                 os.unlink(thumb)
 
-    result = _execute("analyze", {"image": file_path, "prompt": prompt.value if prompt else None})
+    result = _execute(
+        "analyze", {"image": file_path, "prompt": prompt.value if prompt else None}
+    )
     print(result)
     return 0
 
@@ -115,7 +118,9 @@ def cmd_video_info(args) -> int:
 
 def cmd_extract_frames(args) -> int:
     interval = IntervalSeconds(value=float(args.interval))
-    result = _execute("extract-frames", {"video": args.video, "interval": interval.value})
+    result = _execute(
+        "extract-frames", {"video": args.video, "interval": interval.value}
+    )
     print(result)
     return 0
 
@@ -149,14 +154,18 @@ def cmd_create_gif(args) -> int:
 
 def cmd_detect_scenes(args) -> int:
     threshold = SceneThreshold(value=float(args.threshold))
-    result = _execute("detect-scenes", {"video": args.video, "threshold": threshold.value})
+    result = _execute(
+        "detect-scenes", {"video": args.video, "threshold": threshold.value}
+    )
     print(result)
     return 0
 
 
 def cmd_detect_motion(args) -> int:
     min_area = MinArea(value=int(args.min_area))
-    result = _execute("detect-motion", {"video": args.video, "min_area": min_area.value})
+    result = _execute(
+        "detect-motion", {"video": args.video, "min_area": min_area.value}
+    )
     print(result)
     return 0
 
@@ -220,18 +229,33 @@ def cmd_test(args) -> int:
         print("=" * 60)
         try:
             analyze_cmd = [
-                sys.executable, "-m", "modules.root_cli_entry", "analyze",
-                "--image", test_image,
-                "--prompt", "Describe this image in detail. What do you see?"
+                sys.executable,
+                "-m",
+                "modules.root_cli_entry",
+                "analyze",
+                "--image",
+                test_image,
+                "--prompt",
+                "Describe this image in detail. What do you see?",
             ]
-            vision_result = subprocess.run(analyze_cmd, cwd=base, capture_output=True, text=True, timeout=60, check=False)
+            vision_result = subprocess.run(
+                analyze_cmd,
+                cwd=base,
+                capture_output=True,
+                text=True,
+                timeout=60,
+                check=False,
+            )
             if vision_result.returncode == 0:
                 print(vision_result.stdout)
             elif vision_result.stderr:
                 # Fallback langsung melalui dispatcher
                 result_obj = _execute(
                     "analyze",
-                    {"image": test_image, "prompt": "Describe this image in detail. What do you see?"},
+                    {
+                        "image": test_image,
+                        "prompt": "Describe this image in detail. What do you see?",
+                    },
                 )
                 print(result_obj)
         except (OSError, RuntimeError, ValueError) as e:
@@ -249,33 +273,45 @@ def cmd_test(args) -> int:
 
             vproc_info = json.loads(_execute("video-info", {"video": test_video}))
             fps = vproc_info.get("fps") or 30
-            print(f"  Metadata: {vproc_info.get('width')}x{vproc_info.get('height')}, {fps:.1f} FPS, {vproc_info.get('frame_count')} frames")
+            print(
+                f"  Metadata: {vproc_info.get('width')}x{vproc_info.get('height')}, {fps:.1f} FPS, {vproc_info.get('frame_count')} frames"
+            )
             print()
 
             # ── Pipeline: Scene + Motion + Uniform ──
             target_frame_indices: set[int] = set()
 
             # 1. Scene detection — ambil frame pas scene change
-            scenes = json.loads(_execute("detect-scenes", {"video": test_video, "threshold": 20.0}))
+            scenes = json.loads(
+                _execute("detect-scenes", {"video": test_video, "threshold": 20.0})
+            )
             for s in scenes:
                 idx = int(s["timestamp"] * fps)
                 if 0 <= idx < vproc_info.get("frame_count", 0):
                     target_frame_indices.add(idx)
-            print(f"  Scene changes: {len(scenes)} → {len(target_frame_indices)} frame(s)")
+            print(
+                f"  Scene changes: {len(scenes)} → {len(target_frame_indices)} frame(s)"
+            )
 
             # 2. Motion detection — ambil frame dengan motion tertinggi
-            events = json.loads(_execute("detect-motion", {"video": test_video, "min_area": 500}))
+            events = json.loads(
+                _execute("detect-motion", {"video": test_video, "min_area": 500})
+            )
             events.sort(key=lambda ev: ev["magnitude"], reverse=True)
             for ev in events[:5]:
                 idx = int(ev["timestamp"] * fps)
                 if 0 <= idx < vproc_info.get("frame_count", 0):
                     target_frame_indices.add(idx)
-            print(f"  Motion events: top-{min(5, len(events))} → {len(target_frame_indices)} frame(s)")
+            print(
+                f"  Motion events: top-{min(5, len(events))} → {len(target_frame_indices)} frame(s)"
+            )
 
             # 3. Uniform sampling — baseline tiap 30 frame
             for idx in range(0, int(vproc_info.get("frame_count", 0)), 30):
                 target_frame_indices.add(idx)
-            print(f"  Uniform (every 30 frames): {len(target_frame_indices)} total unique frames")
+            print(
+                f"  Uniform (every 30 frames): {len(target_frame_indices)} total unique frames"
+            )
 
             # ── Extract selected frames ──
             cap = cv2.VideoCapture(test_video)
@@ -293,7 +329,9 @@ def cmd_test(args) -> int:
             print(f"  Extracted {len(extracted)} unique key frames")
 
             # Check corruption
-            corrupted = json.loads(_execute("check-corruption", {"video": test_video}))["corrupted"]
+            corrupted = json.loads(_execute("check-corruption", {"video": test_video}))[
+                "corrupted"
+            ]
             print(f"  Corrupted: {corrupted}")
 
             # ── Analyze with VLM ──
@@ -318,8 +356,12 @@ def cmd_test(args) -> int:
                 frame_analyses.append(frame_data)
 
                 # Print per-frame
-                print(f"\n  🎬 Frame {i+1}/{len(extracted)} @ {timestamp}s:")
-                text = frame_data["description"][:300] + "..." if len(frame_data["description"]) > 300 else frame_data["description"]
+                print(f"\n  🎬 Frame {i + 1}/{len(extracted)} @ {timestamp}s:")
+                text = (
+                    frame_data["description"][:300] + "..."
+                    if len(frame_data["description"]) > 300
+                    else frame_data["description"]
+                )
                 print(f"     {text}")
 
                 try:
@@ -336,9 +378,19 @@ def cmd_test(args) -> int:
             summary_prompt = f"Based on these frame-by-frame descriptions, write a brief video summary (3-5 sentences) covering what happens, the setting, people involved, and key actions:\n\n{all_descriptions}"
             try:
                 summary_result = json.loads(
-                    _execute("analyze", {"image": os.path.join(fixtures, "test.jpeg"), "prompt": summary_prompt})
+                    _execute(
+                        "analyze",
+                        {
+                            "image": os.path.join(fixtures, "test.jpeg"),
+                            "prompt": summary_prompt,
+                        },
+                    )
                 )
-                video_summary = summary_result.get("text") if summary_result.get("source") == "llm" else "Summary unavailable"
+                video_summary = (
+                    summary_result.get("text")
+                    if summary_result.get("source") == "llm"
+                    else "Summary unavailable"
+                )
             except (OSError, RuntimeError, ValueError):
                 video_summary = "Summary unavailable"
 
@@ -349,7 +401,9 @@ def cmd_test(args) -> int:
                     "resolution": f"{vproc_info.get('width')}x{vproc_info.get('height')}",
                     "fps": round(fps, 1),
                     "total_frames": vproc_info.get("frame_count"),
-                    "duration_s": round(vproc_info.get("frame_count", 0) / fps, 1) if fps else 0,
+                    "duration_s": round(vproc_info.get("frame_count", 0) / fps, 1)
+                    if fps
+                    else 0,
                     "corrupted": corrupted,
                 },
                 "sampling": {
