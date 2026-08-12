@@ -138,7 +138,9 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install lint-arwaky-cli
-        run: cargo install lint-arwaky --locked
+        run: |
+          cargo install --git https://github.com/rakaarwaky/lint-arwaky \
+            --tag v2.0.0 --bin lint-arwaky-cli --locked
 
       - name: Install Python deps for import scan
         run: |
@@ -155,8 +157,8 @@ jobs:
 
       - name: Run self-lint (must be 0 violations)
         run: |
-          output=$(lint-arwaky-cli scan . 2>&1) || { echo "$output"; exit 1; }
+          output=$(lint-arwaky-cli scan . 2>&1) || true
           echo "$output" | tail -5
-          violations=$(echo "$output" | grep -oP 'Total:\s*\K\d+' || echo "0")
+          violations=$(echo "$output" | grep -oP 'Total:\s*\K\d+') || violations="PARSE_FAILURE"
           echo "Violations: ${violations}"
           [ "${violations}" = "0" ]

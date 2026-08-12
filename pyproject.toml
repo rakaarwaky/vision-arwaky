@@ -42,3 +42,9 @@ no_implicit_optional = true
 [[tool.mypy.overrides]]
 module = ["cv2", "mcp.*", "fastmcp.*", "llama_cpp.*", "pytesseract", "yaml", "requests", "PIL"]
 ignore_missing_imports = true
+
+# These third-party packages ship stubs that change signature between
+# releases; do not let their churn block CI for our own code.
+[[tool.mypy.overrides]]
+module = ["cv2", "llama_cpp.*"]
+ignore_errors = true

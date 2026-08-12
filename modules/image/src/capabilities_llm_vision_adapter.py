@@ -398,7 +398,7 @@ class LLMVisionAdapter(LLMVisionProtocol):
 
             image_url = self._encode_image(path_str)
 
-            messages = [
+            messages: list[dict[str, object]] = [
                 {
                     "role": "system",
                     "content": "You are an assistant who perfectly describes images and helps AI agents understand UI layouts.",
@@ -417,6 +417,18 @@ class LLMVisionAdapter(LLMVisionProtocol):
                 response = llm.create_chat_completion(
                     messages=messages, temperature=0.4, max_tokens=1024
                 )
+                if not isinstance(response, dict):
+                    # Streaming response — collect into a single message.
+                    content = ""
+                    for chunk in response:
+                        delta = (
+                            chunk.get("choices", [{}])[0]
+                            .get("delta", {})
+                            .get("content")
+                        )
+                        if delta:
+                            content += str(delta)
+                    return content
                 content = str(response["choices"][0]["message"]["content"])
                 return content
             except Exception as e:
