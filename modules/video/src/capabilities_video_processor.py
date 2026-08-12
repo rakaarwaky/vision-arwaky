@@ -8,7 +8,6 @@ from modules.shared.src.taxonomy_vision_models_vo import (
     IntervalSeconds,
     TimeSegment,
     VideoInfo,
-    VideoTimeline,
 )
 
 
@@ -18,7 +17,6 @@ class VideoProcessingProcessor(VideoProcessingProtocol):
     def __init__(
         self, opencv_port: OpenCVImageProtocol, ffmpeg_port: FFmpegVideoProtocol
     ):
-        _ = VideoTimeline
         self._opencv = opencv_port
         self._ffmpeg = ffmpeg_port
 

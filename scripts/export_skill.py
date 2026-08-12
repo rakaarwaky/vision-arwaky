@@ -27,11 +27,14 @@ SAFE_VERSION_CHARS = re.compile(r"[^0-9A-Za-z.\-]")
 
 def resolve_project_root() -> tuple[Path, Path]:
     """Return (project_root, skills_dir). Exit on missing .agents/skills/."""
-    project_root = Path(__file__).resolve().parent.parent.parent
+    project_root = Path(__file__).resolve().parent.parent
     skills_dir = project_root / ".agents" / "skills"
 
     if not skills_dir.exists():
-        print(f"Error: '.agents/skills' directory not found at {skills_dir}", file=sys.stderr)
+        print(
+            f"Error: '.agents/skills' directory not found at {skills_dir}",
+            file=sys.stderr,
+        )
         sys.exit(1)
     return project_root, skills_dir
 
@@ -137,16 +140,19 @@ def parse_args() -> argparse.Namespace:
         description="Export Python skill directories into a consolidated Markdown file automatically."
     )
     parser.add_argument(
-        "--skill", "-s",
+        "--skill",
+        "-s",
         help="Export a specific skill name. Omit to automatically export all Python skills.",
     )
     parser.add_argument(
-        "--lang", "-l",
+        "--lang",
+        "-l",
         default="python",
         help="Filter skills by language ('python', 'rust', 'typescript', 'all'). Default: python.",
     )
     parser.add_argument(
-        "--output", "-o",
+        "--output",
+        "-o",
         help="Output file path (default: .agents/skills/exports/python_skills_pack.md).",
     )
     return parser.parse_args()
@@ -160,7 +166,10 @@ def main() -> None:
         # Export single specific skill
         all_skill_dirs = list_skill_dirs(skills_dir, lang="all")
         if args.skill not in all_skill_dirs:
-            print(f"Error: Skill '{args.skill}' not found. Available: {', '.join(all_skill_dirs)}", file=sys.stderr)
+            print(
+                f"Error: Skill '{args.skill}' not found. Available: {', '.join(all_skill_dirs)}",
+                file=sys.stderr,
+            )
             sys.exit(1)
 
         selected_skill = args.skill
@@ -169,7 +178,11 @@ def main() -> None:
         skill_path = skills_dir / selected_skill
         files_to_export = collect_skill_files(skill_path)
 
-        output_path = Path(args.output) if args.output else skills_dir / "exports" / f"{selected_skill}.md"
+        output_path = (
+            Path(args.output)
+            if args.output
+            else skills_dir / "exports" / f"{selected_skill}.md"
+        )
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
         print(f"Collecting {len(files_to_export)} file(s)...")
@@ -186,14 +199,18 @@ def main() -> None:
         print(f"Error: No skills found for language '{args.lang}'.", file=sys.stderr)
         sys.exit(1)
 
-    print(f"Automatically exporting {len(matching_skills)} skill(s) for language '{args.lang}'...")
+    print(
+        f"Automatically exporting {len(matching_skills)} skill(s) for language '{args.lang}'..."
+    )
     all_files: set[Path] = set()
     for s in matching_skills:
         skill_path = skills_dir / s
         all_files.update(collect_skill_files(skill_path))
 
     pack_name = f"{args.lang}_skills_pack"
-    output_path = Path(args.output) if args.output else skills_dir / "exports" / f"{pack_name}.md"
+    output_path = (
+        Path(args.output) if args.output else skills_dir / "exports" / f"{pack_name}.md"
+    )
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     sorted_files = sorted(all_files)

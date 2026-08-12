@@ -19,7 +19,7 @@ def find_config() -> Path | None:
 
 
 def load_config() -> dict:
-    """Load config YAML into a dict (empty on missing/invalid file)."""
+    """Load config YAML into a dict (empty on missing/invalid/non-mapping file)."""
     p = find_config()
     if not p:
         return {}
@@ -27,7 +27,10 @@ def load_config() -> dict:
         import yaml
 
         with open(p) as f:
-            return yaml.safe_load(f) or {}
+            data = yaml.safe_load(f)
+        if not isinstance(data, dict):
+            return {}
+        return data
     except (OSError, yaml.YAMLError):
         return {}
 

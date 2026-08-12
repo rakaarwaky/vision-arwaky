@@ -138,8 +138,7 @@ class VideoOrchestrator(RegistryServiceAggregate):
             )
         elif command.value == "timeline":
             vid = FilePath(value=kwargs["video"])
-            interval_val = int(kwargs["interval"])
-            interval = IntervalSeconds(value=float(interval_val))
+            interval = IntervalSeconds(value=float(kwargs["interval"]))
             return CommandOutput(
                 value=json.dumps(
                     run_async(

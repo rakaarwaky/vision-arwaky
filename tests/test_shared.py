@@ -8,12 +8,10 @@ from modules.shared.src.taxonomy_vision_models_vo import (
     CommandName,
     CommandOutput,
     Detection,
-    DistanceThreshold,
     FilePath,
     IntervalSeconds,
     LanguageCode,
     MaxFrames,
-    MemoryLabel,
     MinArea,
     OcrText,
     SceneThreshold,
@@ -64,8 +62,6 @@ class TestVisionModels:
     def test_value_objects(self):
         assert LanguageCode(value="eng").value == "eng"
         assert FilePath(value="/tmp/test.png").value == "/tmp/test.png"
-        assert MemoryLabel(value="test").value == "test"
-        assert DistanceThreshold(value=10).value == 10
         assert SceneThreshold(value=30.0).value == 30.0
         assert MinArea(value=500).value == 500
         assert IntervalSeconds(value=1.0).value == 1.0

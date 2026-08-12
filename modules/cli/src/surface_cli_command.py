@@ -198,7 +198,10 @@ def cmd_test(args) -> int:
     import subprocess
     import sys
 
-    base = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    # modules/cli/src/surface_cli_command.py -> repo root
+    base = os.path.dirname(
+        os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    )
     test_dir = os.path.join(base, "tests")
     fixtures = os.path.join(test_dir, "fixtures")
     default_image = os.path.join(fixtures, "test.jpeg")

@@ -93,7 +93,7 @@ class OpenCVImageAdapter(OpenCVImageProtocol):
             hasher = hasher_creator()
             hash_val = hasher.compute(image)
             return hash_val.tobytes().hex()
-        except (AttributeError, RuntimeError, TypeError, ValueError) as e:
+        except (AttributeError, RuntimeError, TypeError, ValueError, _cv2.error) as e:
             logger.warning(f"pHash computation failed, using basic hash: {e}")
             return str(hash(image.tobytes()))
 

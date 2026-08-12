@@ -86,11 +86,6 @@ def vision_execute(
       detect-motion — Detect motion events. Args: video, [min_area]
       track        — Track object. Args: video, bbox(X,Y,W,H), [max-frames]
       timeline     — Generate video timeline. Args: video, [interval]
-
-    MEMORY COMMANDS:
-      memory-store  — Store image in visual memory. Args: image, label
-      memory-search — Find similar images. Args: query, [max-distance]
-      memory-list   — List all stored images. Args: (none)
     """
     kwargs = {
         "image": image,
@@ -192,23 +187,6 @@ def vision_list_commands(domain: str = "") -> str:
                 "desc": "Generate video timeline",
             },
         ],
-        "memory": [
-            {
-                "command": "memory-store",
-                "args": "image, label",
-                "desc": "Store image in visual memory",
-            },
-            {
-                "command": "memory-search",
-                "args": "query, [max-distance]",
-                "desc": "Find similar images",
-            },
-            {
-                "command": "memory-list",
-                "args": "(none)",
-                "desc": "List all stored images",
-            },
-        ],
     }
 
     if domain and domain in commands:
@@ -258,21 +236,27 @@ def vision_status() -> str:
             import yaml
 
             with open(config_path) as f:
-                cfg_data = yaml.safe_load(f) or {}
+                cfg_data = yaml.safe_load(f)
+            if not isinstance(cfg_data, dict):
+                cfg_data = {}
             selected_backend = str(cfg_data.get("backend", "external"))
             native_cfg = cfg_data.get("native", {})
             if isinstance(native_cfg, dict):
-                model_rel = str(native_cfg.get("model_path", ""))
-                mmproj_rel = str(native_cfg.get("mmproj_path", ""))
+                model_rel = str(native_cfg.get("model_path", "") or "")
+                mmproj_rel = str(native_cfg.get("mmproj_path", "") or "")
                 native_files = {
-                    "model_file": "FOUND"
-                    if (project_root / model_rel).exists()
-                    else "MISSING",
-                    "mmproj_file": "FOUND"
-                    if (project_root / mmproj_rel).exists()
-                    else "MISSING",
+                    "model_file": "MISSING"
+                    if not model_rel
+                    else (
+                        "FOUND" if (project_root / model_rel).exists() else "MISSING"
+                    ),
+                    "mmproj_file": "MISSING"
+                    if not mmproj_rel
+                    else (
+                        "FOUND" if (project_root / mmproj_rel).exists() else "MISSING"
+                    ),
                 }
-        except (OSError, ValueError) as e:
+        except (OSError, ValueError, yaml.YAMLError) as e:
             native_files["config_error"] = str(e)
 
     status_cfg: dict[str, Any] = {

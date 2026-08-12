@@ -50,7 +50,7 @@ class VideoTimelineGenerator(VideoTimelineProtocol):
         fps = cap.get(self._opencv.cv2.CAP_PROP_FPS)
         total_frames = int(cap.get(self._opencv.cv2.CAP_PROP_FRAME_COUNT))
         interval_val = interval.value if interval else 5.0
-        frame_interval = int(fps * interval_val) if fps > 0 else 30
+        frame_interval = max(1, int(fps * interval_val)) if fps > 0 else 30
 
         key_frames: list[dict] = []
         frame_idx = 0

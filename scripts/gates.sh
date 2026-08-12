@@ -21,9 +21,9 @@ echo "==> [4/5] pytest"
 uv run python3 -m pytest tests/ -q
 
 echo "==> [5/5] lint-arwaky-cli scan . (must be 0 violations)"
-output=$(lint-arwaky-cli scan . 2>&1) || { echo "$output"; exit 1; }
+output=$(lint-arwaky-cli scan . 2>&1) || true
 echo "$output" | tail -3
-violations=$(echo "$output" | grep -oP 'Total:\s*\K\d+' || echo "0")
+violations=$(echo "$output" | grep -oP 'Total:\s*\K\d+') || violations="PARSE_FAILURE"
 echo "Violations: ${violations}"
 [ "${violations}" = "0" ]
 

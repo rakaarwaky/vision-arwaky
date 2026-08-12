@@ -32,7 +32,7 @@ SUPPORTED_EXTENSIONS = {".rs", ".py", ".js", ".ts", ".jsx", ".tsx"}
 
 def resolve_project_root() -> Path:
     """Return the project root (parent of scripts/)."""
-    return Path(__file__).resolve().parent.parent.parent
+    return Path(__file__).resolve().parent.parent
 
 
 def discover_source_files(project_root: Path) -> list[Path]:
@@ -126,7 +126,9 @@ def extract_dependencies(file_path: Path, content: str) -> list[dict]:
     if suffix == ".rs":
         for m in RUST_USE_PATTERN.finditer(content):
             source = m.group(1)  # "modules" or "shared"
-            path_str = m.group(2)  # e.g., "server::contract_command_protocol::ICommandProtocol"
+            path_str = m.group(
+                2
+            )  # e.g., "server::contract_command_protocol::ICommandProtocol"
             parts = path_str.split("::")
             segments: list[str] = []
             for p in parts:
@@ -144,7 +146,9 @@ def extract_dependencies(file_path: Path, content: str) -> list[dict]:
     return deps
 
 
-def resolve_dependency_path(dep: dict, file_path: Path, project_root: Path) -> set[Path]:
+def resolve_dependency_path(
+    dep: dict, file_path: Path, project_root: Path
+) -> set[Path]:
     """Try to locate the actual file that `dep` refers to.
 
     Handles Rust imports (modules:: and shared::), Python imports, and nested modules.
@@ -241,17 +245,12 @@ def resolve_dependency_path(dep: dict, file_path: Path, project_root: Path) -> s
 
             for segs in candidates:
                 current = base
+                matched_file = None
                 for seg in segs:
-                    # Try as .py file
+                    # Try as .py file — exact module file wins.
                     candidate_py = current / f"{seg}.py"
                     if candidate_py.is_file():
-                        found.add(candidate_py)
-                        break
-
-                    # Try as directory with __init__.py
-                    candidate_pkg = current / seg / "__init__.py"
-                    if candidate_pkg.is_file():
-                        found.add(candidate_pkg)
+                        matched_file = candidate_py
                         break
 
                     # Continue into directory
@@ -260,6 +259,15 @@ def resolve_dependency_path(dep: dict, file_path: Path, project_root: Path) -> s
                         current = candidate_dir
                     else:
                         break
+
+                if matched_file is not None:
+                    found.add(matched_file)
+                else:
+                    # Segment chain exhausted on a directory — that is a
+                    # package; record its __init__.py when present.
+                    init_py = current / "__init__.py"
+                    if init_py.is_file():
+                        found.add(init_py)
 
     return found
 
@@ -479,7 +487,9 @@ def write_markdown(
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Export a source file into a single consolidated Markdown document.")
+    parser = argparse.ArgumentParser(
+        description="Export a source file into a single consolidated Markdown document."
+    )
     parser.add_argument(
         "--file",
         "-f",
@@ -520,9 +530,13 @@ def main() -> None:
         deps = extract_dependencies(selected_file, content)
         initial_deps: set[Path] = set()
         for dep in deps:
-            initial_deps.update(resolve_dependency_path(dep, selected_file, project_root))
+            initial_deps.update(
+                resolve_dependency_path(dep, selected_file, project_root)
+            )
 
-        print(f"Extracted {len(deps)} dependency reference(s), resolved to {len(initial_deps)} file(s).")
+        print(
+            f"Extracted {len(deps)} dependency reference(s), resolved to {len(initial_deps)} file(s)."
+        )
 
         transitive = resolve_transitive_dependencies(initial_deps, project_root)
         all_dep_files = (initial_deps | transitive) - {selected_file}
@@ -593,9 +607,13 @@ def main() -> None:
         deps = extract_dependencies(selected_file, content)
         initial_deps: set[Path] = set()
         for dep in deps:
-            initial_deps.update(resolve_dependency_path(dep, selected_file, project_root))
+            initial_deps.update(
+                resolve_dependency_path(dep, selected_file, project_root)
+            )
 
-        print(f"Extracted {len(deps)} dependency reference(s), resolved to {len(initial_deps)} file(s).")
+        print(
+            f"Extracted {len(deps)} dependency reference(s), resolved to {len(initial_deps)} file(s)."
+        )
 
         # Resolve transitive dependencies
         transitive = resolve_transitive_dependencies(initial_deps, project_root)

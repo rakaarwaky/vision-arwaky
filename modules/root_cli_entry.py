@@ -22,9 +22,6 @@ from modules.root_composition_container import build
 
 
 def cli():
-    graph = build()
-    set_cli_dispatcher(graph["dispatcher"])
-
     parser = create_parser()
     args = parser.parse_args()
 
@@ -49,11 +46,13 @@ def cli():
         "test": cmd_test,
     }
 
-    if args.command in commands:
-        sys.exit(commands[args.command](args) or 0)
-    else:
+    if args.command not in commands:
         parser.print_help()
         sys.exit(1)
+
+    graph = build()
+    set_cli_dispatcher(graph["dispatcher"])
+    sys.exit(commands[args.command](args) or 0)
 
 
 if __name__ == "__main__":

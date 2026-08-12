@@ -25,5 +25,4 @@ jobs:
         run: |
           # --auto holds the PR until required checks pass, then squash-merges.
           gh pr merge "$PR_NUMBER" --auto --squash \
-            --subject "$PR_TITLE" || \
-            echo "Auto-merge not available yet — a later event will retry."
+            --subject "$PR_TITLE"

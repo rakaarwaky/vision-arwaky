@@ -64,7 +64,7 @@ class LLMVisionAdapter(LLMVisionProtocol):
                 with open(config_path, "r") as f:
                     self._config = yaml.safe_load(f) or {}
                 logger.info(f"Loaded config from {config_path}")
-            except (OSError, ValueError) as e:
+            except (OSError, ValueError, yaml.YAMLError) as e:
                 logger.warning(f"Failed to read config: {e}. Falling back to defaults.")
 
         self._backend = str(self._config.get("backend", "external"))
@@ -130,6 +130,13 @@ class LLMVisionAdapter(LLMVisionProtocol):
                 return p
         return None
 
+    def _get_native_config(self) -> dict:
+        """Return the native backend configuration block (always a dict)."""
+        native_cfg = self._config.get("native")
+        if not isinstance(native_cfg, dict):
+            return {}
+        return native_cfg
+
     def _maybe_start_bundled_server(self):
         """Auto-start bundled llama-server binary if available."""
         server_path = self._get_bundled_server_path()
@@ -137,9 +144,7 @@ class LLMVisionAdapter(LLMVisionProtocol):
             logger.info("No bundled llama-server binary found, trying llama-cpp-python")
             return
 
-        native_cfg = self._config.get("native", {})
-        if not isinstance(native_cfg, dict):
-            native_cfg = {}
+        native_cfg = self._get_native_config()
         model = native_cfg.get("model_path", "")
         mmproj = native_cfg.get("mmproj_path", "")
         gpu = native_cfg.get("n_gpu_layers", -1)
@@ -201,9 +206,7 @@ class LLMVisionAdapter(LLMVisionProtocol):
     @property
     def model(self) -> ModelName:
         if self._backend == "native":
-            native_cfg = self._config.get("native")
-            if not isinstance(native_cfg, dict):
-                native_cfg = {}
+            native_cfg = self._get_native_config()
             model_rel_path = str(
                 native_cfg.get("model_path", "models/MiniCPM-V-4_6-Q8_0.gguf")
             )
@@ -258,9 +261,7 @@ class LLMVisionAdapter(LLMVisionProtocol):
             ) from e
 
         project_root = Path(__file__).parent.parent.parent
-        native_cfg = self._config.get("native")
-        if not isinstance(native_cfg, dict):
-            native_cfg = {}
+        native_cfg = self._get_native_config()
 
         model_rel_path = str(
             native_cfg.get("model_path", "models/MiniCPM-V-4_6-Q8_0.gguf")

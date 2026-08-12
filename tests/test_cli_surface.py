@@ -64,7 +64,7 @@ class TestMCPHandler:
         data = json.loads(result)
         assert "image" in data
         assert "video" in data
-        assert "memory" in data
+        assert "memory" not in data
 
     def test_list_commands_image(self):
         from modules.mcp.src.surface_mcp_action import vision_list_commands

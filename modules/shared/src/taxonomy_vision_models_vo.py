@@ -38,15 +38,6 @@ class SceneChange(BaseModel):
     score: float = Field(..., description="Similarity score change")
 
 
-class MemoryEntry(BaseModel):
-    """Visual memory storage entry."""
-
-    label: str = Field(..., description="User-defined label for the image")
-    phash: str = Field(..., description="Perceptual hash (hex format)")
-    image_path: str = Field(..., description="Absolute path to the source image")
-    metadata: dict = Field(default_factory=dict, description="Additional metadata")
-
-
 class VideoTimeline(BaseModel):
     """Structured timeline of a video for Agentic reasoning."""
 
@@ -112,18 +103,6 @@ class CommandOutput(BaseModel):
     """Value object representing JSON command output."""
 
     value: str
-
-
-class MemoryLabel(BaseModel):
-    """Value object for visual memory labels."""
-
-    value: str
-
-
-class DistanceThreshold(BaseModel):
-    """Value object for memory search hamming distance threshold."""
-
-    value: int = 15
 
 
 class SceneThreshold(BaseModel):

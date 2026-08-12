@@ -50,7 +50,13 @@ class ImageProcessingProcessor(ImageProcessingProtocol):
                     text=analysis,
                     model=self._llm.model.value,
                 )
-            except (RuntimeError, ValueError, OSError) as e:
+            except (
+                RuntimeError,
+                ValueError,
+                OSError,
+                ImportError,
+                FileNotFoundError,
+            ) as e:
                 # Fallback to OpenCV if LLM fails
                 return VisionAnalysis(
                     source="opencv",

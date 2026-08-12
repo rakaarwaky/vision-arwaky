@@ -7,7 +7,11 @@ class FFmpegVideoProtocol(ABC):
     """Abstract port defining FFmpeg video conversion and GIF creation services."""
 
     @abstractmethod
-    async def run(self, args, capture_output=True):
+    async def run(
+        self,
+        args: list[str],
+        capture_output: bool = True,
+    ) -> str:
         """Run FFmpeg command asynchronously with given arguments."""
 
     @abstractmethod
@@ -16,11 +20,11 @@ class FFmpegVideoProtocol(ABC):
         input_path: FilePath,
         output_path: FilePath,
         segment: TimeSegment,
-    ):
+    ) -> list[str]:
         """Get standard FFmpeg arguments for high-quality GIF creation."""
 
     @abstractmethod
-    async def convert_video(self, input_path: FilePath, output_path: FilePath):
+    async def convert_video(self, input_path: FilePath, output_path: FilePath) -> bool:
         """Convert video from one format to another."""
 
     @abstractmethod
@@ -29,5 +33,5 @@ class FFmpegVideoProtocol(ABC):
         input_path: FilePath,
         output_path: FilePath,
         segment: TimeSegment,
-    ):
+    ) -> bool:
         """Create GIF from video segment."""
