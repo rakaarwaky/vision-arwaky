@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import requests
+import yaml
 
 from modules.shared.src.contract_llm_vision_protocol import LLMVisionProtocol
 from modules.shared.src.taxonomy_vision_models_vo import (
@@ -59,8 +60,6 @@ class LLMVisionAdapter(LLMVisionProtocol):
 
         if config_path.exists():
             try:
-                import yaml
-
                 with open(config_path, "r") as f:
                     self._config = yaml.safe_load(f) or {}
                 logger.info(f"Loaded config from {config_path}")

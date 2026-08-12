@@ -20,12 +20,12 @@ def find_config() -> Path | None:
 
 def load_config() -> dict:
     """Load config YAML into a dict (empty on missing/invalid/non-mapping file)."""
+    import yaml
+
     p = find_config()
     if not p:
         return {}
     try:
-        import yaml
-
         with open(p) as f:
             data = yaml.safe_load(f)
         if not isinstance(data, dict):

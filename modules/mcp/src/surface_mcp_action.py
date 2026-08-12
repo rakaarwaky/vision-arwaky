@@ -5,6 +5,7 @@ import shutil
 from pathlib import Path
 from typing import Any
 
+import yaml
 from mcp.server.fastmcp import FastMCP
 
 from modules.shared.src.contract_registry_service_aggregate import (
@@ -233,8 +234,6 @@ def vision_status() -> str:
     native_files: dict = {}
     if config_path.exists():
         try:
-            import yaml
-
             with open(config_path) as f:
                 cfg_data = yaml.safe_load(f)
             if not isinstance(cfg_data, dict):
