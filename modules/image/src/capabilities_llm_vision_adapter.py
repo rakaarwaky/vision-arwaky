@@ -20,7 +20,13 @@ from typing import TYPE_CHECKING
 import requests
 
 from modules.shared.src.contract_llm_vision_protocol import LLMVisionProtocol
-from modules.shared.src.taxonomy_vision_models_vo import VisionAnalysis
+from modules.shared.src.taxonomy_vision_models_vo import (
+    AnalysisPrompt,
+    BackendType,
+    FilePath,
+    ModelName,
+    VisionAnalysis,
+)
 
 if TYPE_CHECKING:
     from llama_cpp import Llama
@@ -83,8 +89,8 @@ class LLMVisionAdapter(LLMVisionProtocol):
         return self._config
 
     @property
-    def backend(self) -> str:
-        return self._backend
+    def backend(self) -> BackendType:
+        return BackendType(value=self._backend)
 
     @staticmethod
     def _find_free_port() -> int:
@@ -167,16 +173,16 @@ class LLMVisionAdapter(LLMVisionProtocol):
 
 
     @property
-    def model(self) -> str:
+    def model(self) -> ModelName:
         if self._backend == "native":
             native_cfg = self._config.get("native")
             if not isinstance(native_cfg, dict):
                 native_cfg = {}
             model_rel_path = str(native_cfg.get("model_path", "models/MiniCPM-V-4_6-Q8_0.gguf"))
-            return os.path.basename(model_rel_path)
+            return ModelName(value=os.path.basename(model_rel_path))
 
         if self._model:
-            return self._model
+            return ModelName(value=self._model)
         try:
             session = requests.Session()
             session.headers.update({
@@ -191,11 +197,11 @@ class LLMVisionAdapter(LLMVisionProtocol):
             if models:
                 self._model = str(models[0]["id"])
                 logger.info(f"Auto-selected model: {self._model}")
-                return self._model
+                return ModelName(value=self._model)
         except (requests.RequestException, KeyError, ValueError) as e:
             logger.warning(f"Failed to list models: {e}")
 
-        return "local-model"
+        return ModelName(value="local-model")
 
     def _get_nested_config(self, section: str, key: str) -> str:
         sec = self._config.get(section)
@@ -275,7 +281,7 @@ class LLMVisionAdapter(LLMVisionProtocol):
 
     def _analyze_via_http(self, image_path: str, prompt: str, timeout: int = 120) -> str:
         """Send image + prompt via HTTP to an API-compatible server."""
-        model = self.model
+        model = self.model.value
         image_url = self._encode_image(image_path)
 
         payload = {
@@ -326,21 +332,29 @@ class LLMVisionAdapter(LLMVisionProtocol):
             logger.error(f"LLM request failed: {e}")
             raise RuntimeError(f"LLM request failed: {e}") from e
 
-    def analyze_image(self, image_path: str, prompt: str, timeout: int = 120) -> str:
+    def analyze_image(
+        self,
+        image_path: FilePath,
+        prompt: AnalysisPrompt,
+        timeout: int = 120,
+    ) -> str:
         """Send image + prompt to VLM and return the text response."""
+        path_str = image_path.value
+        prompt_str = prompt.value if prompt and prompt.value is not None else ""
+
         # If bundled server is active, use it via HTTP
         if self._server_process and self._server_process.poll() is None:
-            return self._analyze_via_http(image_path, prompt, timeout)
+            return self._analyze_via_http(path_str, prompt_str, timeout)
 
         # Otherwise try llama-cpp-python native
-        if self.backend == "native":
+        if self.backend.value == "native":
             self._init_native_llm()
             with self._llm_lock:
                 llm = self._native_llm
             if llm is None:
                 raise RuntimeError("Native VLM was not initialized")
 
-            image_url = self._encode_image(image_path)
+            image_url = self._encode_image(path_str)
 
             messages = [
                 {
@@ -350,7 +364,7 @@ class LLMVisionAdapter(LLMVisionProtocol):
                 {
                     "role": "user",
                     "content": [
-                        {"type": "text", "text": prompt},
+                        {"type": "text", "text": prompt_str},
                         {"type": "image_url", "image_url": {"url": image_url}}
                     ]
                 }
@@ -369,5 +383,5 @@ class LLMVisionAdapter(LLMVisionProtocol):
                 logger.error(f"Native VLM inference failed: {e}")
                 raise RuntimeError(f"Native VLM inference failed: {e}") from e
         else:
-            return self._analyze_via_http(image_path, prompt, timeout)
+            return self._analyze_via_http(path_str, prompt_str, timeout)
 

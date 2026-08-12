@@ -170,8 +170,8 @@ class TestLLMVisionAdapter:
         from modules.image.src.capabilities_llm_vision_adapter import LLMVisionAdapter
         adapter = LLMVisionAdapter()
         assert adapter.config is not None
-        assert isinstance(adapter.backend, str)
-        assert adapter.model is not None
+        assert isinstance(adapter.backend.value, str)
+        assert adapter.model.value is not None
 
     def test_adapter_find_free_port(self):
         from modules.image.src.capabilities_llm_vision_adapter import LLMVisionAdapter

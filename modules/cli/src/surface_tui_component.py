@@ -3,11 +3,13 @@
 import json
 import os
 from pathlib import Path
+from typing import ClassVar
 
 import numpy
 from textual.app import App, ComposeResult
-from textual.binding import Binding
+from textual.binding import Binding, BindingType
 from textual.containers import Horizontal, ScrollableContainer, Vertical
+from textual.errors import TextualError
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Input, Label, Select, Static
 
@@ -23,8 +25,10 @@ from modules.shared.src.utility_config_handler import (
 
 _dispatcher: RegistryServiceAggregate | None = None
 
+_UI_EXCEPTIONS = (OSError, ValueError, ImportError, KeyError, TypeError, TextualError)
 
-def set_dispatcher(dispatcher: RegistryServiceAggregate) -> None:
+
+def set_tui_dispatcher(dispatcher: RegistryServiceAggregate) -> None:
     """Inject the aggregate facade used by the TUI."""
     global _dispatcher
     _dispatcher = dispatcher
@@ -34,7 +38,7 @@ def get_dispatcher() -> RegistryServiceAggregate:
     """Return the injected aggregate facade."""
     if _dispatcher is None:
         raise RuntimeError(
-            "No dispatcher injected. Call set_dispatcher() before running commands."
+            "No dispatcher injected. Call set_tui_dispatcher() before running commands."
         )
     return _dispatcher
 
@@ -42,7 +46,7 @@ def get_dispatcher() -> RegistryServiceAggregate:
 # ── Screens ───────────────────────────────────────────────
 
 class MainMenu(Screen):
-    BINDINGS = [
+    BINDINGS: ClassVar[list[BindingType]] = [
         Binding("1", "go_config", "Configuration"),
         Binding("2", "go_models", "Models"),
         Binding("3", "go_status", "Status"),
@@ -69,6 +73,8 @@ class MainMenu(Screen):
             "btn_status": self.action_go_status,
             "btn_test": self.action_go_test,
         }
+        if event.button.id is None:
+            return
         action = actions.get(event.button.id)
         if action:
             action()
@@ -90,7 +96,7 @@ class MainMenu(Screen):
 
 
 class ConfigScreen(Screen):
-    BINDINGS = [Binding("escape", "go_back", "Back")]
+    BINDINGS: ClassVar[list[BindingType]] = [Binding("escape", "go_back", "Back")]
 
     def compose(self) -> ComposeResult:
         cfg = load_config()
@@ -155,7 +161,7 @@ class ConfigScreen(Screen):
 
 
 class ModelScreen(Screen):
-    BINDINGS = [Binding("escape", "go_back", "Back")]
+    BINDINGS: ClassVar[list[BindingType]] = [Binding("escape", "go_back", "Back")]
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -213,7 +219,7 @@ class ModelScreen(Screen):
 
 
 class StatusScreen(Screen):
-    BINDINGS = [Binding("escape", "go_back", "Back"), Binding("r", "refresh", "Refresh")]
+    BINDINGS: ClassVar[list[BindingType]] = [Binding("escape", "go_back", "Back"), Binding("r", "refresh", "Refresh")]
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -284,7 +290,7 @@ class StatusScreen(Screen):
                 lines.append(f"  {icon} {dep}: {st}")
 
             self.query_one("#status_content", Static).update("\n".join(lines))
-        except Exception as e:
+        except _UI_EXCEPTIONS as e:
             self.query_one("#status_content", Static).update(f"[red]Error: {e}[/]")
 
     def action_go_back(self) -> None:
@@ -295,7 +301,7 @@ class StatusScreen(Screen):
 
 
 class TestScreen(Screen):
-    BINDINGS = [Binding("escape", "go_back", "Back"), Binding("r", "run_test", "Run Test")]
+    BINDINGS: ClassVar[list[BindingType]] = [Binding("escape", "go_back", "Back"), Binding("r", "run_test", "Run Test")]
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -342,7 +348,7 @@ class TestScreen(Screen):
                 ).value
             )
             results.append(("UI element detection", isinstance(elements, list)))
-        except Exception:
+        except _UI_EXCEPTIONS:
             results.append(("UI element detection", False))
 
         # 3. OCR
@@ -351,7 +357,7 @@ class TestScreen(Screen):
                 CommandName(value="ocr"), {"image": path, "lang": "eng"}
             )
             results.append(("OCR", bool(ocr_result.value)))
-        except Exception:
+        except _UI_EXCEPTIONS:
             results.append(("OCR (fallback)", True))
 
         # Cleanup
@@ -364,7 +370,7 @@ class TestScreen(Screen):
                 CommandName(value="video-info"), {"video": "/nonexistent.mp4"}
             )
             results.append(("Dispatcher", result is not None))
-        except Exception:
+        except _UI_EXCEPTIONS:
             results.append(("Dispatcher", False))
 
         # Format output
@@ -387,8 +393,8 @@ class TestScreen(Screen):
 
 class VisionTUI(App):
     TITLE = "Vision Arwaky Config"
-    SCREENS = {}
-    BINDINGS = []
+    SCREENS: ClassVar[dict] = {}
+    BINDINGS: ClassVar[list[BindingType]] = []
 
     def on_mount(self) -> None:
         self.push_screen(MainMenu())

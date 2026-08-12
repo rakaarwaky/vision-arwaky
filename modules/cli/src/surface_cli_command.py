@@ -21,7 +21,7 @@ from modules.shared.src.taxonomy_vision_models_vo import (
 _dispatcher: RegistryServiceAggregate | None = None
 
 
-def set_dispatcher(dispatcher: RegistryServiceAggregate) -> None:
+def set_cli_dispatcher(dispatcher: RegistryServiceAggregate) -> None:
     """Inject the aggregate facade used by all CLI commands."""
     global _dispatcher
     _dispatcher = dispatcher
@@ -31,7 +31,7 @@ def get_dispatcher() -> RegistryServiceAggregate:
     """Return the injected aggregate facade."""
     if _dispatcher is None:
         raise RuntimeError(
-            "No dispatcher injected. Call set_dispatcher() before running commands."
+            "No dispatcher injected. Call set_cli_dispatcher() before running commands."
         )
     return _dispatcher
 
@@ -77,7 +77,7 @@ def cmd_analyze(args) -> int:
         thumb = _extract_middle_frame(file_path)
         if thumb is not None:
             try:
-                result = _execute("analyze", {"image": thumb, "prompt": prompt.value})
+                result = _execute("analyze", {"image": thumb, "prompt": prompt.value if prompt else None})
                 print(result)
                 return 0
             finally:
@@ -204,7 +204,7 @@ def cmd_test(args) -> int:
 
     # Run pytest
     cmd = [sys.executable, "-m", "pytest", test_dir, "-v"]
-    result = subprocess.run(cmd, cwd=base)
+    result = subprocess.run(cmd, cwd=base, check=False)
 
     print()
     if result.returncode == 0:
@@ -224,7 +224,7 @@ def cmd_test(args) -> int:
                 "--image", test_image,
                 "--prompt", "Describe this image in detail. What do you see?"
             ]
-            vision_result = subprocess.run(analyze_cmd, cwd=base, capture_output=True, text=True, timeout=60)
+            vision_result = subprocess.run(analyze_cmd, cwd=base, capture_output=True, text=True, timeout=60, check=False)
             if vision_result.returncode == 0:
                 print(vision_result.stdout)
             elif vision_result.stderr:
@@ -234,7 +234,7 @@ def cmd_test(args) -> int:
                     {"image": test_image, "prompt": "Describe this image in detail. What do you see?"},
                 )
                 print(result_obj)
-        except Exception as e:
+        except (OSError, RuntimeError, ValueError) as e:
             print(f"  ⚠ Vision analysis unavailable: {e}")
 
     # Run AI vision analysis on test video
@@ -265,9 +265,9 @@ def cmd_test(args) -> int:
 
             # 2. Motion detection — ambil frame dengan motion tertinggi
             events = json.loads(_execute("detect-motion", {"video": test_video, "min_area": 500}))
-            events.sort(key=lambda e: e["magnitude"], reverse=True)
-            for e in events[:5]:
-                idx = int(e["timestamp"] * fps)
+            events.sort(key=lambda ev: ev["magnitude"], reverse=True)
+            for ev in events[:5]:
+                idx = int(ev["timestamp"] * fps)
                 if 0 <= idx < vproc_info.get("frame_count", 0):
                     target_frame_indices.add(idx)
             print(f"  Motion events: top-{min(5, len(events))} → {len(target_frame_indices)} frame(s)")
@@ -339,7 +339,7 @@ def cmd_test(args) -> int:
                     _execute("analyze", {"image": os.path.join(fixtures, "test.jpeg"), "prompt": summary_prompt})
                 )
                 video_summary = summary_result.get("text") if summary_result.get("source") == "llm" else "Summary unavailable"
-            except Exception:
+            except (OSError, RuntimeError, ValueError):
                 video_summary = "Summary unavailable"
 
             # ── Final JSON output ──
@@ -367,7 +367,7 @@ def cmd_test(args) -> int:
             print(json.dumps(output, indent=2))
 
             print("\n  ✅ Video analysis complete")
-        except Exception as e:
+        except (OSError, RuntimeError, ValueError) as e:
             print(f"  ⚠ Video analysis unavailable: {e}")
 
     return result.returncode

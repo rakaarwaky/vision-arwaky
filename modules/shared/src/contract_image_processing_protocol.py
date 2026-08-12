@@ -2,11 +2,11 @@ from abc import ABC, abstractmethod
 
 from modules.shared.src.taxonomy_vision_models_vo import (
     AnalysisPrompt,
-    CommandOutput,
     Detection,
     FilePath,
     LanguageCode,
     OcrText,
+    ScreenshotComparison,
     VisionAnalysis,
 )
 
@@ -27,5 +27,7 @@ class ImageProcessingProtocol(ABC):
         """Locate raw interactive UI elements on the screenshot."""
 
     @abstractmethod
-    def compare_screenshots(self, image_path1: FilePath, image_path2: FilePath) -> CommandOutput:
+    def compare_screenshots(
+        self, image_path1: FilePath, image_path2: FilePath
+    ) -> ScreenshotComparison:
         """Compare two screenshots to find visual changes."""

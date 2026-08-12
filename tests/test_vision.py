@@ -115,7 +115,7 @@ class TestImageProcessing:
         path2 = save_test_image(img)
         try:
             result = cap.compare_screenshots(FilePath(value=path1), FilePath(value=path2))
-            assert result["identical"] is True
+            assert result.identical is True
         finally:
             os.unlink(path1)
             os.unlink(path2)
@@ -128,8 +128,8 @@ class TestImageProcessing:
         path2 = save_test_image(img2)
         try:
             result = cap.compare_screenshots(FilePath(value=path1), FilePath(value=path2))
-            assert result["identical"] is False
-            assert len(result["differences"]) > 0
+            assert result.identical is False
+            assert len(result.differences) > 0
         finally:
             os.unlink(path1)
             os.unlink(path2)

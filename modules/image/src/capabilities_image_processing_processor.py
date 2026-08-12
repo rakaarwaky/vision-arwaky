@@ -1,5 +1,3 @@
-from typing import Any
-
 from modules.shared.src.contract_image_processing_protocol import (
     ImageProcessingProtocol,
 )
@@ -15,6 +13,7 @@ from modules.shared.src.taxonomy_vision_models_vo import (
     FilePath,
     LanguageCode,
     OcrText,
+    ScreenshotComparison,
     VisionAnalysis,
 )
 
@@ -41,11 +40,13 @@ class ImageProcessingProcessor(ImageProcessingProtocol):
         p_val = prompt.value if prompt else None
         if p_val:
             try:
-                analysis = self._llm.analyze_image(image_path.value, p_val)
+                analysis = self._llm.analyze_image(
+                    image_path, AnalysisPrompt(value=p_val)
+                )
                 return VisionAnalysis(
                     source="llm",
                     text=analysis,
-                    model=self._llm.model or "unknown",
+                    model=self._llm.model.value,
                 )
             except (RuntimeError, ValueError, OSError) as e:
                 # Fallback to OpenCV if LLM fails
@@ -95,7 +96,9 @@ class ImageProcessingProcessor(ImageProcessingProtocol):
                 )
         return detections
 
-    def compare_screenshots(self, image_path1: FilePath, image_path2: FilePath) -> dict[str, Any]:
+    def compare_screenshots(
+        self, image_path1: FilePath, image_path2: FilePath
+    ) -> ScreenshotComparison:
         """Compare two screenshots and find differences."""
         img1 = self._opencv.read_image(image_path1)
         img2 = self._opencv.read_image(image_path2)
@@ -125,21 +128,19 @@ class ImageProcessingProcessor(ImageProcessingProtocol):
         )
         contours = self._opencv.find_contours(thresh)
 
-        differences = []
+        differences: list[BoundingBox] = []
         for cnt in contours:
             area = self._opencv.get_contour_area(cnt)
             if area > 50:
                 x, y, w, h = self._opencv.get_bounding_box(cnt)
-                differences.append(
-                    BoundingBox(x=x, y=y, width=w, height=h).model_dump()
-                )
+                differences.append(BoundingBox(x=x, y=y, width=w, height=h))
 
         hash1 = self._opencv.compute_phash(img1)
         hash2 = self._opencv.compute_phash(img2)
 
-        return {
-            "identical": len(differences) == 0 and hash1 == hash2,
-            "phash_diff": hash1 != hash2,
-            "differences": differences,
-        }
+        return ScreenshotComparison(
+            identical=len(differences) == 0 and hash1 == hash2,
+            phash_diff=hash1 != hash2,
+            differences=differences,
+        )
 

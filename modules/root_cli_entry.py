@@ -15,7 +15,7 @@ from modules.cli.src.surface_cli_command import (
     cmd_timeline,
     cmd_track,
     cmd_video_info,
-    set_dispatcher as set_cli_dispatcher,
+    set_cli_dispatcher,
 )
 from modules.cli.src.surface_cli_controller import create_parser
 from modules.root_composition_container import build

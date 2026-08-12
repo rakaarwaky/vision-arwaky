@@ -22,7 +22,7 @@ DEFAULT_URL = "http://127.0.0.1:1234/v1"
 _dispatcher: RegistryServiceAggregate | None = None
 
 
-def set_dispatcher(dispatcher: RegistryServiceAggregate) -> None:
+def set_mcp_dispatcher(dispatcher: RegistryServiceAggregate) -> None:
     """Inject the aggregate facade used by all MCP commands."""
     global _dispatcher
     _dispatcher = dispatcher
@@ -32,7 +32,7 @@ def get_dispatcher() -> RegistryServiceAggregate:
     """Return the injected aggregate facade."""
     if _dispatcher is None:
         raise RuntimeError(
-            "No dispatcher injected. Call set_dispatcher() before running commands."
+            "No dispatcher injected. Call set_mcp_dispatcher() before running commands."
         )
     return _dispatcher
 
@@ -44,7 +44,7 @@ def _execute_in_process(command: str, kwargs: dict) -> str:
             CommandName(value=command), kwargs
         )
         return result.value
-    except Exception as e:
+    except (KeyError, TypeError, ValueError, RuntimeError, OSError) as e:
         return json.dumps({"error": str(e)})
 
 
@@ -203,8 +203,8 @@ def vision_status() -> str:
                     "model_file": "FOUND" if (project_root / model_rel).exists() else "MISSING",
                     "mmproj_file": "FOUND" if (project_root / mmproj_rel).exists() else "MISSING",
                 }
-        except Exception:
-            pass
+        except (OSError, ValueError) as e:
+            native_files["config_error"] = str(e)
 
     status_cfg: dict[str, Any] = {
         "config_yaml_detected": config_path.exists(),
@@ -226,7 +226,7 @@ def vision_status() -> str:
             resp = requests.get(f"{base_url}/models", timeout=5)
             deps["llm_endpoint"] = "OK"
             llm_ready = resp.status_code == 200
-        except Exception:
+        except (OSError, requests.RequestException):
             deps["llm_endpoint"] = "UNREACHABLE"
 
     caps = {

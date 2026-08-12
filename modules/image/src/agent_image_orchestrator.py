@@ -67,6 +67,8 @@ class ImageOrchestrator(RegistryServiceAggregate):
             img1 = FilePath(value=kwargs["image1"])
             img2 = FilePath(value=kwargs["image2"])
             return CommandOutput(
-                value=json.dumps(cap.compare_screenshots(img1, img2), indent=2)
+                value=json.dumps(
+                    cap.compare_screenshots(img1, img2).model_dump(), indent=2
+                )
             )
         raise ValueError(f"Unknown image command: {command.value}")

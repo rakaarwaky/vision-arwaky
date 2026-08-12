@@ -167,3 +167,11 @@ class ModelName(BaseModel):
     """Value object for the active VLM model name."""
 
     value: str
+
+
+class ScreenshotComparison(BaseModel):
+    """Result of comparing two screenshots."""
+
+    identical: bool
+    phash_diff: bool
+    differences: list[BoundingBox] = Field(default_factory=list)

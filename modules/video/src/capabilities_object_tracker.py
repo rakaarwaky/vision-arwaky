@@ -3,16 +3,15 @@
 
 import cv2
 
+from modules.shared.src.contract_object_tracking_protocol import (
+    ObjectTrackingProtocol,
+)
 from modules.shared.src.contract_opencv_image_protocol import OpenCVImageProtocol
 from modules.shared.src.taxonomy_vision_models_vo import (
     BoundingBox,
     FilePath,
     MaxFrames,
 )
-from modules.shared.src.contract_object_tracking_protocol import (
-    ObjectTrackingProtocol,
-)
-
 
 
 class ObjectTrackingTracker(ObjectTrackingProtocol):
@@ -33,8 +32,8 @@ class ObjectTrackingTracker(ObjectTrackingProtocol):
                 legacy_csrt_creator = getattr(legacy, "TrackerCSRT_create", None)
                 if legacy_csrt_creator is not None:
                     return legacy_csrt_creator()
-        except Exception as e:
-            _err = str(e)
+        except (AttributeError, RuntimeError, OSError):
+            pass
 
         try:
             kcf_creator = getattr(cv2, "TrackerKCF_create", None)
@@ -46,8 +45,8 @@ class ObjectTrackingTracker(ObjectTrackingProtocol):
                 legacy_kcf_creator = getattr(legacy, "TrackerKCF_create", None)
                 if legacy_kcf_creator is not None:
                     return legacy_kcf_creator()
-        except Exception as e:
-            _err = str(e)
+        except (AttributeError, RuntimeError, OSError):
+            pass
 
         return None
 

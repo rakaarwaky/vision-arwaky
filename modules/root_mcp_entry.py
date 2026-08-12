@@ -4,7 +4,7 @@ import sys
 from mcp.server.fastmcp import FastMCP
 
 from modules.mcp.src.surface_mcp_action import (
-    set_dispatcher as set_mcp_dispatcher,
+    set_mcp_dispatcher,
     vision_cancel,
     vision_execute,
     vision_help,
