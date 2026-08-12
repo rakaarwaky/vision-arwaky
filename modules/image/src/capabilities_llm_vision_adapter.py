@@ -15,7 +15,7 @@ import subprocess
 import threading
 import time
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import requests
 import yaml
@@ -398,7 +398,7 @@ class LLMVisionAdapter(LLMVisionProtocol):
 
             image_url = self._encode_image(path_str)
 
-            messages: list[dict[str, object]] = [
+            messages: Any = [
                 {
                     "role": "system",
                     "content": "You are an assistant who perfectly describes images and helps AI agents understand UI layouts.",

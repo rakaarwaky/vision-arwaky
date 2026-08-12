@@ -1,4 +1,5 @@
 import logging
+from typing import Any
 
 import cv2 as _cv2
 import numpy
@@ -65,10 +66,11 @@ class OpenCVImageAdapter(OpenCVImageProtocol):
     def calc_optical_flow(
         self, prev: numpy.ndarray, next_img: numpy.ndarray
     ) -> numpy.ndarray:
-        flow = _cv2.calcOpticalFlowFarneback(
-            prev, next_img, None, 0.5, 3, 15, 3, 5, 1.2, 0
+        flow: Any = None
+        result = _cv2.calcOpticalFlowFarneback(
+            prev, next_img, flow, 0.5, 3, 15, 3, 5, 1.2, 0
         )
-        return flow
+        return result
 
     def compare_histograms(self, h1: numpy.ndarray, h2: numpy.ndarray) -> float:
         return float(_cv2.compareHist(h1, h2, _cv2.HISTCMP_CORREL))

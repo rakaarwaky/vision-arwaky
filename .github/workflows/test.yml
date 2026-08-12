@@ -140,7 +140,7 @@ jobs:
       - name: Install lint-arwaky-cli
         run: |
           cargo install --git https://github.com/rakaarwaky/lint-arwaky \
-            --tag v2.0.0 --bin lint-arwaky-cli --locked
+            --tag v2.0.0 --package lint_arwaky-arwaky --bin lint-arwaky-cli --locked
 
       - name: Install Python deps for import scan
         run: |
