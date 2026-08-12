@@ -1,9 +1,22 @@
-from typing import Dict, Any, List
-from modules.shared.src.common.contract_image_processing_protocol import ImageProcessingProtocol
-from modules.shared.src.common.contract_opencv_image_protocol import OpenCVImageProtocol
-from modules.shared.src.common.contract_tesseract_ocr_protocol import TesseractOCRProtocol
-from modules.shared.src.common.contract_llm_vision_protocol import LLMVisionProtocol
-from modules.shared.src.common.taxonomy_vision_models_vo import BoundingBox, Detection, VisionAnalysis, FilePath, LanguageCode, AnalysisPrompt, OcrText
+from typing import Any
+
+from modules.shared.src.contract_image_processing_protocol import (
+    ImageProcessingProtocol,
+)
+from modules.shared.src.contract_llm_vision_protocol import LLMVisionProtocol
+from modules.shared.src.contract_opencv_image_protocol import OpenCVImageProtocol
+from modules.shared.src.contract_tesseract_ocr_protocol import (
+    TesseractOCRProtocol,
+)
+from modules.shared.src.taxonomy_vision_models_vo import (
+    AnalysisPrompt,
+    BoundingBox,
+    Detection,
+    FilePath,
+    LanguageCode,
+    OcrText,
+    VisionAnalysis,
+)
 
 
 class ImageProcessingProcessor(ImageProcessingProtocol):
@@ -21,8 +34,8 @@ class ImageProcessingProcessor(ImageProcessingProtocol):
 
     def analyze_screenshot(self, image_path: FilePath, prompt: AnalysisPrompt) -> VisionAnalysis:
         """Analyze screenshot for UI elements and text.
-        
-        If prompt is provided and a local VLM is available, use LLM for 
+
+        If prompt is provided and a local VLM is available, use LLM for
         open-ended visual analysis. Otherwise fallback to OCR + element detection.
         """
         p_val = prompt.value if prompt else None
@@ -34,7 +47,7 @@ class ImageProcessingProcessor(ImageProcessingProtocol):
                     text=analysis,
                     model=self._llm.model or "unknown",
                 )
-            except Exception as e:
+            except (RuntimeError, ValueError, OSError) as e:
                 # Fallback to OpenCV if LLM fails
                 return VisionAnalysis(
                     source="opencv",
@@ -42,7 +55,8 @@ class ImageProcessingProcessor(ImageProcessingProtocol):
                     elements=self.find_elements(image_path),
                     error=str(e),
                 )
-        
+
+
         # Default: OCR + element detection
         text = self.extract_text(image_path, LanguageCode(value="eng")).value
         elements = self.find_elements(image_path)
@@ -57,7 +71,7 @@ class ImageProcessingProcessor(ImageProcessingProtocol):
         text_str = self._tesseract.extract_text(image_path, lang)
         return OcrText(value=text_str)
 
-    def find_elements(self, image_path: FilePath) -> List[Detection]:
+    def find_elements(self, image_path: FilePath) -> list[Detection]:
         """Find UI elements (buttons, input fields, etc)."""
         image = self._opencv.read_image(image_path)
         if image is None:
@@ -81,7 +95,7 @@ class ImageProcessingProcessor(ImageProcessingProtocol):
                 )
         return detections
 
-    def compare_screenshots(self, image_path1: FilePath, image_path2: FilePath) -> Dict[str, Any]:
+    def compare_screenshots(self, image_path1: FilePath, image_path2: FilePath) -> dict[str, Any]:
         """Compare two screenshots and find differences."""
         img1 = self._opencv.read_image(image_path1)
         img2 = self._opencv.read_image(image_path2)
@@ -128,3 +142,4 @@ class ImageProcessingProcessor(ImageProcessingProtocol):
             "phash_diff": hash1 != hash2,
             "differences": differences,
         }
+

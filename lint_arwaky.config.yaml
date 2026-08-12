@@ -5,19 +5,12 @@
 # ═══════════════════════════════════════════════════════════════════════
 
 thresholds:
-  score: 0.0
+  score: 100.0
   complexity: 15
 
 # ─── Adapters ─────────────────────────────────────────────────────────
 # All adapters listed. The system auto-filters by detected language.
 adapters:
-  # Rust
-  - name: "clippy"
-    weight: 1.0
-  - name: "rustfmt"
-    weight: 1.0
-  - name: "cargo-audit"
-    weight: 1.0
   # Python
   - name: "ruff"
     weight: 1.0
@@ -25,18 +18,11 @@ adapters:
     weight: 1.0
   - name: "bandit"
     weight: 1.0
-  # TypeScript/JavaScript
-  - name: "eslint"
-    weight: 1.0
-  - name: "tsc"
-    weight: 1.0
-  - name: "prettier"
-    weight: 1.0
   # Internal
   - name: "architecture"
     weight: 3.0
 
-ignored_rules: ["AES203"]
+ignored_rules: []
 
 ignored_paths: []
 
@@ -319,8 +305,7 @@ architecture:
             ]
 
     AES203:
-      enabled: false
-      enabled: false
+      enabled: true
       scope:
         ["taxonomy", "contract", "utility", "capabilities", "agent", "surface"]
       exceptions: []

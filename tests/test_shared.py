@@ -1,16 +1,24 @@
 """Tests for shared/contract layer — all protocols, ports, and models."""
 import json
-import os
-import tempfile
-import numpy as np
-import cv2
-from pathlib import Path
-from modules.shared.src.common.taxonomy_vision_models_vo import (
-    BoundingBox, Detection, MotionEvent, SceneChange, MemoryEntry,
-    VideoTimeline, VisionAnalysis, FilePath, LanguageCode, OcrText,
-    CommandName, CommandOutput, MemoryLabel, DistanceThreshold,
-    SceneThreshold, MinArea, AnalysisPrompt, IntervalSeconds,
-    MaxFrames, TimeSegment, VideoInfo,
+
+from modules.shared.src.taxonomy_vision_models_vo import (
+    AnalysisPrompt,
+    BoundingBox,
+    CommandName,
+    CommandOutput,
+    Detection,
+    DistanceThreshold,
+    FilePath,
+    IntervalSeconds,
+    LanguageCode,
+    MaxFrames,
+    MemoryLabel,
+    MinArea,
+    OcrText,
+    SceneThreshold,
+    TimeSegment,
+    VideoInfo,
+    VisionAnalysis,
 )
 
 
@@ -67,21 +75,25 @@ class TestProtocolInstantiation:
     """Test that protocols/ports can be subclassed and used."""
 
     def test_opencv_port_interface(self):
-        from modules.shared.src.common.contract_opencv_image_protocol import OpenCVImageProtocol
+        from modules.shared.src.contract_opencv_image_protocol import (
+            OpenCVImageProtocol,
+        )
         assert callable(OpenCVImageProtocol.read_image)
 
     def test_image_processing_protocol(self):
-        from modules.shared.src.common.contract_image_processing_protocol import ImageProcessingProtocol
+        from modules.shared.src.contract_image_processing_protocol import (
+            ImageProcessingProtocol,
+        )
         assert callable(ImageProcessingProtocol.analyze_screenshot)
 
     def test_llm_vision_port(self):
-        from modules.shared.src.common.contract_llm_vision_protocol import LLMVisionProtocol
+        from modules.shared.src.contract_llm_vision_protocol import LLMVisionProtocol
         assert callable(LLMVisionProtocol.analyze_image)
 
     def test_video_processing_protocol(self):
-        from modules.shared.src.common.contract_video_processing_protocol import VideoProcessingProtocol
+        from modules.shared.src.contract_video_processing_protocol import (
+            VideoProcessingProtocol,
+        )
         assert callable(VideoProcessingProtocol.extract_frames)
 
-    def test_visual_memory_protocol(self):
-        from modules.shared.src.common.contract_visual_memory_protocol import VisualMemoryProtocol
-        assert callable(VisualMemoryProtocol.remember_image)
+

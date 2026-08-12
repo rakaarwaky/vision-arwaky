@@ -1,27 +1,30 @@
 import sys
-from modules.cli.src.surface_cli_controller import create_parser
+
 from modules.cli.src.surface_cli_command import (
     cmd_analyze,
-    cmd_ocr,
-    cmd_elements,
-    cmd_compare,
-    cmd_video_info,
-    cmd_extract_frames,
-    cmd_convert,
     cmd_check_corruption,
+    cmd_compare,
+    cmd_convert,
     cmd_create_gif,
-    cmd_detect_scenes,
     cmd_detect_motion,
-    cmd_track,
-    cmd_timeline,
-    cmd_memory_store,
-    cmd_memory_search,
-    cmd_memory_list,
+    cmd_detect_scenes,
+    cmd_elements,
+    cmd_extract_frames,
+    cmd_ocr,
     cmd_test,
+    cmd_timeline,
+    cmd_track,
+    cmd_video_info,
+    set_dispatcher as set_cli_dispatcher,
 )
+from modules.cli.src.surface_cli_controller import create_parser
+from modules.root_composition_container import build
 
 
 def cli():
+    graph = build()
+    set_cli_dispatcher(graph["dispatcher"])
+
     parser = create_parser()
     args = parser.parse_args()
 
@@ -46,17 +49,7 @@ def cli():
         "test": cmd_test,
     }
 
-    if args.command == "memory":
-        if args.memory_cmd == "store":
-            cmd_memory_store(args)
-        elif args.memory_cmd == "search":
-            cmd_memory_search(args)
-        elif args.memory_cmd == "list":
-            cmd_memory_list()
-        else:
-            print("vision memory: requires subcommand (store|search|list)")
-            sys.exit(1)
-    elif args.command in commands:
+    if args.command in commands:
         sys.exit(commands[args.command](args) or 0)
     else:
         parser.print_help()

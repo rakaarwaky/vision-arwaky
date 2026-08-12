@@ -1,8 +1,16 @@
-from typing import List
-from modules.shared.src.common.contract_video_processing_protocol import VideoProcessingProtocol
-from modules.shared.src.common.contract_opencv_image_protocol import OpenCVImageProtocol
-from modules.shared.src.common.contract_ffmpeg_video_protocol import FFmpegVideoProtocol
-from modules.shared.src.common.taxonomy_vision_models_vo import VideoTimeline, FilePath, TimeSegment, IntervalSeconds, VideoInfo
+
+from modules.shared.src.contract_ffmpeg_video_protocol import FFmpegVideoProtocol
+from modules.shared.src.contract_opencv_image_protocol import OpenCVImageProtocol
+from modules.shared.src.contract_video_processing_protocol import (
+    VideoProcessingProtocol,
+)
+from modules.shared.src.taxonomy_vision_models_vo import (
+    FilePath,
+    IntervalSeconds,
+    TimeSegment,
+    VideoInfo,
+    VideoTimeline,
+)
 
 
 class VideoProcessingProcessor(VideoProcessingProtocol):
@@ -13,10 +21,10 @@ class VideoProcessingProcessor(VideoProcessingProtocol):
         self._opencv = opencv_port
         self._ffmpeg = ffmpeg_port
 
-    async def extract_frames(self, video_path: FilePath, interval: IntervalSeconds) -> List[FilePath]:
+    async def extract_frames(self, video_path: FilePath, interval: IntervalSeconds) -> list[FilePath]:
         """Extract frames from video at specific interval."""
-        import os
         import glob
+        import os
         output_pattern = f"{video_path.value}_frame_%04d.jpg"
         # Remove stale frames first
         for stale in glob.glob(output_pattern.replace("%04d", "*")):

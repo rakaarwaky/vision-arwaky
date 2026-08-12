@@ -63,23 +63,10 @@ def create_parser() -> argparse.ArgumentParser:
     timeline.add_argument("--video", required=True, help="Video path")
     timeline.add_argument("--interval", type=int, default=5, help="Interval in seconds")
 
-    # --- Memory commands ---
-    memory = subparsers.add_parser("memory", help="Visual memory operations")
-    mem_sub = memory.add_subparsers(dest="memory_cmd")
-
-    mem_store = mem_sub.add_parser("store", help="Store image in memory")
-    mem_store.add_argument("--image", required=True, help="Image path")
-    mem_store.add_argument("--label", required=True, help="Label for the image")
-
-    mem_search = mem_sub.add_parser("search", help="Search similar images")
-    mem_search.add_argument("--query", required=True, help="Query image path")
-    mem_search.add_argument("--max-distance", type=int, default=15, help="Max hamming distance")
-
-    mem_sub.add_parser("list", help="List all stored images")
-    
     # --- Test command ---
     test_parser = subparsers.add_parser("test", help="Run vision-arwaky test suite")
     test_parser.add_argument("--image", default=None, help="Path to test image (optional)")
     test_parser.add_argument("--verbose", "-v", action="store_true", help="Verbose output")
 
     return parser
+

@@ -1,5 +1,10 @@
 from abc import ABC, abstractmethod
-from modules.shared.src.common.taxonomy_vision_models_vo import VideoTimeline, FilePath, IntervalSeconds
+
+from modules.shared.src.taxonomy_vision_models_vo import (
+    FilePath,
+    IntervalSeconds,
+    VideoTimeline,
+)
 
 
 class VideoTimelineProtocol(ABC):
@@ -8,4 +13,3 @@ class VideoTimelineProtocol(ABC):
     @abstractmethod
     async def generate_timeline(self, video_path: FilePath, interval: IntervalSeconds) -> VideoTimeline:
         """Generate structured chronological event timeline summarizing a video."""
-        pass

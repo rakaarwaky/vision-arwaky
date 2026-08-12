@@ -3,27 +3,61 @@
 import json
 import os
 import tempfile
-import numpy as np
+
 import cv2
-from modules.image.src.agent_image_orchestrator import ImageOrchestrator
-from modules.video.src.agent_video_orchestrator import VideoOrchestrator
-from modules.memory.src.agent_memory_orchestrator import MemoryOrchestrator
+import numpy as np
+
 from modules.mcp.src.surface_mcp_action import vision_list_commands, vision_status
-from modules.shared.src.common.taxonomy_vision_models_vo import (
+from modules.shared.src.taxonomy_vision_models_vo import (
     FilePath,
     LanguageCode,
-    AnalysisPrompt,
-    IntervalSeconds,
-    VideoInfo,
-    SceneThreshold,
     MinArea,
-    MemoryLabel,
-    DistanceThreshold,
-    MaxFrames,
+    SceneThreshold,
+    VideoInfo,
 )
 
-
 # ── Helpers ──────────────────────────────────────────────────
+
+def build_image_capabilities():
+    """Build image processor + orchestrator via DI."""
+    from modules.image.src.capabilities_image_processing_processor import (
+        ImageProcessingProcessor,
+    )
+    from modules.image.src.capabilities_llm_vision_adapter import LLMVisionAdapter
+    from modules.image.src.capabilities_tesseract_ocr_adapter import (
+        TesseractOCRAdapter,
+    )
+    from modules.opencv.src.capabilities_opencv_image_adapter import (
+        OpenCVImageAdapter,
+    )
+
+    opencv = OpenCVImageAdapter()
+    tesseract = TesseractOCRAdapter()
+    llm = LLMVisionAdapter()
+    processor = ImageProcessingProcessor(
+        opencv_port=opencv,
+        tesseract_port=tesseract,
+        llm_port=llm,
+    )
+    return opencv, processor
+
+
+def build_video_capabilities():
+    """Build video capabilities via DI."""
+    from modules.opencv.src.capabilities_opencv_image_adapter import (
+        OpenCVImageAdapter,
+    )
+    from modules.video.src.capabilities_ffmpeg_adapter import FFmpegVideoAdapter
+    from modules.video.src.capabilities_video_analyzer import VideoAnalysisAnalyzer
+    from modules.video.src.capabilities_video_processor import (
+        VideoProcessingProcessor,
+    )
+
+    opencv = OpenCVImageAdapter()
+    ffmpeg = FFmpegVideoAdapter()
+    video_proc = VideoProcessingProcessor(opencv, ffmpeg)
+    video_analysis = VideoAnalysisAnalyzer(opencv)
+    return video_proc, video_analysis
 
 def create_test_image(width=100, height=100, color=(255, 0, 0)):
     """Create a test image."""
@@ -63,7 +97,7 @@ def create_test_video(num_frames=30, width=100, height=100):
 
 class TestImageProcessing:
     def test_find_elements(self):
-        cap = ImageOrchestrator.get_image_processing()
+        _, cap = build_image_capabilities()
         img = create_test_image()
         path = save_test_image(img)
         try:
@@ -75,7 +109,7 @@ class TestImageProcessing:
             os.unlink(path)
 
     def test_compare_identical(self):
-        cap = ImageOrchestrator.get_image_processing()
+        _, cap = build_image_capabilities()
         img = create_test_image()
         path1 = save_test_image(img)
         path2 = save_test_image(img)
@@ -87,7 +121,7 @@ class TestImageProcessing:
             os.unlink(path2)
 
     def test_compare_different(self):
-        cap = ImageOrchestrator.get_image_processing()
+        _, cap = build_image_capabilities()
         img1 = create_test_image(color=(255, 0, 0))
         img2 = create_test_image(color=(0, 255, 0))
         path1 = save_test_image(img1)
@@ -101,7 +135,7 @@ class TestImageProcessing:
             os.unlink(path2)
 
     def test_extract_text_no_tesseract(self):
-        cap = ImageOrchestrator.get_image_processing()
+        _, cap = build_image_capabilities()
         img = create_test_image()
         path = save_test_image(img)
         try:
@@ -117,7 +151,7 @@ class TestImageProcessing:
 
 class TestVideoProcessing:
     def test_get_info(self):
-        cap = VideoOrchestrator.get_video_processing()
+        cap, _ = build_video_capabilities()
         path = create_test_video()
         try:
             info = cap.get_info(FilePath(value=path))
@@ -127,7 +161,7 @@ class TestVideoProcessing:
             os.unlink(path)
 
     def test_check_corruption_valid(self):
-        cap = VideoOrchestrator.get_video_processing()
+        cap, _ = build_video_capabilities()
         path = create_test_video()
         try:
             corrupted = cap.check_corruption(FilePath(value=path))
@@ -138,7 +172,7 @@ class TestVideoProcessing:
 
 class TestVideoAnalysis:
     def test_detect_scenes(self):
-        cap = VideoOrchestrator.get_video_analysis()
+        _, cap = build_video_capabilities()
         path = create_test_video(num_frames=30)
         try:
             scenes = cap.detect_scenes(FilePath(value=path), SceneThreshold(value=20.0))
@@ -147,29 +181,11 @@ class TestVideoAnalysis:
             os.unlink(path)
 
     def test_detect_motion(self):
-        cap = VideoOrchestrator.get_video_analysis()
+        _, cap = build_video_capabilities()
         path = create_test_video(num_frames=30)
         try:
             events = cap.detect_motion(FilePath(value=path), MinArea(value=100))
             assert isinstance(events, list)
-        finally:
-            os.unlink(path)
-
-
-class TestVisualMemory:
-    def test_remember_and_search(self):
-        cap = MemoryOrchestrator.get_visual_memory()
-        img = create_test_image()
-        path = save_test_image(img)
-        try:
-            entry = cap.remember_image(FilePath(value=path), MemoryLabel(value="test_label"))
-            assert entry.label == "test_label"
-            assert entry.phash != ""
-            assert entry.image_path == os.path.realpath(path)
-
-            # Search should find it
-            results = cap.find_similar_images(FilePath(value=path), DistanceThreshold(value=0))
-            assert len(results) >= 1
         finally:
             os.unlink(path)
 
@@ -182,7 +198,6 @@ class TestMCPTools:
         data = json.loads(result)
         assert "image" in data
         assert "video" in data
-        assert "memory" in data
 
     def test_list_commands_filter(self):
         result = vision_list_commands(domain="image")
@@ -195,3 +210,4 @@ class TestMCPTools:
         data = json.loads(result)
         assert "dependencies" in data
         assert "capabilities" in data
+

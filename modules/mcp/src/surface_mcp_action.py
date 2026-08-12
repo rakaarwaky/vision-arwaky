@@ -1,73 +1,51 @@
-import shutil
+"""MCP surface — expose aggregate facade as MCP tools (pure delegation)."""
+
 import json
+import shutil
 from pathlib import Path
 from typing import Any
+
 from mcp.server.fastmcp import FastMCP
-from .surface_mcp_controller import _check_dependencies, _check_native_vlm
-from modules.image.src.agent_image_orchestrator import ImageOrchestrator
-from modules.video.src.agent_video_orchestrator import VideoOrchestrator
-from modules.memory.src.agent_memory_orchestrator import MemoryOrchestrator
+
+from modules.shared.src.contract_registry_service_aggregate import (
+    RegistryServiceAggregate,
+)
+from modules.shared.src.taxonomy_vision_models_vo import CommandName
+
+from .surface_mcp_controller import _check_dependencies
 
 mcp = FastMCP("Vision")
 
 VISION_PROJECT = str(Path(__file__).resolve().parents[3])
 DEFAULT_URL = "http://127.0.0.1:1234/v1"
 
+_dispatcher: RegistryServiceAggregate | None = None
 
-IMAGE_COMMANDS = {"analyze", "ocr", "elements", "compare"}
-VIDEO_COMMANDS = {
-    "video-info", "extract-frames", "convert", "check-corruption",
-    "create-gif", "detect-scenes", "detect-motion", "track", "timeline",
-}
-MEMORY_COMMANDS = {"memory-store", "memory-search", "memory-list"}
+
+def set_dispatcher(dispatcher: RegistryServiceAggregate) -> None:
+    """Inject the aggregate facade used by all MCP commands."""
+    global _dispatcher
+    _dispatcher = dispatcher
+
+
+def get_dispatcher() -> RegistryServiceAggregate:
+    """Return the injected aggregate facade."""
+    if _dispatcher is None:
+        raise RuntimeError(
+            "No dispatcher injected. Call set_dispatcher() before running commands."
+        )
+    return _dispatcher
 
 
 def _execute_in_process(command: str, kwargs: dict) -> str:
-    """Route command to the appropriate feature orchestrator."""
+    """Route command to the appropriate feature orchestrator via the facade."""
     try:
-        if command in IMAGE_COMMANDS:
-            result = ImageOrchestrator.execute_image_cmd(command, kwargs)
-        elif command in VIDEO_COMMANDS:
-            result = VideoOrchestrator.execute_video_cmd(command, kwargs)
-        elif command in MEMORY_COMMANDS:
-            result = MemoryOrchestrator.execute_memory_cmd(command, kwargs)
-        else:
-            return json.dumps({"error": f"Unknown command: {command}"})
-        return result if result is not None else json.dumps({"error": f"Command failed: {command}"})
+        result = get_dispatcher().execute_in_process(
+            CommandName(value=command), kwargs
+        )
+        return result.value
     except Exception as e:
         return json.dumps({"error": str(e)})
-
-
-def _resolve_llm_readiness(
-    adapter: object,
-    deps: dict,
-    project_root: Path,
-    status_cfg: dict,
-) -> bool:
-    """Determine LLM readiness and populate status config with native file status."""
-    selected_backend = getattr(adapter, "backend", "external")
-    adapter_config = getattr(adapter, "config", {})
-    if selected_backend == "native":
-        files_status, file_match = _check_native_vlm(project_root, adapter_config)
-        status_cfg["native_files"] = files_status
-        llm_ready = deps.get("llama-cpp-python") == "OK" and file_match
-        deps["native_llm_state"] = "READY" if llm_ready else "NOT_READY"
-        return llm_ready
-    try:
-        base_url = getattr(adapter, "base_url", DEFAULT_URL)
-        import requests
-        session = requests.Session()
-        session.headers.update({
-            "Authorization": f"Bearer {getattr(adapter, 'api_key', '')}",
-            "Content-Type": "application/json",
-        })
-        resp = session.get(f"{base_url}/models", timeout=5)
-        session.close()
-        deps["llm_endpoint"] = "OK"
-        return resp.status_code == 200
-    except Exception:
-        deps["llm_endpoint"] = "UNREACHABLE"
-        return False
 
 
 @mcp.tool()
@@ -203,26 +181,58 @@ def vision_help(section: str = "all") -> str:
 @mcp.tool()
 def vision_status() -> str:
     """Check vision server status, dependencies, and capabilities."""
-    adapter = ImageOrchestrator.get_llm()
-
     project_root = Path(VISION_PROJECT)
     user_config = Path.home() / ".config" / "vision-arwaky" / "config.yaml"
     config_path = user_config if user_config.exists() else (project_root / "config.yaml")
     deps = _check_dependencies(shutil)
+
+    # Read backend from config
+    selected_backend = "external"
+    native_files: dict = {}
+    if config_path.exists():
+        try:
+            import yaml
+            with open(config_path) as f:
+                cfg_data = yaml.safe_load(f) or {}
+            selected_backend = str(cfg_data.get("backend", "external"))
+            native_cfg = cfg_data.get("native", {})
+            if isinstance(native_cfg, dict):
+                model_rel = str(native_cfg.get("model_path", ""))
+                mmproj_rel = str(native_cfg.get("mmproj_path", ""))
+                native_files = {
+                    "model_file": "FOUND" if (project_root / model_rel).exists() else "MISSING",
+                    "mmproj_file": "FOUND" if (project_root / mmproj_rel).exists() else "MISSING",
+                }
+        except Exception:
+            pass
+
     status_cfg: dict[str, Any] = {
         "config_yaml_detected": config_path.exists(),
         "config_source": "~/.config/vision-arwaky/" if user_config.exists() else "project root",
-        "selected_backend": getattr(adapter, "backend", "external"),
-        "native_files": {},
+        "selected_backend": selected_backend,
+        "native_files": native_files,
     }
 
-    llm_ready = _resolve_llm_readiness(adapter, deps, project_root, status_cfg)
+    # Resolve LLM readiness
+    llm_ready = False
+    if selected_backend == "native":
+        file_match = all(v == "FOUND" for v in native_files.values())
+        llm_ready = deps.get("llama-cpp-python") == "OK" and file_match
+        deps["native_llm_state"] = "READY" if llm_ready else "NOT_READY"
+    else:
+        try:
+            import requests
+            base_url = DEFAULT_URL
+            resp = requests.get(f"{base_url}/models", timeout=5)
+            deps["llm_endpoint"] = "OK"
+            llm_ready = resp.status_code == 200
+        except Exception:
+            deps["llm_endpoint"] = "UNREACHABLE"
 
     caps = {
         "image_analysis": deps.get("opencv") == "OK",
         "ocr": deps.get("pytesseract") == "OK" and deps.get("pillow") == "OK",
         "video_processing": deps.get("opencv") == "OK" and deps.get("ffmpeg") == "OK",
-        "visual_memory": deps.get("opencv") == "OK",
         "llm_vision": llm_ready,
     }
 

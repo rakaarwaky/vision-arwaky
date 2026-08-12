@@ -1,5 +1,7 @@
-from modules.shared.src.common.taxonomy_vision_models_vo import FilePath
 from abc import ABC, abstractmethod
+from typing import Any
+
+from modules.shared.src.taxonomy_vision_models_vo import FilePath
 
 
 class OpenCVImageProtocol(ABC):
@@ -9,78 +11,60 @@ class OpenCVImageProtocol(ABC):
     @abstractmethod
     def cv2(self):
         """Expose raw cv2 namespace for standard operations."""
-        pass
 
     @property
     @abstractmethod
     def np(self):
         """Expose numpy namespace."""
-        pass
 
     @abstractmethod
-    def read_image(self, path):
+    def read_image(self, path: FilePath | str):
         """Read image from path."""
-        pass
 
     @abstractmethod
-    def write_image(self, path, image):
+    def write_image(self, path: FilePath | str, image) -> bool:
         """Write image to path."""
-        pass
 
     @abstractmethod
-    def get_video_capture(self, path):
+    def get_video_capture(self, path: FilePath | str):
         """Get VideoCapture object."""
-        pass
 
     @abstractmethod
-    def get_dimensions(self, image):
+    def get_dimensions(self, image) -> tuple[int, int]:
         """Get image width and height."""
-        pass
 
     @abstractmethod
     def to_grayscale(self, image):
         """Convert BGR image to grayscale."""
-        pass
 
     @abstractmethod
-    def detect_edges(self, image, t1 = 50, t2 = 150):
+    def detect_edges(self, image, t1: int = 50, t2: int = 150):
         """Perform Canny edge detection."""
-        pass
 
     @abstractmethod
-    def find_contours(self, edges):
+    def find_contours(self, edges) -> list[Any]:
         """Find contours from edge map."""
-        pass
 
     @abstractmethod
-    def get_contour_area(self, contour):
+    def get_contour_area(self, contour) -> Any:
         """Get contour area."""
-        pass
 
     @abstractmethod
-    def get_bounding_box(self, contour):
+    def get_bounding_box(self, contour) -> tuple[int, int, int, int]:
         """Get x, y, width, height bounding box for a contour."""
-        pass
 
     @abstractmethod
     def abs_diff(self, img1, img2):
         """Compute absolute difference between two images."""
-        pass
 
     @abstractmethod
     def calc_optical_flow(self, prev, next_img):
         """Calculate optical flow between consecutive frames."""
-        pass
 
     @abstractmethod
-    def compare_histograms(self, h1, h2):
+    def compare_histograms(self, h1, h2) -> Any:
         """Compare two color histograms."""
-        pass
 
     @abstractmethod
-    def compute_phash(self, image):
+    def compute_phash(self, image) -> Any:
         """Compute perceptual hash of an image."""
-        pass
-
-
-_use_vo = FilePath

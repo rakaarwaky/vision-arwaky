@@ -1,8 +1,13 @@
 import asyncio
 import logging
-from modules.shared.src.common.contract_ffmpeg_video_protocol import FFmpegVideoProtocol
-from modules.shared.src.common.taxonomy_vision_models_vo import FilePath, TimeSegment, VideoTimeline
-from modules.system_utils.src.capabilities_system_utils_util import SystemUtilsUtil
+
+from modules.shared.src.contract_ffmpeg_video_protocol import FFmpegVideoProtocol
+from modules.shared.src.taxonomy_vision_models_vo import (
+    FilePath,
+    TimeSegment,
+    VideoTimeline,
+)
+from modules.shared.src.utility_system_utils import get_ffmpeg_path
 
 logger = logging.getLogger("mcp_server.infrastructure.ffmpeg")
 
@@ -13,8 +18,9 @@ class FFmpegVideoAdapter(FFmpegVideoProtocol):
     _taxonomy_marker = VideoTimeline
 
     async def run(self, args: list[str], capture_output: bool = True) -> str:
-        ffmpeg_path = SystemUtilsUtil().FFMPEG_PATH
-        # Convert any potential SystemUtilsUtil path or environment string
+        ffmpeg_path = get_ffmpeg_path()
+        # Convert any potential path or environment string
+
         full_args = [ffmpeg_path, *args]
         logger.info(f"Running ffmpeg: {' '.join(full_args)}")
 

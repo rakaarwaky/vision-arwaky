@@ -1,64 +1,72 @@
-from modules.shared.src.common.contract_registry_service_aggregate import RegistryServiceAggregate
-"""Image Agent Orchestrator — coordinates image processing capabilities."""
+"""Image Agent Orchestrator — coordinates image processing capabilities via DI."""
 
-import importlib
 import json
-from typing import Any, Dict
+from typing import Any
 
-from modules.shared.src.common.taxonomy_vision_models_vo import FilePath, LanguageCode, AnalysisPrompt
+from modules.shared.src.contract_image_processing_protocol import (
+    ImageProcessingProtocol,
+)
+from modules.shared.src.contract_llm_vision_protocol import LLMVisionProtocol
+from modules.shared.src.contract_opencv_image_protocol import OpenCVImageProtocol
+from modules.shared.src.contract_registry_service_aggregate import (
+    RegistryServiceAggregate,
+)
+from modules.shared.src.contract_tesseract_ocr_protocol import (
+    TesseractOCRProtocol,
+)
+from modules.shared.src.taxonomy_vision_models_vo import (
+    AnalysisPrompt,
+    CommandName,
+    CommandOutput,
+    FilePath,
+    LanguageCode,
+)
 
 
 class ImageOrchestrator(RegistryServiceAggregate):
-    """Orchestrator for image processing domain."""
+    """Orchestrator for image processing domain (pure delegation facade)."""
 
-    @staticmethod
-    def get_opencv():
-        module = importlib.import_module("modules.opencv.src.capabilities_opencv_image_adapter")
-        cls = getattr(module, "OpenCVImageAdapter")
-        return cls()
+    def __init__(
+        self,
+        image_processing: ImageProcessingProtocol,
+        opencv: OpenCVImageProtocol,
+        tesseract: TesseractOCRProtocol,
+        llm: LLMVisionProtocol,
+    ):
+        self._image_processing = image_processing
+        self._opencv = opencv
+        self._tesseract = tesseract
+        self._llm = llm
 
-    @staticmethod
-    def get_tesseract():
-        module = importlib.import_module("modules.image.src.capabilities_tesseract_ocr_adapter")
-        cls = getattr(module, "TesseractOCRAdapter")
-        return cls()
+    def execute_in_process(
+        self,
+        command: CommandName,
+        kwargs: dict[str, Any],
+    ) -> CommandOutput:
+        """Execute image-related commands by delegating to the injected processor."""
+        cap = self._image_processing
 
-    @staticmethod
-    def get_llm():
-        module = importlib.import_module("modules.image.src.capabilities_llm_vision_adapter")
-        cls = getattr(module, "LLMVisionAdapter")
-        return cls()
-
-    @staticmethod
-    def get_image_processing():
-        cap_mod = importlib.import_module("modules.image.src.capabilities_image_processing_processor")
-        cap_cls = getattr(cap_mod, "ImageProcessingProcessor")
-        return cap_cls(
-            opencv_port=ImageOrchestrator.get_opencv(),
-            tesseract_port=ImageOrchestrator.get_tesseract(),
-            llm_port=ImageOrchestrator.get_llm(),
-        )
-
-    @staticmethod
-    def execute_image_cmd(command: str, kwargs: Dict[str, Any]) -> str | None:
-        """Execute image-related commands."""
-        cap = ImageOrchestrator.get_image_processing()
-
-        if command == "analyze":
+        if command.value == "analyze":
             img = FilePath(value=kwargs["image"])
             prompt_val = kwargs.get("prompt")
             prompt = AnalysisPrompt(value=prompt_val)
-            return json.dumps(cap.analyze_screenshot(img, prompt).model_dump(), indent=2)
-        elif command == "ocr":
+            return CommandOutput(
+                value=json.dumps(cap.analyze_screenshot(img, prompt).model_dump(), indent=2)
+            )
+        elif command.value == "ocr":
             img = FilePath(value=kwargs["image"])
             lang_val = kwargs.get("lang") or "eng"
             lang = LanguageCode(value=lang_val)
-            return cap.extract_text(img, lang).value
-        elif command == "elements":
+            return CommandOutput(value=cap.extract_text(img, lang).value)
+        elif command.value == "elements":
             img = FilePath(value=kwargs["image"])
-            return json.dumps([e.model_dump() for e in cap.find_elements(img)], indent=2)
-        elif command == "compare":
+            return CommandOutput(
+                value=json.dumps([e.model_dump() for e in cap.find_elements(img)], indent=2)
+            )
+        elif command.value == "compare":
             img1 = FilePath(value=kwargs["image1"])
             img2 = FilePath(value=kwargs["image2"])
-            return json.dumps(cap.compare_screenshots(img1, img2), indent=2)
-        return None
+            return CommandOutput(
+                value=json.dumps(cap.compare_screenshots(img1, img2), indent=2)
+            )
+        raise ValueError(f"Unknown image command: {command.value}")

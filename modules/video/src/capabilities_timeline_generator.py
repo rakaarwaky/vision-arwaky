@@ -2,12 +2,22 @@
 
 import os
 import tempfile
-from typing import List
-from modules.shared.src.common.contract_video_timeline_protocol import VideoTimelineProtocol
-from modules.shared.src.common.contract_opencv_image_protocol import OpenCVImageProtocol
-from modules.shared.src.common.contract_video_processing_protocol import VideoProcessingProtocol
-from modules.shared.src.common.contract_video_analysis_protocol import VideoAnalysisProtocol
-from modules.shared.src.common.taxonomy_vision_models_vo import VideoTimeline, FilePath, IntervalSeconds
+
+from modules.shared.src.contract_opencv_image_protocol import OpenCVImageProtocol
+from modules.shared.src.contract_video_analysis_protocol import (
+    VideoAnalysisProtocol,
+)
+from modules.shared.src.contract_video_processing_protocol import (
+    VideoProcessingProtocol,
+)
+from modules.shared.src.contract_video_timeline_protocol import (
+    VideoTimelineProtocol,
+)
+from modules.shared.src.taxonomy_vision_models_vo import (
+    FilePath,
+    IntervalSeconds,
+    VideoTimeline,
+)
 
 
 class VideoTimelineGenerator(VideoTimelineProtocol):
@@ -40,7 +50,7 @@ class VideoTimelineGenerator(VideoTimelineProtocol):
         interval_val = interval.value if interval else 5.0
         frame_interval = int(fps * interval_val) if fps > 0 else 30
 
-        key_frames: List[dict] = []
+        key_frames: list[dict] = []
         frame_idx = 0
         tmp_dir = tempfile.mkdtemp(prefix="vision_timeline_")
 

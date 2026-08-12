@@ -1,7 +1,6 @@
 
 """Tests for CLI and MCP surfaces."""
 import json
-import pytest
 
 
 class TestCLIHandler:
@@ -32,19 +31,13 @@ class TestCLIHandler:
         sub = parser._subparsers._group_actions[0].choices.get("test")
         assert sub is not None
 
-    def test_parser_memory_subcommands(self):
-        from modules.cli.src.surface_cli_controller import create_parser
-        parser = create_parser()
-        mem = parser._subparsers._group_actions[0].choices.get("memory")
-        assert mem is not None
-        mem_sub = mem._subparsers._group_actions[0].choices
-        for sc in ["store", "search", "list"]:
-            assert sc in mem_sub, f"Missing memory subcommand: {sc}"
+
 
 
 class TestMCPHandler:
     def test_check_dependencies(self):
         import shutil
+
         from modules.mcp.src.surface_mcp_controller import _check_dependencies
         deps = _check_dependencies(shutil)
         assert isinstance(deps, dict)
@@ -120,7 +113,9 @@ class TestCLIEntry:
 
 class TestTracking:
     def test_tracking_import(self):
+        from modules.opencv.src.capabilities_opencv_image_adapter import (
+            OpenCVImageAdapter,
+        )
         from modules.video.src.capabilities_object_tracker import ObjectTrackingTracker
-        from modules.opencv.src.capabilities_opencv_image_adapter import OpenCVImageAdapter
         tracker = ObjectTrackingTracker(OpenCVImageAdapter())
         assert tracker is not None

@@ -1,10 +1,18 @@
 """Object tracking using OpenCV tracking algorithms."""
 
+
 import cv2
-from typing import List
-from modules.shared.src.video.contract_object_tracking_protocol import ObjectTrackingProtocol
-from modules.shared.src.common.contract_opencv_image_protocol import OpenCVImageProtocol
-from modules.shared.src.common.taxonomy_vision_models_vo import BoundingBox, FilePath, MaxFrames
+
+from modules.shared.src.contract_opencv_image_protocol import OpenCVImageProtocol
+from modules.shared.src.taxonomy_vision_models_vo import (
+    BoundingBox,
+    FilePath,
+    MaxFrames,
+)
+from modules.shared.src.contract_object_tracking_protocol import (
+    ObjectTrackingProtocol,
+)
+
 
 
 class ObjectTrackingTracker(ObjectTrackingProtocol):
@@ -48,7 +56,7 @@ class ObjectTrackingTracker(ObjectTrackingProtocol):
         video_path: FilePath,
         initial_box: BoundingBox,
         max_frames: MaxFrames,
-    ) -> List[BoundingBox]:
+    ) -> list[BoundingBox]:
         """Track an object starting from an initial bounding box."""
         cap = self._opencv.get_video_capture(video_path.value)
         if not cap.isOpened():
@@ -75,7 +83,7 @@ class ObjectTrackingTracker(ObjectTrackingProtocol):
             cap.release()
             return []
 
-        boxes: List[BoundingBox] = [initial_box]
+        boxes: list[BoundingBox] = [initial_box]
         frame_count = 0
         max_frames_val = max_frames.value if max_frames else 300
 

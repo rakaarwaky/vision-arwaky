@@ -1,6 +1,10 @@
 from abc import ABC, abstractmethod
-from typing import List
-from modules.shared.src.common.taxonomy_vision_models_vo import BoundingBox, FilePath, MaxFrames
+
+from modules.shared.src.taxonomy_vision_models_vo import (
+    BoundingBox,
+    FilePath,
+    MaxFrames,
+)
 
 
 class ObjectTrackingProtocol(ABC):
@@ -12,6 +16,5 @@ class ObjectTrackingProtocol(ABC):
         video_path: FilePath,
         initial_box: BoundingBox,
         max_frames: MaxFrames,
-    ) -> List[BoundingBox]:
+    ) -> list[BoundingBox]:
         """Track object starting from initial_box throughout the video."""
-        pass

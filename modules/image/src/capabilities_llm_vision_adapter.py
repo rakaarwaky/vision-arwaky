@@ -15,10 +15,12 @@ import subprocess
 import threading
 import time
 from pathlib import Path
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING
+
 import requests
-from modules.shared.src.common.contract_llm_vision_protocol import LLMVisionProtocol
-from modules.shared.src.common.taxonomy_vision_models_vo import VisionAnalysis
+
+from modules.shared.src.contract_llm_vision_protocol import LLMVisionProtocol
+from modules.shared.src.taxonomy_vision_models_vo import VisionAnalysis
 
 if TYPE_CHECKING:
     from llama_cpp import Llama
@@ -36,9 +38,9 @@ class LLMVisionAdapter(LLMVisionProtocol):
 
     def __init__(
         self,
-        base_url: Optional[str] = None,
-        api_key: Optional[str] = None,
-        model: Optional[str] = None,
+        base_url: str | None = None,
+        api_key: str | None = None,
+        model: str | None = None,
     ):
         # 1. Load config.yaml — check ~/.config/vision-arwaky/ first, then project root
         project_root = Path(__file__).parent.parent.parent
@@ -55,13 +57,14 @@ class LLMVisionAdapter(LLMVisionProtocol):
                 with open(config_path, "r") as f:
                     self._config = yaml.safe_load(f) or {}
                 logger.info(f"Loaded config from {config_path}")
-            except Exception as e:
+            except (OSError, ValueError) as e:
                 logger.warning(f"Failed to read config: {e}. Falling back to defaults.")
 
+
         self._backend = str(self._config.get("backend", "external"))
-        self._native_llm: Optional["Llama"] = None
+        self._native_llm: Llama | None = None
         self._llm_lock = threading.Lock()
-        self._server_process: Optional[subprocess.Popen] = None
+        self._server_process: subprocess.Popen | None = None
         self._bundled_port = self._find_free_port()
 
         # 2. Configure external HTTP endpoint settings
@@ -91,7 +94,7 @@ class LLMVisionAdapter(LLMVisionProtocol):
             s.bind(("127.0.0.1", 0))
             return s.getsockname()[1]
 
-    def _get_bundled_server_path(self) -> Optional[Path]:
+    def _get_bundled_server_path(self) -> Path | None:
         """Find the bundled llama-server binary."""
         candidates = [
             Path(__file__).parent.parent.parent / "llama-server-rocm" / "llama-server",
@@ -148,8 +151,9 @@ class LLMVisionAdapter(LLMVisionProtocol):
                     pass
                 time.sleep(1)
             logger.warning("Bundled llama-server failed to become ready")
-        except Exception as e:
+        except (OSError, RuntimeError, subprocess.SubprocessError) as e:
             logger.error(f"Failed to start bundled server: {e}")
+
 
     def _stop_bundled_server(self):
         """Stop the bundled llama-server subprocess."""
@@ -160,6 +164,7 @@ class LLMVisionAdapter(LLMVisionProtocol):
 
     def __del__(self):
         self._stop_bundled_server()
+
 
     @property
     def model(self) -> str:
@@ -187,8 +192,9 @@ class LLMVisionAdapter(LLMVisionProtocol):
                 self._model = str(models[0]["id"])
                 logger.info(f"Auto-selected model: {self._model}")
                 return self._model
-        except Exception as e:
+        except (requests.RequestException, KeyError, ValueError) as e:
             logger.warning(f"Failed to list models: {e}")
+
         return "local-model"
 
     def _get_nested_config(self, section: str, key: str) -> str:
@@ -219,10 +225,10 @@ class LLMVisionAdapter(LLMVisionProtocol):
         native_cfg = self._config.get("native")
         if not isinstance(native_cfg, dict):
             native_cfg = {}
-        
+
         model_rel_path = str(native_cfg.get("model_path", "models/MiniCPM-V-4_6-Q8_0.gguf"))
         mmproj_rel_path = str(native_cfg.get("mmproj_path", "models/mmproj-MiniCPM-V-4.6-F16.gguf"))
-        
+
         model_path = project_root / model_rel_path
         mmproj_path = project_root / mmproj_rel_path
 
@@ -335,10 +341,10 @@ class LLMVisionAdapter(LLMVisionProtocol):
                 raise RuntimeError("Native VLM was not initialized")
 
             image_url = self._encode_image(image_path)
-            
+
             messages = [
                 {
-                    "role": "system", 
+                    "role": "system",
                     "content": "You are an assistant who perfectly describes images and helps AI agents understand UI layouts."
                 },
                 {
@@ -364,3 +370,4 @@ class LLMVisionAdapter(LLMVisionProtocol):
                 raise RuntimeError(f"Native VLM inference failed: {e}") from e
         else:
             return self._analyze_via_http(image_path, prompt, timeout)
+

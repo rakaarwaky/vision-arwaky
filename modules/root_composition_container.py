@@ -1,119 +1,59 @@
 """Root Composition Container — Composition root for dependency injection.
 
-Wires all infrastructure adapters and capabilities together,
-then exposes them to CLI/MCP/TUI surface layers.
+Wires all feature modules together by composing per-feature containers.
 """
 
-import importlib
 from typing import Any
 
+from modules.image.src.root_image_container import build_image_feature
+from modules.opencv.src.root_opencv_container import build_opencv
+from modules.shared.src.contract_registry_service_aggregate import (
+    RegistryServiceAggregate,
+)
+from modules.shared.src.taxonomy_vision_models_vo import CommandName, CommandOutput
+from modules.video.src.root_video_container import build_video_feature
 
-def _load_module(module_path: str, class_name: str) -> type:
-    mod = importlib.import_module(module_path)
-    return getattr(mod, class_name)
-
-
-def build_opencv() -> Any:
-    cls = _load_module(
-        "modules.opencv.src.capabilities_opencv_image_adapter", "OpenCVImageAdapter"
-    )
-    return cls()
-
-
-def build_tesseract() -> Any:
-    cls = _load_module(
-        "modules.image.src.capabilities_tesseract_ocr_adapter", "TesseractOCRAdapter"
-    )
-    return cls()
+IMAGE_COMMANDS = {"analyze", "ocr", "elements", "compare"}
+VIDEO_COMMANDS = {
+    "video-info", "extract-frames", "convert", "check-corruption",
+    "create-gif", "detect-scenes", "detect-motion", "track", "timeline",
+}
 
 
-def build_llm() -> Any:
-    cls = _load_module(
-        "modules.image.src.capabilities_llm_vision_adapter", "LLMVisionAdapter"
-    )
-    return cls()
+class RootDispatcher(RegistryServiceAggregate):
+    """Composition-root facade routing commands to per-domain orchestrators."""
 
+    def __init__(self, graph: dict[str, Any]):
+        self._graph = graph
 
-def build_ffmpeg() -> Any:
-    cls = _load_module(
-        "modules.video.src.capabilities_ffmpeg_adapter", "FFmpegVideoAdapter"
-    )
-    return cls()
-
-
-def build_utils() -> Any:
-    cls = _load_module(
-        "modules.system_utils.src.capabilities_system_utils_util", "SystemUtilsUtil"
-    )
-    return cls()
-
-
-def build_image_processing(opencv: Any, tesseract: Any, llm: Any) -> Any:
-    cls = _load_module(
-        "modules.image.src.capabilities_image_processing_processor", "ImageProcessingProcessor"
-    )
-    return cls(opencv_port=opencv, tesseract_port=tesseract, llm_port=llm)
-
-
-def build_video_processing(opencv: Any, ffmpeg: Any) -> Any:
-    cls = _load_module(
-        "modules.video.src.capabilities_video_processor", "VideoProcessingProcessor"
-    )
-    return cls(opencv_port=opencv, ffmpeg_port=ffmpeg)
-
-
-def build_video_analysis(opencv: Any) -> Any:
-    cls = _load_module(
-        "modules.video.src.capabilities_video_analyzer", "VideoAnalysisAnalyzer"
-    )
-    return cls(opencv_port=opencv)
-
-
-def build_video_timeline(opencv: Any, video_proc: Any, analysis: Any) -> Any:
-    cls = _load_module(
-        "modules.video.src.capabilities_timeline_generator", "VideoTimelineGenerator"
-    )
-    return cls(opencv_port=opencv, video_cap=video_proc, analysis_cap=analysis)
-
-
-def build_object_tracking(opencv: Any) -> Any:
-    cls = _load_module(
-        "modules.video.src.capabilities_object_tracker", "ObjectTrackingTracker"
-    )
-    return cls(opencv_port=opencv)
-
-
-def build_visual_memory(opencv: Any, utils: Any) -> Any:
-    cls = _load_module(
-        "modules.memory.src.capabilities_visual_memory_repository", "VisualMemoryStore"
-    )
-    return cls(opencv_port=opencv, utils_port=utils)
+    def execute_in_process(self, command: CommandName, kwargs: dict[str, Any]) -> CommandOutput:
+        if command.value in IMAGE_COMMANDS:
+            return self._graph["image_orchestrator"].execute_in_process(command, kwargs)
+        if command.value in VIDEO_COMMANDS:
+            return self._graph["video_orchestrator"].execute_in_process(command, kwargs)
+        raise ValueError(f"Unknown command: {command.value}")
 
 
 def build() -> dict[str, Any]:
+    """Compose all feature containers into unified application graph."""
     opencv = build_opencv()
-    tesseract = build_tesseract()
-    llm = build_llm()
-    ffmpeg = build_ffmpeg()
-    utils = build_utils()
 
-    image_proc = build_image_processing(opencv, tesseract, llm)
-    video_proc = build_video_processing(opencv, ffmpeg)
-    video_analysis = build_video_analysis(opencv)
-    video_timeline = build_video_timeline(opencv, video_proc, video_analysis)
-    obj_tracking = build_object_tracking(opencv)
-    visual_mem = build_visual_memory(opencv, utils)
+    image_feature = build_image_feature(opencv_port=opencv)
+    video_feature = build_video_feature(opencv_port=opencv)
 
-    return {
+    graph = {
         "opencv": opencv,
-        "tesseract": tesseract,
-        "llm": llm,
-        "ffmpeg": ffmpeg,
-        "utils": utils,
-        "image_processing": image_proc,
-        "video_processing": video_proc,
-        "video_analysis": video_analysis,
-        "video_timeline": video_timeline,
-        "object_tracking": obj_tracking,
-        "visual_memory": visual_mem,
+
+        "tesseract": image_feature["tesseract"],
+        "llm": image_feature["llm"],
+        "image_processing": image_feature["image_processing"],
+        "image_orchestrator": image_feature["image_orchestrator"],
+        "ffmpeg": video_feature["ffmpeg"],
+        "video_processing": video_feature["video_processing"],
+        "video_analysis": video_feature["video_analysis"],
+        "video_timeline": video_feature["video_timeline"],
+        "object_tracking": video_feature["object_tracking"],
+        "video_orchestrator": video_feature["video_orchestrator"],
     }
+    graph["dispatcher"] = RootDispatcher(graph)
+    return graph

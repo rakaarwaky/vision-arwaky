@@ -1,4 +1,4 @@
-from typing import List, Optional
+
 from pydantic import BaseModel, Field
 
 
@@ -24,10 +24,10 @@ class MotionEvent(BaseModel):
 
     timestamp: float = Field(..., description="Timestamp in seconds")
     magnitude: float = Field(..., description="Weighted magnitude of motion")
-    direction: Optional[float] = Field(
+    direction: float | None = Field(
         None, description="Primary direction of motion in degrees (0-360)"
     )
-    region: Optional[BoundingBox] = Field(
+    region: BoundingBox | None = Field(
         None, description="Region where motion was detected"
     )
 
@@ -54,7 +54,7 @@ class VideoTimeline(BaseModel):
     video_path: str
     total_frames: int
     fps: float
-    key_frames: List[dict] = Field(
+    key_frames: list[dict] = Field(
         ..., description="List of frames with paths and detections"
     )
 
@@ -64,9 +64,9 @@ class VisionAnalysis(BaseModel):
 
     source: str = Field(..., description="Analysis source: 'llm' or 'opencv'")
     text: str = Field(..., description="Analytical description or OCR text")
-    elements: List[Detection] = Field(default_factory=list, description="Detected UI elements (opencv only)")
-    model: Optional[str] = Field(default=None, description="LLM model used when source='llm'")
-    error: Optional[str] = Field(default=None, description="Error message if analysis failed")
+    elements: list[Detection] = Field(default_factory=list, description="Detected UI elements (opencv only)")
+    model: str | None = Field(default=None, description="LLM model used when source='llm'")
+    error: str | None = Field(default=None, description="Error message if analysis failed")
 
 
 class FilePath(BaseModel):
@@ -84,8 +84,8 @@ class LanguageCode(BaseModel):
 class TimeSegment(BaseModel):
     """Value object representing a video time segment start and duration."""
 
-    start: Optional[float] = None
-    duration: Optional[float] = None
+    start: float | None = None
+    duration: float | None = None
 
 
 class VideoInfo(BaseModel):
@@ -136,7 +136,7 @@ class MinArea(BaseModel):
 class AnalysisPrompt(BaseModel):
     """Value object for visual language model prompt."""
 
-    value: Optional[str] = None
+    value: str | None = None
 
 
 class OcrText(BaseModel):
@@ -155,3 +155,15 @@ class MaxFrames(BaseModel):
     """Value object for maximum object tracking frame limit."""
 
     value: int = 300
+
+
+class BackendType(BaseModel):
+    """Value object for the active VLM backend type ('native' or 'external')."""
+
+    value: str = "external"
+
+
+class ModelName(BaseModel):
+    """Value object for the active VLM model name."""
+
+    value: str

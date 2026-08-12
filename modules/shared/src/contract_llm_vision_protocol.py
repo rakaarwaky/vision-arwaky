@@ -1,5 +1,11 @@
-from modules.shared.src.common.taxonomy_vision_models_vo import FilePath
 from abc import ABC, abstractmethod
+
+from modules.shared.src.taxonomy_vision_models_vo import (
+    AnalysisPrompt,
+    BackendType,
+    FilePath,
+    ModelName,
+)
 
 
 class LLMVisionProtocol(ABC):
@@ -7,20 +13,19 @@ class LLMVisionProtocol(ABC):
 
     @property
     @abstractmethod
-    def backend(self):
+    def backend(self) -> BackendType:
         """The active backend type: native or external."""
-        pass
 
     @property
     @abstractmethod
-    def model(self):
+    def model(self) -> ModelName:
         """The active model name."""
-        pass
 
     @abstractmethod
-    def analyze_image(self, image_path, prompt, timeout = 120):
+    def analyze_image(
+        self,
+        image_path: FilePath,
+        prompt: AnalysisPrompt,
+        timeout: int = 120,
+    ) -> str:
         """Analyze image with custom prompt using the VLM."""
-        pass
-
-
-_use_vo = FilePath

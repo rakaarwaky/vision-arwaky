@@ -1,64 +1,42 @@
 """Advanced TUI for vision-arwaky configuration using Textual."""
 
-import os
 import json
+import os
 from pathlib import Path
-from typing import Optional
 
+import numpy
 from textual.app import App, ComposeResult
-from textual.containers import Horizontal, Vertical, ScrollableContainer
-from textual.widgets import Header, Footer, Button, Static, Input, Select, Label
-from textual.screen import Screen
 from textual.binding import Binding
+from textual.containers import Horizontal, ScrollableContainer, Vertical
+from textual.screen import Screen
+from textual.widgets import Button, Footer, Header, Input, Label, Select, Static
 
-CONFIG_PATHS = [
-    Path.home() / ".config" / "vision-arwaky" / "config.yaml",
-    Path.cwd() / "config.yaml",
-]
+from modules.shared.src.contract_registry_service_aggregate import (
+    RegistryServiceAggregate,
+)
+from modules.shared.src.taxonomy_vision_models_vo import CommandName
+from modules.shared.src.utility_config_handler import (
+    load_config,
+    save_config,
+    scan_models,
+)
 
-MODEL_EXTENSIONS = {".gguf", ".bin", ".pt", ".pth", ".safetensors"}
-
-
-# ── Helpers ────────────────────────────────────────────────
-
-def find_config() -> Optional[Path]:
-    for p in CONFIG_PATHS:
-        if p.exists():
-            return p
-    return None
-
-
-def load_config() -> dict:
-    p = find_config()
-    if not p:
-        return {}
-    try:
-        import yaml
-        with open(p) as f:
-            return yaml.safe_load(f) or {}
-    except Exception:
-        return {}
+_dispatcher: RegistryServiceAggregate | None = None
 
 
-def save_config(data: dict):
-    import yaml
-    p = find_config()
-    if not p:
-        p = CONFIG_PATHS[0]
-        p.parent.mkdir(parents=True, exist_ok=True)
-    with open(p, "w") as f:
-        yaml.dump(data, f, default_flow_style=False)
-    return p
+def set_dispatcher(dispatcher: RegistryServiceAggregate) -> None:
+    """Inject the aggregate facade used by the TUI."""
+    global _dispatcher
+    _dispatcher = dispatcher
 
 
-def scan_models(dirs: list[Path]) -> list[Path]:
-    found = []
-    for d in dirs:
-        if d.exists():
-            for f in sorted(d.iterdir()):
-                if f.suffix.lower() in MODEL_EXTENSIONS:
-                    found.append(f)
-    return found
+def get_dispatcher() -> RegistryServiceAggregate:
+    """Return the injected aggregate facade."""
+    if _dispatcher is None:
+        raise RuntimeError(
+            "No dispatcher injected. Call set_dispatcher() before running commands."
+        )
+    return _dispatcher
 
 
 # ── Screens ───────────────────────────────────────────────
@@ -258,16 +236,40 @@ class StatusScreen(Screen):
 
     def refresh_status(self) -> None:
         try:
-            from modules.mcp.src.surface_mcp_action import vision_status
-            result = json.loads(vision_status())
-            cfg = result.get("configuration", {})
-            deps = result.get("dependencies", {})
-            caps = result.get("capabilities", {})
+            import shutil
+
+            cfg = load_config()
+            selected_backend = str(cfg.get("backend", "external"))
+            native = cfg.get("native", {})
+            if not isinstance(native, dict):
+                native = {}
+
+            deps_status = {}
+            for name, module in [
+                ("opencv", "cv2"),
+                ("pillow", "PIL"),
+                ("numpy", "numpy"),
+                ("pytesseract", "pytesseract"),
+                ("requests", "requests"),
+                ("pyyaml", "yaml"),
+                ("llama-cpp-python", "llama_cpp"),
+            ]:
+                try:
+                    __import__(module)
+                    deps_status[name] = "OK"
+                except ImportError:
+                    deps_status[name] = "MISSING"
+            deps_status["ffmpeg"] = "OK" if shutil.which("ffmpeg") else "MISSING"
+
+            caps = {
+                "image_analysis": deps_status.get("opencv") == "OK",
+                "ocr": deps_status.get("pytesseract") == "OK" and deps_status.get("pillow") == "OK",
+                "video_processing": deps_status.get("opencv") == "OK" and deps_status.get("ffmpeg") == "OK",
+            }
 
             lines = [
-                f"[bold]Server:[/] {result.get('server', 'N/A')}",
-                f"[bold]Backend:[/] {cfg.get('selected_backend', 'N/A')}",
-                f"[bold]Config:[/] {'✅' if cfg.get('config_yaml_detected') else '❌'}",
+                f"[bold]Backend:[/] {selected_backend}",
+                f"[bold]Config:[/] {'✅' if load_config() else '❌'}",
                 "",
                 "[bold underline]Capabilities[/]",
             ]
@@ -276,7 +278,7 @@ class StatusScreen(Screen):
                 lines.append(f"  {icon} {cap}")
 
             lines.append("\n[bold underline]Dependencies[/]")
-            for dep, status in deps.items():
+            for dep, status in deps_status.items():
                 st = str(status)
                 icon = "✅" if st == "OK" else ("⚠️" if "MISSING" in st else "❓")
                 lines.append(f"  {icon} {dep}: {st}")
@@ -320,50 +322,50 @@ class TestScreen(Screen):
         output.update("[yellow]Running tests...[/]")
         self.refresh()
 
-        results = []
+        results: list[tuple[str, bool]] = []
 
         # 1. Create test image
         fd, path = tempfile.mkstemp(suffix=".png")
         os.close(fd)
-        img = np.zeros((200, 200, 3), dtype=np.uint8)
+        import cv2
+        img = numpy.zeros((200, 200, 3), dtype=numpy.uint8)
         cv2.rectangle(img, (30, 30), (170, 170), (255, 255, 255), -1)
         cv2.putText(img, "TEST", (50, 120), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 3)
         cv2.imwrite(path, img)
         results.append(("Test image created", True))
 
-        # 2. OpenCV read
-        from modules.opencv.src.capabilities_opencv_image_adapter import OpenCVImageAdapter
-        ocv = OpenCVImageAdapter()
-        img_read = ocv.read_image(path)
-        results.append(("OpenCV read", img_read is not None))
-
-        # 3. UI elements
-        from modules.shared.src.common.taxonomy_vision_models_vo import FilePath, LanguageCode
-        from modules.image.src.agent_image_orchestrator import ImageOrchestrator
-        cap = ImageOrchestrator.get_image_processing()
-        elements = cap.find_elements(FilePath(value=path))
-        results.append(("UI element detection", len(elements) >= 0))
-
-        # 4. OCR
+        # 2. UI elements
         try:
-            cap.extract_text(FilePath(value=path), LanguageCode(value="eng"))
-            results.append(("OCR", True))
-        except (RuntimeError, Exception):
+            elements = json.loads(
+                get_dispatcher().execute_in_process(
+                    CommandName(value="elements"), {"image": path}
+                ).value
+            )
+            results.append(("UI element detection", isinstance(elements, list)))
+        except Exception:
+            results.append(("UI element detection", False))
+
+        # 3. OCR
+        try:
+            ocr_result = get_dispatcher().execute_in_process(
+                CommandName(value="ocr"), {"image": path, "lang": "eng"}
+            )
+            results.append(("OCR", bool(ocr_result.value)))
+        except Exception:
             results.append(("OCR (fallback)", True))
 
         # Cleanup
         os.unlink(path)
         results.append(("Cleanup", True))
 
-        # 5. Video processing
-        from modules.video.src.agent_video_orchestrator import VideoOrchestrator
-        vcap = VideoOrchestrator.get_video_processing()
-        results.append(("Video module", vcap is not None))
-
-        # 6. Memory
-        from modules.memory.src.agent_memory_orchestrator import MemoryOrchestrator
-        mcap = MemoryOrchestrator.get_visual_memory()
-        results.append(("Memory module", mcap is not None))
+        # 4. Video module
+        try:
+            result = get_dispatcher().execute_in_process(
+                CommandName(value="video-info"), {"video": "/nonexistent.mp4"}
+            )
+            results.append(("Dispatcher", result is not None))
+        except Exception:
+            results.append(("Dispatcher", False))
 
         # Format output
         lines = []

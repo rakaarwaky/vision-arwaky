@@ -1,10 +1,10 @@
-import numpy
+import logging
 
 import cv2 as _cv2
-from typing import Optional, Tuple
-import logging
-from modules.shared.src.common.contract_opencv_image_protocol import OpenCVImageProtocol
-from modules.shared.src.common.taxonomy_vision_models_vo import BoundingBox, FilePath
+import numpy
+
+from modules.shared.src.contract_opencv_image_protocol import OpenCVImageProtocol
+from modules.shared.src.taxonomy_vision_models_vo import BoundingBox, FilePath
 
 logger = logging.getLogger("mcp_server.infrastructure.opencv")
 
@@ -22,7 +22,7 @@ class OpenCVImageAdapter(OpenCVImageProtocol):
     def np(self):
         return numpy
 
-    def read_image(self, path: str | FilePath) -> Optional[numpy.ndarray]:
+    def read_image(self, path: str | FilePath) -> numpy.ndarray | None:
         p = path.value if isinstance(path, FilePath) else str(path)
         return _cv2.imread(p)
 
@@ -34,7 +34,7 @@ class OpenCVImageAdapter(OpenCVImageProtocol):
         p = path.value if isinstance(path, FilePath) else str(path)
         return _cv2.VideoCapture(p)
 
-    def get_dimensions(self, image: numpy.ndarray) -> Tuple[int, int]:
+    def get_dimensions(self, image: numpy.ndarray) -> tuple[int, int]:
         h, w = image.shape[:2]
         return w, h
 
@@ -53,7 +53,7 @@ class OpenCVImageAdapter(OpenCVImageProtocol):
     def get_contour_area(self, contour) -> float:
         return float(_cv2.contourArea(contour))
 
-    def get_bounding_box(self, contour) -> Tuple[int, int, int, int]:
+    def get_bounding_box(self, contour) -> tuple[int, int, int, int]:
         x, y, w, h = _cv2.boundingRect(contour)
         return int(x), int(y), int(w), int(h)
 
@@ -61,7 +61,7 @@ class OpenCVImageAdapter(OpenCVImageProtocol):
         return _cv2.absdiff(img1, img2)
 
     def calc_optical_flow(self, prev: numpy.ndarray, next_img: numpy.ndarray) -> numpy.ndarray:
-        flow: Optional[numpy.ndarray] = None
+        flow: numpy.ndarray | None = None
         result = _cv2.calcOpticalFlowFarneback(
             prev, next_img, flow, 0.5, 3, 15, 3, 5, 1.2, 0
         )

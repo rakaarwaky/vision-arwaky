@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
-from modules.shared.src.common.taxonomy_vision_models_vo import FilePath
-from modules.shared.src.common.taxonomy_vision_models_vo import TimeSegment
+
+from modules.shared.src.taxonomy_vision_models_vo import FilePath, TimeSegment
 
 
 class FFmpegVideoProtocol(ABC):
@@ -9,7 +9,6 @@ class FFmpegVideoProtocol(ABC):
     @abstractmethod
     async def run(self, args, capture_output = True):
         """Run FFmpeg command asynchronously with given arguments."""
-        pass
 
     @abstractmethod
     def get_default_gif_args(
@@ -19,12 +18,10 @@ class FFmpegVideoProtocol(ABC):
         segment: TimeSegment,
     ):
         """Get standard FFmpeg arguments for high-quality GIF creation."""
-        pass
 
     @abstractmethod
     async def convert_video(self, input_path: FilePath, output_path: FilePath):
         """Convert video from one format to another."""
-        pass
 
     @abstractmethod
     async def create_gif(
@@ -34,4 +31,3 @@ class FFmpegVideoProtocol(ABC):
         segment: TimeSegment,
     ):
         """Create GIF from video segment."""
-        pass

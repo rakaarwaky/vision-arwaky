@@ -1,18 +1,25 @@
 import logging
 import sys
+
 from mcp.server.fastmcp import FastMCP
+
 from modules.mcp.src.surface_mcp_action import (
-    vision_execute,
-    vision_list_commands,
-    vision_help,
-    vision_status,
+    set_dispatcher as set_mcp_dispatcher,
     vision_cancel,
+    vision_execute,
+    vision_help,
+    vision_list_commands,
+    vision_status,
 )
+from modules.root_composition_container import build
 
 mcp_server = FastMCP("Vision")
 
 
 def main():
+    graph = build()
+    set_mcp_dispatcher(graph["dispatcher"])
+
     logging.basicConfig(level=logging.INFO, stream=sys.stderr)
     logger = logging.getLogger("vision-mcp")
     logger.info("Starting Vision MCP Server (AES architecture)")

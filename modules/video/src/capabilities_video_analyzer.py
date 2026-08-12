@@ -2,11 +2,21 @@ import numpy
 
 """Video analysis: scene change detection and motion detection."""
 
+
 import cv2
-from typing import List
-from modules.shared.src.common.contract_video_analysis_protocol import VideoAnalysisProtocol
-from modules.shared.src.common.contract_opencv_image_protocol import OpenCVImageProtocol
-from modules.shared.src.common.taxonomy_vision_models_vo import SceneChange, MotionEvent, BoundingBox, FilePath, SceneThreshold, MinArea
+
+from modules.shared.src.contract_opencv_image_protocol import OpenCVImageProtocol
+from modules.shared.src.contract_video_analysis_protocol import (
+    VideoAnalysisProtocol,
+)
+from modules.shared.src.taxonomy_vision_models_vo import (
+    BoundingBox,
+    FilePath,
+    MinArea,
+    MotionEvent,
+    SceneChange,
+    SceneThreshold,
+)
 
 
 class VideoAnalysisAnalyzer(VideoAnalysisProtocol):
@@ -15,14 +25,14 @@ class VideoAnalysisAnalyzer(VideoAnalysisProtocol):
     def __init__(self, opencv_port: OpenCVImageProtocol):
         self._opencv = opencv_port
 
-    def detect_scenes(self, video_path: FilePath, threshold: SceneThreshold) -> List[SceneChange]:
+    def detect_scenes(self, video_path: FilePath, threshold: SceneThreshold) -> list[SceneChange]:
         """Detect scene changes by comparing consecutive frame histograms."""
         cap = self._opencv.get_video_capture(video_path.value)
         if not cap.isOpened():
             return []
 
         fps = cap.get(cv2.CAP_PROP_FPS)
-        scenes: List[SceneChange] = []
+        scenes: list[SceneChange] = []
         prev_hist = None
         frame_idx = 0
         thresh_val = threshold.value if threshold else 30.0
@@ -53,14 +63,14 @@ class VideoAnalysisAnalyzer(VideoAnalysisProtocol):
         cap.release()
         return scenes
 
-    def detect_motion(self, video_path: FilePath, min_area: MinArea) -> List[MotionEvent]:
+    def detect_motion(self, video_path: FilePath, min_area: MinArea) -> list[MotionEvent]:
         """Detect significant motion events using frame differencing."""
         cap = self._opencv.get_video_capture(video_path.value)
         if not cap.isOpened():
             return []
 
         fps = cap.get(cv2.CAP_PROP_FPS)
-        events: List[MotionEvent] = []
+        events: list[MotionEvent] = []
         prev_gray = None
         frame_idx = 0
         min_area_val = min_area.value if min_area else 500

@@ -1,10 +1,11 @@
 
 """Advanced tests for image processing — orchestrator, LLM adapter, tesseract."""
+import json
 import os
 import tempfile
-import json
-import numpy as np
+
 import cv2
+import numpy as np
 import pytest
 
 
@@ -22,95 +23,152 @@ def save_test_image(img):
     return path
 
 
+def make_image_processor():
+    """Build an ImageProcessingProcessor with real adapters (DI)."""
+    from modules.image.src.capabilities_image_processing_processor import (
+        ImageProcessingProcessor,
+    )
+    from modules.image.src.capabilities_llm_vision_adapter import LLMVisionAdapter
+    from modules.image.src.capabilities_tesseract_ocr_adapter import (
+        TesseractOCRAdapter,
+    )
+    from modules.opencv.src.capabilities_opencv_image_adapter import (
+        OpenCVImageAdapter,
+    )
+
+    return ImageProcessingProcessor(
+        opencv_port=OpenCVImageAdapter(),
+        tesseract_port=TesseractOCRAdapter(),
+        llm_port=LLMVisionAdapter(),
+    )
+
+
+def make_image_orchestrator():
+    """Build an ImageOrchestrator with injected ports (DI)."""
+    from modules.image.src.agent_image_orchestrator import ImageOrchestrator
+    from modules.image.src.capabilities_image_processing_processor import (
+        ImageProcessingProcessor,
+    )
+    from modules.image.src.capabilities_llm_vision_adapter import LLMVisionAdapter
+    from modules.image.src.capabilities_tesseract_ocr_adapter import (
+        TesseractOCRAdapter,
+    )
+    from modules.opencv.src.capabilities_opencv_image_adapter import (
+        OpenCVImageAdapter,
+    )
+
+    opencv = OpenCVImageAdapter()
+    tesseract = TesseractOCRAdapter()
+    llm = LLMVisionAdapter()
+    processor = ImageProcessingProcessor(
+        opencv_port=opencv,
+        tesseract_port=tesseract,
+        llm_port=llm,
+    )
+    return ImageOrchestrator(
+        image_processing=processor,
+        opencv=opencv,
+        tesseract=tesseract,
+        llm=llm,
+    )
+
+
 class TestImageOrchestrator:
     def test_get_image_processing(self):
-        from modules.image.src.agent_image_orchestrator import ImageOrchestrator
-        proc = ImageOrchestrator.get_image_processing()
+        proc = make_image_processor()
         assert proc is not None
         img = create_test_image()
         path = save_test_image(img)
         try:
-            from modules.shared.src.common.taxonomy_vision_models_vo import FilePath
+            from modules.shared.src.taxonomy_vision_models_vo import FilePath
             elements = proc.find_elements(FilePath(value=path))
             assert isinstance(elements, list)
         finally:
             os.unlink(path)
 
     def test_execute_image_cmd_analyze_no_llm(self):
-        from modules.image.src.agent_image_orchestrator import ImageOrchestrator
+        from modules.shared.src.taxonomy_vision_models_vo import CommandName
+
+        orch = make_image_orchestrator()
         img = create_test_image()
         path = save_test_image(img)
         try:
-            result = ImageOrchestrator.execute_image_cmd("analyze", {"image": path})
+            result = orch.execute_in_process(
+                CommandName(value="analyze"), {"image": path}
+            )
             assert result is not None
-            data = json.loads(result)
+            data = json.loads(result.value)
             assert "source" in data
         finally:
             os.unlink(path)
 
     def test_execute_image_cmd_ocr(self):
-        from modules.image.src.agent_image_orchestrator import ImageOrchestrator
+        from modules.shared.src.taxonomy_vision_models_vo import CommandName
+
+        orch = make_image_orchestrator()
         img = create_test_image()
         path = save_test_image(img)
         try:
-            result = ImageOrchestrator.execute_image_cmd("ocr", {"image": path, "lang": "eng"})
+            result = orch.execute_in_process(
+                CommandName(value="ocr"), {"image": path, "lang": "eng"}
+            )
             assert result is not None
         finally:
             os.unlink(path)
 
     def test_execute_image_cmd_elements(self):
-        from modules.image.src.agent_image_orchestrator import ImageOrchestrator
+        from modules.shared.src.taxonomy_vision_models_vo import CommandName
+
+        orch = make_image_orchestrator()
         img = create_test_image()
         path = save_test_image(img)
         try:
-            result = ImageOrchestrator.execute_image_cmd("elements", {"image": path})
+            result = orch.execute_in_process(
+                CommandName(value="elements"), {"image": path}
+            )
             assert result is not None
-            data = json.loads(result)
+            data = json.loads(result.value)
             assert isinstance(data, list)
         finally:
             os.unlink(path)
 
     def test_execute_image_cmd_compare(self):
-        from modules.image.src.agent_image_orchestrator import ImageOrchestrator
+        from modules.shared.src.taxonomy_vision_models_vo import CommandName
+
+        orch = make_image_orchestrator()
         img = create_test_image()
         p1 = save_test_image(img)
         p2 = save_test_image(img)
         try:
-            result = ImageOrchestrator.execute_image_cmd("compare", {"image1": p1, "image2": p2})
+            result = orch.execute_in_process(
+                CommandName(value="compare"), {"image1": p1, "image2": p2}
+            )
             assert result is not None
-            data = json.loads(result)
+            data = json.loads(result.value)
             assert "identical" in data
         finally:
             os.unlink(p1)
             os.unlink(p2)
 
     def test_execute_image_cmd_unknown(self):
-        from modules.image.src.agent_image_orchestrator import ImageOrchestrator
-        assert ImageOrchestrator.execute_image_cmd("nonexistent", {}) is None
+        from modules.shared.src.taxonomy_vision_models_vo import CommandName
 
-    def test_get_opencv(self):
-        from modules.image.src.agent_image_orchestrator import ImageOrchestrator
-        ocv = ImageOrchestrator.get_opencv()
-        assert ocv is not None
-        img = ocv.read_image("nonexistent.png")
-        assert img is None
+        orch = make_image_orchestrator()
+        with pytest.raises(ValueError):
+            orch.execute_in_process(CommandName(value="nonexistent"), {})
 
-    def test_get_tesseract(self):
-        from modules.image.src.agent_image_orchestrator import ImageOrchestrator
-        tess = ImageOrchestrator.get_tesseract()
-        assert tess is not None
-
-    def test_get_llm(self):
-        from modules.image.src.agent_image_orchestrator import ImageOrchestrator
-        llm = ImageOrchestrator.get_llm()
-        assert llm is not None
-        assert hasattr(llm, "analyze_image")
+    def test_orchestrator_ports(self):
+        orch = make_image_orchestrator()
+        assert orch._opencv is not None
+        assert orch._tesseract is not None
+        assert orch._llm is not None
+        assert orch._image_processing is not None
 
 
 class TestLLMVisionAdapter:
     def test_adapter_properties(self):
-        from modules.image.src.agent_image_orchestrator import ImageOrchestrator
-        adapter = ImageOrchestrator.get_llm()
+        from modules.image.src.capabilities_llm_vision_adapter import LLMVisionAdapter
+        adapter = LLMVisionAdapter()
         assert adapter.config is not None
         assert isinstance(adapter.backend, str)
         assert adapter.model is not None
@@ -130,8 +188,10 @@ class TestLLMVisionAdapter:
 
 class TestTesseractAdapter:
     def test_extract_text_nonexistent(self):
-        from modules.image.src.capabilities_tesseract_ocr_adapter import TesseractOCRAdapter
-        from modules.shared.src.common.taxonomy_vision_models_vo import FilePath, LanguageCode
+        from modules.image.src.capabilities_tesseract_ocr_adapter import (
+            TesseractOCRAdapter,
+        )
+        from modules.shared.src.taxonomy_vision_models_vo import FilePath, LanguageCode
         adapter = TesseractOCRAdapter()
         with pytest.raises((RuntimeError, FileNotFoundError)):
             adapter.extract_text(FilePath(value="/nonexistent.png"), LanguageCode(value="eng"))
