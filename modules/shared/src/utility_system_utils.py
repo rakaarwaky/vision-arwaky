@@ -4,16 +4,28 @@ Module-level functions only — no classes, no state.
 """
 
 import os
+import shutil
+
+
+def _resolve_binary(env_key: str, default: str) -> str:
+    """Resolve a binary path from env var, then PATH, then a default."""
+    env_path = os.environ.get(env_key)
+    if env_path:
+        return env_path
+    found = shutil.which(os.path.basename(default))
+    if found:
+        return found
+    return default
 
 
 def get_ffmpeg_path() -> str:
-    """Get FFmpeg binary path from environment or default system location."""
-    return os.environ.get("FFMPEG_PATH", "/usr/bin/ffmpeg")
+    """Get FFmpeg binary path from environment, PATH, or default location."""
+    return _resolve_binary("FFMPEG_PATH", "/usr/bin/ffmpeg")
 
 
 def get_ffprobe_path() -> str:
-    """Get FFprobe binary path from environment or default system location."""
-    return os.environ.get("FFPROBE_PATH", "/usr/bin/ffprobe")
+    """Get FFprobe binary path from environment, PATH, or default location."""
+    return _resolve_binary("FFPROBE_PATH", "/usr/bin/ffprobe")
 
 
 def file_exists(path: str) -> bool:
