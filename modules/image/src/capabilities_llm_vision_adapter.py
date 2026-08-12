@@ -170,6 +170,8 @@ class LLMVisionAdapter(LLMVisionProtocol):
             cmd += ["--mmproj", str(mmproj)]
 
         try:
+            # Safe: cmd uses only trusted config paths (model_path, mmproj_path)
+            # from ~/.config/vision-arwaky/config.yaml — not user input
             self._server_process = subprocess.Popen(
                 cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
             )

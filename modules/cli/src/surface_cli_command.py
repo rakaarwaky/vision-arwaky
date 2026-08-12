@@ -214,7 +214,7 @@ def cmd_test(args) -> int:
     print(f"  Test image: {test_image}")
     print()
 
-    # Run pytest
+    # Run pytest (safe: only trusted paths, no shell, no user input in command)
     cmd = [sys.executable, "-m", "pytest", test_dir, "-v"]
     result = subprocess.run(cmd, cwd=base, check=False)
 
@@ -241,6 +241,7 @@ def cmd_test(args) -> int:
                 "--prompt",
                 "Describe this image in detail. What do you see?",
             ]
+            # Safe: test_image is validated path from fixtures or trusted args.image
             vision_result = subprocess.run(
                 analyze_cmd,
                 cwd=base,

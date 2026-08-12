@@ -15,7 +15,7 @@ dependencies = [
     "fastmcp",
     "pydantic",
     "opencv-contrib-python-headless",
-    "pillow",
+    "pillow>=12.3.0",
     "numpy",
     "pytesseract",
     "requests",
