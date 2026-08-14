@@ -159,3 +159,25 @@ class ScreenshotComparison(BaseModel):
     identical: bool
     phash_diff: bool
     differences: list[BoundingBox] = Field(default_factory=list)
+
+
+class FrameAnalysis(BaseModel):
+    """VLM description of a single sampled key frame."""
+
+    frame: int = Field(..., description="1-based index in the extracted frame list")
+    timestamp_s: float = Field(..., description="Timestamp in seconds")
+    source: str | None = Field(
+        None, description="Analysis source: 'llm' or 'fallback'"
+    )
+    description: str = Field(..., description="VLM description of the frame")
+
+
+class VideoUnderstanding(BaseModel):
+    """Structured smart video understanding result."""
+
+    video: dict = Field(..., description="Video metadata summary")
+    sampling: dict = Field(..., description="Key-frame sampling statistics")
+    frames: list[FrameAnalysis] = Field(
+        default_factory=list, description="Per key-frame VLM analyses"
+    )
+    summary: str = Field(..., description="Synthesized video summary")

@@ -24,6 +24,7 @@ VIDEO_COMMANDS = {
     "detect-motion",
     "track",
     "timeline",
+    "analyze-video",
 }
 
 
@@ -48,7 +49,9 @@ def build() -> dict[str, Any]:
     opencv = build_opencv()
 
     image_feature = build_image_feature(opencv_port=opencv)
-    video_feature = build_video_feature(opencv_port=opencv)
+    video_feature = build_video_feature(
+        opencv_port=opencv, llm_port=image_feature["llm"]
+    )
 
     graph = {
         "opencv": opencv,
