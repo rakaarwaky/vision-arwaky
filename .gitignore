@@ -157,7 +157,7 @@ serviceAccountKey
 .codacy
 .codegraph
 .github/instructions/codacy.instructions.md
-
+vision_arwaky.egg-info/
 # local editor config
 .vscode/
 
