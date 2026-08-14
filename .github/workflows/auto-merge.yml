@@ -24,5 +24,7 @@ jobs:
           PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
           # --auto holds the PR until required checks pass, then squash-merges.
-          gh pr merge "$PR_NUMBER" --auto --squash \
+          gh pr merge "$PR_NUMBER" \
+            --repo "$GITHUB_REPOSITORY" \
+            --auto --squash \
             --subject "$PR_TITLE"
