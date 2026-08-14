@@ -34,12 +34,17 @@ echo -e "${GREEN}✓ Python $($PYTHON --version)${NC}"
 
 # ── Create XDG dirs ───────────────────────────────────────
 echo ""
-echo -e "${YELLOW}[2/5]${NC} Creating config & cache directories..."
-CONFIG_DIR="$HOME/.config/vision-arwaky"
-CACHE_DIR="$HOME/.cache/vision-arwaky/memory"
-mkdir -p "$CONFIG_DIR" "$CACHE_DIR"
-echo -e "${GREEN}✓ ${CONFIG_DIR}${NC}"
-echo -e "${GREEN}✓ ${CACHE_DIR}${NC}"
+echo -e "${YELLOW}[2/5]${NC} Creating XDG directories..."
+CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/vision-arwaky"
+DATA_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/vision-arwaky"
+CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/vision-arwaky/memory"
+VENV_DIR="$DATA_DIR/venv"
+BIN_DIR="$HOME/.local/bin"
+mkdir -p "$CONFIG_DIR" "$DATA_DIR" "$CACHE_DIR" "$BIN_DIR"
+echo -e "${GREEN}✓ config : ${CONFIG_DIR}${NC}"
+echo -e "${GREEN}✓ data  : ${DATA_DIR}${NC}"
+echo -e "${GREEN}✓ cache : ${CACHE_DIR}${NC}"
+echo -e "${GREEN}✓ venv  : ${VENV_DIR}${NC}"
 
 # Copy default config if not exists
 if [ ! -f "$CONFIG_DIR/config.yaml" ]; then
@@ -51,42 +56,70 @@ else
     echo -e "${GREEN}✓ Config already exists at $CONFIG_DIR/config.yaml${NC}"
 fi
 
-# ── Install package ───────────────────────────────────────
+# ── Create isolated venv (do not touch system Python) ─────
 echo ""
-echo -e "${YELLOW}[3/5]${NC} Installing vision-arwaky (editable, no deps)..."
-pip install -e . --no-deps 2>&1 | tail -3
-echo -e "${GREEN}✓ Package installed${NC}"
+echo -e "${YELLOW}[3/5]${NC} Creating isolated virtualenv in XDG data dir..."
+if [ ! -x "$VENV_DIR/bin/python" ]; then
+    "$PYTHON" -m venv "$VENV_DIR"
+    echo -e "${GREEN}✓ venv created${NC}"
+else
+    echo -e "${GREEN}✓ venv already exists${NC}"
+fi
+VENV_PY="$VENV_DIR/bin/python"
+VENV_PIP="$VENV_DIR/bin/pip"
+"$VENV_PY" -m pip install --upgrade pip wheel setuptools 2>&1 | tail -1
+
+# ── Install package + deps into venv ──────────────────────
+echo ""
+echo -e "${YELLOW}[4/5]${NC} Installing vision-arwaky (editable) + dependencies into venv..."
+if "$VENV_PIP" install -e ".[native]" 2>&1 | tail -4; then
+    echo -e "${GREEN}✓ Package + native deps installed into venv${NC}"
+else
+    # llama-cpp-python (native backend only) may fail to build on this
+    # Python/platform. Fall back to core deps so the external/CLI path works.
+    echo -e "${YELLOW}⚠ native extra (llama-cpp-python) failed to build — installing core only${NC}"
+    "$VENV_PIP" install -e . 2>&1 | tail -4
+    echo -e "${GREEN}✓ Package (core deps) installed into venv${NC}"
+    echo -e "${YELLOW}  Note: backend: native requires llama-cpp-python separately.${NC}"
+fi
+
+# Expose entry points on PATH via symlinks into ~/.local/bin
+for ep in vision-arwaky-cli vision-arwaky-mcp vision-arwaky-tui; do
+    if [ -x "$VENV_DIR/bin/$ep" ]; then
+        ln -sf "$VENV_DIR/bin/$ep" "$BIN_DIR/$ep"
+    fi
+done
 
 # ── Verify CLI ─────────────────────────────────────────────
 echo ""
-echo -e "${YELLOW}[4/5]${NC} Verifying CLI entry points..."
-if command -v vision-arwaky-cli &>/dev/null; then
-    echo -e "${GREEN}✓ vision-arwaky-cli — $(vision-arwaky-cli --help 2>&1 | head -1)${NC}"
+echo -e "${YELLOW}[5/5]${NC} Verifying CLI entry points..."
+if [ -x "$BIN_DIR/vision-arwaky-cli" ]; then
+    echo -e "${GREEN}✓ vision-arwaky-cli — $("$BIN_DIR/vision-arwaky-cli" --help 2>&1 | head -1)${NC}"
 else
-    echo -e "${RED}✗ vision-arwaky-cli not found in PATH${NC}"
+    echo -e "${RED}✗ vision-arwaky-cli not found${NC}"
 fi
 
-if command -v vision-arwaky-mcp &>/dev/null; then
+if [ -x "$BIN_DIR/vision-arwaky-mcp" ]; then
     echo -e "${GREEN}✓ vision-arwaky-mcp — MCP server${NC}"
 else
-    echo -e "${RED}✗ vision-arwaky-mcp not found in PATH${NC}"
+    echo -e "${RED}✗ vision-arwaky-mcp not found${NC}"
 fi
 
-if command -v vision-arwaky-tui &>/dev/null; then
+if [ -x "$BIN_DIR/vision-arwaky-tui" ]; then
     echo -e "${GREEN}✓ vision-arwaky-tui — TUI config${NC}"
 else
-    echo -e "${RED}✗ vision-arwaky-tui not found in PATH${NC}"
+    echo -e "${RED}✗ vision-arwaky-tui not found${NC}"
 fi
 
 # ── Check deps ─────────────────────────────────────────────
 echo ""
-echo -e "${YELLOW}[5/5]${NC} Optional dependency check..."
+echo -e "${YELLOW}[6/6]${NC} Dependency check (against venv)..."
 DEPS_MISSING=()
 
-$PYTHON -c "import cv2" 2>/dev/null || DEPS_MISSING+=("opencv-python")
-$PYTHON -c "import PIL" 2>/dev/null || DEPS_MISSING+=("pillow")
-$PYTHON -c "import pytesseract" 2>/dev/null || DEPS_MISSING+=("pytesseract")
-$PYTHON -c "import llama_cpp" 2>/dev/null || DEPS_MISSING+=("llama-cpp-python")
+"$VENV_PY" -c "import cv2" 2>/dev/null || DEPS_MISSING+=("opencv-python")
+"$VENV_PY" -c "import PIL" 2>/dev/null || DEPS_MISSING+=("pillow")
+"$VENV_PY" -c "import pytesseract" 2>/dev/null || DEPS_MISSING+=("pytesseract")
+"$VENV_PY" -c "import llama_cpp" 2>/dev/null || DEPS_MISSING+=("llama-cpp-python")
 command -v ffmpeg &>/dev/null || DEPS_MISSING+=("ffmpeg (binary)")
 
 # Check bundled ROCm binary
@@ -115,7 +148,7 @@ fi
 # ── Done ──────────────────────────────────────────────────
 echo ""
 echo -e "${CYAN}══════════════════════════════════════════════${NC}"
-echo -e "${GREEN}  vision-arwaky v2.0.5 installed!${NC}"
+echo -e "${GREEN}  vision-arwaky installed (venv: ${VENV_DIR})!${NC}"
 echo -e "${CYAN}══════════════════════════════════════════════${NC}"
 echo ""
 echo -e "  ${GREEN}vision-arwaky-cli${NC}    — CLI interface"
