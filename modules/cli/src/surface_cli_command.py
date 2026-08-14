@@ -1,6 +1,5 @@
 """CLI surface — parse args into VOs, delegate to injected aggregate, print JSON."""
 
-import json
 import os
 from typing import Any
 
@@ -43,23 +42,23 @@ def _execute(command: str, kwargs: dict[str, Any]) -> str:
 
 def _extract_middle_frame(file_path: str) -> str | None:
     """Extract the middle frame of a video file to a temp JPG (returns temp path)."""
+    import importlib
     import tempfile
 
-    import cv2 as _cv2
-
-    cap = _cv2.VideoCapture(file_path)
+    cv2: Any = importlib.import_module("cv2")
+    cap = cv2.VideoCapture(file_path)
     try:
-        total = int(cap.get(_cv2.CAP_PROP_FRAME_COUNT))
+        total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         if total <= 0:
             return None
         mid = total // 2
-        cap.set(_cv2.CAP_PROP_POS_FRAMES, mid)
+        cap.set(cv2.CAP_PROP_POS_FRAMES, mid)
         ret, frame = cap.read()
         if not ret:
             return None
         fd, thumb = tempfile.mkstemp(suffix=".jpg")
         os.close(fd)
-        _cv2.imwrite(thumb, frame)
+        cv2.imwrite(thumb, frame)
         return thumb
     finally:
         cap.release()

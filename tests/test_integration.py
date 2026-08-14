@@ -142,6 +142,9 @@ class TestAgentOrchestratorEdge:
         from modules.video.src.capabilities_video_processor import (
             VideoProcessingProcessor,
         )
+        from modules.video.src.capabilities_video_understanding import (
+            VideoUnderstandingAnalyzer,
+        )
 
         opencv = OpenCVImageAdapter()
         ffmpeg = FFmpegVideoAdapter()
@@ -149,6 +152,12 @@ class TestAgentOrchestratorEdge:
         video_analysis = VideoAnalysisAnalyzer(opencv)
         video_timeline = VideoTimelineGenerator(opencv, video_proc, video_analysis)
         object_tracking = ObjectTrackingTracker(opencv)
+        video_understanding = VideoUnderstandingAnalyzer(
+            video_analysis=video_analysis,
+            video_processing=video_proc,
+            llm=object(),
+            opencv=opencv,
+        )
         orch = VideoOrchestrator(
             video_processing=video_proc,
             video_analysis=video_analysis,
@@ -156,6 +165,7 @@ class TestAgentOrchestratorEdge:
             object_tracking=object_tracking,
             opencv=opencv,
             ffmpeg=ffmpeg,
+            video_understanding=video_understanding,
         )
         assert orch._opencv is not None
         assert orch._ffmpeg is not None
@@ -163,6 +173,7 @@ class TestAgentOrchestratorEdge:
         assert orch._video_analysis is not None
         assert orch._video_timeline is not None
         assert orch._object_tracking is not None
+        assert orch._video_understanding is not None
 
 
 class TestOpenCVAdapter:

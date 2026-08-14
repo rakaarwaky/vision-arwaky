@@ -62,7 +62,8 @@ def vision_execute(
     min_area: int = 500,
     bbox: str = "",
     max_frames: int = 300,
-    interval: float = 1.0,
+    interval: float | None = None,
+    scene_threshold: float | None = None,
     start: float = 0.0,
     duration: float = 0.0,
     label: str = "",
@@ -87,7 +88,13 @@ def vision_execute(
       detect-motion — Detect motion events. Args: video, [min_area]
       track        — Track object. Args: video, bbox(X,Y,W,H), [max-frames]
       timeline     — Generate video timeline. Args: video, [interval]
+      analyze-video — Smart video understanding. Args: video, [prompt, interval, scene_threshold, min_area]
     """
+    effective_interval = (
+        interval
+        if interval is not None
+        else (30.0 if command == "analyze-video" else 1.0)
+    )
     kwargs = {
         "image": image,
         "image1": image1,
@@ -98,10 +105,11 @@ def vision_execute(
         "lang": lang,
         "prompt": prompt,
         "threshold": threshold,
+        "scene_threshold": (scene_threshold if scene_threshold is not None else 20.0),
         "min_area": min_area,
         "bbox": bbox,
         "max_frames": max_frames,
-        "interval": interval,
+        "interval": effective_interval,
         "start": start,
         "duration": duration,
         "label": label,
@@ -116,7 +124,7 @@ def vision_list_commands(domain: str = "") -> str:
     """List all available vision commands.
 
     Args:
-        domain: Filter by domain (image, video, memory). Empty = all.
+        domain: Filter by domain (image, video). Empty = all.
     """
     commands = {
         "image": [
@@ -187,6 +195,11 @@ def vision_list_commands(domain: str = "") -> str:
                 "args": "video, [interval]",
                 "desc": "Generate video timeline",
             },
+            {
+                "command": "analyze-video",
+                "args": "video, [prompt, interval, scene_threshold, min_area]",
+                "desc": "Analyze sampled video frames with a VLM and summarize the video",
+            },
         ],
     }
 
@@ -200,7 +213,7 @@ def vision_help(section: str = "all") -> str:
     """Read SKILL.md documentation for vision commands.
 
     Args:
-        section: Section to read (all, image, video, memory, workflows).
+        section: Section to read (all, image, video).
     """
     skill_path = Path(VISION_PROJECT) / "SKILL.md"
     if not skill_path.exists():
@@ -216,7 +229,7 @@ def vision_help(section: str = "all") -> str:
         if s.lower().startswith(section.lower()):
             return "## " + s
 
-    return f"Section '{section}' not found. Available: all, image, video, memory, workflows"
+    return f"Section '{section}' not found. Available: all, image, video"
 
 
 @mcp.tool()

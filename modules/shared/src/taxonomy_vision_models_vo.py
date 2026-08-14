@@ -166,9 +166,7 @@ class FrameAnalysis(BaseModel):
 
     frame: int = Field(..., description="1-based index in the extracted frame list")
     timestamp_s: float = Field(..., description="Timestamp in seconds")
-    source: str | None = Field(
-        None, description="Analysis source: 'llm' or 'fallback'"
-    )
+    source: str | None = Field(None, description="Analysis source: 'llm' or 'fallback'")
     description: str = Field(..., description="VLM description of the frame")
 
 

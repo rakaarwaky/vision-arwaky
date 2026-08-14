@@ -11,7 +11,7 @@ from textual.binding import Binding, BindingType
 from textual.containers import Horizontal, ScrollableContainer, Vertical
 from textual.errors import TextualError
 from textual.screen import Screen
-from textual.widgets import Button, Footer, Header, Input, Label, Select, Static
+from textual.widgets import Button, Footer, Header, Input, Label, Static
 
 from modules.shared.src.contract_registry_service_aggregate import (
     RegistryServiceAggregate,
