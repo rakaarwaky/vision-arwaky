@@ -231,7 +231,6 @@ def vision_status() -> str:
 
     # Read backend from config
     selected_backend = "external"
-    native_files: dict = {}
     if config_path.exists():
         try:
             with open(config_path) as f:
@@ -239,24 +238,8 @@ def vision_status() -> str:
             if not isinstance(cfg_data, dict):
                 cfg_data = {}
             selected_backend = str(cfg_data.get("backend", "external"))
-            native_cfg = cfg_data.get("native", {})
-            if isinstance(native_cfg, dict):
-                model_rel = str(native_cfg.get("model_path", "") or "")
-                mmproj_rel = str(native_cfg.get("mmproj_path", "") or "")
-                native_files = {
-                    "model_file": "MISSING"
-                    if not model_rel
-                    else (
-                        "FOUND" if (project_root / model_rel).exists() else "MISSING"
-                    ),
-                    "mmproj_file": "MISSING"
-                    if not mmproj_rel
-                    else (
-                        "FOUND" if (project_root / mmproj_rel).exists() else "MISSING"
-                    ),
-                }
-        except (OSError, ValueError, yaml.YAMLError) as e:
-            native_files["config_error"] = str(e)
+        except (OSError, ValueError, yaml.YAMLError):
+            pass
 
     status_cfg: dict[str, Any] = {
         "config_yaml_detected": config_path.exists(),
@@ -264,25 +247,19 @@ def vision_status() -> str:
         if user_config.exists()
         else "project root",
         "selected_backend": selected_backend,
-        "native_files": native_files,
     }
 
-    # Resolve LLM readiness
+    # Resolve external LLM readiness
     llm_ready = False
-    if selected_backend == "native":
-        file_match = all(v == "FOUND" for v in native_files.values())
-        llm_ready = deps.get("llama-cpp-python") == "OK" and file_match
-        deps["native_llm_state"] = "READY" if llm_ready else "NOT_READY"
-    else:
-        try:
-            import requests
+    try:
+        import requests
 
-            base_url = DEFAULT_URL
-            resp = requests.get(f"{base_url}/models", timeout=5)
-            deps["llm_endpoint"] = "OK"
-            llm_ready = resp.status_code == 200
-        except (OSError, requests.RequestException):
-            deps["llm_endpoint"] = "UNREACHABLE"
+        base_url = DEFAULT_URL
+        resp = requests.get(f"{base_url}/models", timeout=5)
+        deps["llm_endpoint"] = "OK"
+        llm_ready = resp.status_code == 200
+    except (OSError, requests.RequestException):
+        deps["llm_endpoint"] = "UNREACHABLE"
 
     caps = {
         "image_analysis": deps.get("opencv") == "OK",

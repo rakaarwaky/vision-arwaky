@@ -1,21 +1,13 @@
-"""Infrastructure adapter for local LLM/VLM inference.
+"""Infrastructure adapter for VLM inference via OpenAI-compatible APIs.
 
-Supports two modes:
-1. Native: In-process GGUF loading using llama-cpp-python.
-2. External: OpenAI-compatible APIs (OpenAI-compatible API).
-
-Configuration via config.yaml in the project root.
+Configuration via config.yaml in the project root (backend: "external").
 """
 
 import base64
 import json
 import logging
 import os
-import subprocess
-import threading
-import time
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
 
 import requests
 import yaml
@@ -29,9 +21,6 @@ from modules.shared.src.taxonomy_vision_models_vo import (
     VisionAnalysis,
 )
 
-if TYPE_CHECKING:
-    from llama_cpp import Llama
-
 logger = logging.getLogger("mcp_server.infrastructure.llm")
 
 DEFAULT_URL = "http://127.0.0.1:1234/v1"
@@ -39,7 +28,7 @@ DEFAULT_API_KEY = ""
 
 
 class LLMVisionAdapter(LLMVisionProtocol):
-    """Adapter for vision-capable local LLM."""
+    """Adapter for vision-capable VLM via OpenAI-compatible API."""
 
     _taxonomy_marker = VisionAnalysis
 
@@ -67,10 +56,6 @@ class LLMVisionAdapter(LLMVisionProtocol):
                 logger.warning(f"Failed to read config: {e}. Falling back to defaults.")
 
         self._backend = str(self._config.get("backend", "external"))
-        self._native_llm: Llama | None = None
-        self._llm_lock = threading.Lock()
-        self._server_process: subprocess.Popen | None = None
-        self._bundled_port = self._find_free_port()
 
         # 2. Configure external HTTP endpoint settings
         url = (
@@ -93,10 +78,6 @@ class LLMVisionAdapter(LLMVisionProtocol):
             or ""
         )
 
-        # Try to start bundled server if native (will override self.base_url)
-        if self._backend == "native":
-            self._maybe_start_bundled_server()
-
     @property
     def config(self) -> dict:
         """Expose self._config dictionary dynamically."""
@@ -106,113 +87,14 @@ class LLMVisionAdapter(LLMVisionProtocol):
     def backend(self) -> BackendType:
         return BackendType(value=self._backend)
 
-    @staticmethod
-    def _find_free_port() -> int:
-        """Find a free localhost port."""
-        import socket
-
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.bind(("127.0.0.1", 0))
-            return s.getsockname()[1]
-
-    def _get_bundled_server_path(self) -> Path | None:
-        """Find the bundled llama-server binary."""
-        candidates = [
-            Path(__file__).parent.parent.parent / "llama-server-rocm" / "llama-server",
-            Path(__file__).parent.parent.parent
-            / "packages"
-            / "llama-server-rocm"
-            / "llama-server",
-        ]
-        for p in candidates:
-            if p.exists():
-                return p
-        return None
-
-    def _get_native_config(self) -> dict:
-        """Return the native backend configuration block (always a dict)."""
-        native_cfg = self._config.get("native")
-        if not isinstance(native_cfg, dict):
-            return {}
-        return native_cfg
-
-    def _maybe_start_bundled_server(self):
-        """Auto-start bundled llama-server binary if available."""
-        server_path = self._get_bundled_server_path()
-        if not server_path:
-            logger.info("No bundled llama-server binary found, trying llama-cpp-python")
-            return
-
-        native_cfg = self._get_native_config()
-        model = native_cfg.get("model_path", "")
-        mmproj = native_cfg.get("mmproj_path", "")
-        gpu = native_cfg.get("n_gpu_layers", -1)
-        ctx = native_cfg.get("n_ctx", 4096)
-
-        if not model or not os.path.exists(str(model)):
-            logger.warning(f"Model not found: {model}, skipping bundled server")
-            return
-
-        cmd = [
-            str(server_path),
-            "-m",
-            str(model),
-            "-c",
-            str(ctx),
-            "-ngl",
-            str(gpu),
-            "--host",
-            "127.0.0.1",
-            "--port",
-            str(self._bundled_port),
-        ]
-        if mmproj and os.path.exists(str(mmproj)):
-            cmd += ["--mmproj", str(mmproj)]
-
-        try:
-            # Safe: cmd uses only trusted config paths (model_path, mmproj_path)
-            # from ~/.config/vision-arwaky/config.yaml — not user input
-            self._server_process = subprocess.Popen(
-                cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
-            )
-            # Wait for server to be ready
-            for _ in range(30):
-                try:
-                    r = requests.get(
-                        f"http://127.0.0.1:{self._bundled_port}/health", timeout=2
-                    )
-                    if r.status_code == 200:
-                        logger.info(
-                            f"Bundled llama-server ready on port {self._bundled_port}"
-                        )
-                        self.base_url = f"http://127.0.0.1:{self._bundled_port}/v1"
-                        return
-                except requests.ConnectionError:
-                    pass
-                time.sleep(1)
-            logger.warning("Bundled llama-server failed to become ready")
-        except (OSError, RuntimeError, subprocess.SubprocessError) as e:
-            logger.error(f"Failed to start bundled server: {e}")
-
-    def _stop_bundled_server(self):
-        """Stop the bundled llama-server subprocess."""
-        if self._server_process:
-            self._server_process.terminate()
-            self._server_process.wait(timeout=5)
-            self._server_process = None
-
-    def __del__(self):
-        self._stop_bundled_server()
+    def _get_nested_config(self, section: str, key: str) -> str:
+        sec = self._config.get(section)
+        if isinstance(sec, dict):
+            return str(sec.get(key, ""))
+        return ""
 
     @property
     def model(self) -> ModelName:
-        if self._backend == "native":
-            native_cfg = self._get_native_config()
-            model_rel_path = str(
-                native_cfg.get("model_path", "models/MiniCPM-V-4_6-Q8_0.gguf")
-            )
-            return ModelName(value=os.path.basename(model_rel_path))
-
         if self._model:
             return ModelName(value=self._model)
         try:
@@ -237,77 +119,6 @@ class LLMVisionAdapter(LLMVisionProtocol):
 
         return ModelName(value="local-model")
 
-    def _get_nested_config(self, section: str, key: str) -> str:
-        sec = self._config.get(section)
-        if isinstance(sec, dict):
-            return str(sec.get(key, ""))
-        return ""
-
-    def _init_native_llm(self):
-        """Lazy-load the native Llama model with thread-safe lock."""
-        with self._llm_lock:
-            if self._native_llm is not None:
-                return
-
-        try:
-            from llama_cpp import Llama
-            from llama_cpp.llama_chat_format import MiniCPMv26ChatHandler
-        except ImportError as e:
-            raise ImportError(
-                "Libraries 'llama-cpp-python' or 'pyyaml' are not installed. "
-                "To run natively, please install them inside your active environment:\n"
-                "  pip install llama-cpp-python pyyaml\n"
-                "Or configure CUDA for GPU acceleration:\n"
-                "  CMAKE_ARGS='-GGPU_INTERFACES=ON' pip install llama-cpp-python pyyaml"
-            ) from e
-
-        project_root = Path(__file__).parent.parent.parent
-        native_cfg = self._get_native_config()
-
-        model_rel_path = str(
-            native_cfg.get("model_path", "models/MiniCPM-V-4_6-Q8_0.gguf")
-        )
-        mmproj_rel_path = str(
-            native_cfg.get("mmproj_path", "models/mmproj-MiniCPM-V-4.6-F16.gguf")
-        )
-
-        model_path = project_root / model_rel_path
-        mmproj_path = project_root / mmproj_rel_path
-
-        if not model_path.exists():
-            raise FileNotFoundError(
-                f"Native GGUF model file not found at: {model_path}\n"
-                "Please place your GGUF model inside the models/ directory."
-            )
-        if not mmproj_path.exists():
-            raise FileNotFoundError(
-                f"Multimodal projector (mmproj) not found at: {mmproj_path}\n"
-                "MiniCPM-V requires the mmproj GGUF file to process images."
-            )
-
-        n_ctx = int(native_cfg.get("n_ctx", 2048))
-        n_threads = int(native_cfg.get("n_threads", 4))
-        n_gpu_layers = int(native_cfg.get("n_gpu_layers", -1))
-
-        logger.info(
-            f"Initializing native llama-cpp-python VLM. Model: {model_rel_path}, Projector: {mmproj_rel_path}"
-        )
-
-        try:
-            chat_handler = MiniCPMv26ChatHandler(clip_model_path=str(mmproj_path))
-            self._native_llm = Llama(
-                model_path=str(model_path),
-                chat_handler=chat_handler,
-                n_ctx=n_ctx,
-                n_threads=n_threads,
-                n_gpu_layers=n_gpu_layers,
-                verbose=False,
-            )
-            logger.info("Native llama-cpp-python VLM successfully initialized.")
-        except Exception as e:
-            logger.error(f"Failed to initialize native Llama model: {e}")
-            raise RuntimeError(f"Failed to initialize native Llama model: {e}") from e
-
     @staticmethod
     def _encode_image(path: str) -> str:
         with open(path, "rb") as f:
@@ -320,7 +131,7 @@ class LLMVisionAdapter(LLMVisionProtocol):
     def _analyze_via_http(
         self, image_path: str, prompt: str, timeout: int = 120
     ) -> str:
-        """Send image + prompt via HTTP to an API-compatible server."""
+        """Send image + prompt via HTTP to an OpenAI-compatible server."""
         model = self.model.value
         image_url = self._encode_image(image_path)
 
@@ -385,59 +196,7 @@ class LLMVisionAdapter(LLMVisionProtocol):
         prompt: AnalysisPrompt,
         timeout: int = 120,
     ) -> str:
-        """Send image + prompt to VLM and return the text response."""
+        """Send image + prompt to the VLM and return the text response."""
         path_str = image_path.value
         prompt_str = prompt.value if prompt and prompt.value is not None else ""
-
-        # If bundled server is active, use it via HTTP
-        if self._server_process and self._server_process.poll() is None:
-            return self._analyze_via_http(path_str, prompt_str, timeout)
-
-        # Otherwise try llama-cpp-python native
-        if self.backend.value == "native":
-            self._init_native_llm()
-            with self._llm_lock:
-                llm = self._native_llm
-            if llm is None:
-                raise RuntimeError("Native VLM was not initialized")
-
-            image_url = self._encode_image(path_str)
-
-            messages: Any = [
-                {
-                    "role": "system",
-                    "content": "You are an assistant who perfectly describes images and helps AI agents understand UI layouts.",
-                },
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": prompt_str},
-                        {"type": "image_url", "image_url": {"url": image_url}},
-                    ],
-                },
-            ]
-
-            logger.info("Running native VLM inference (in-process)...")
-            try:
-                response = llm.create_chat_completion(
-                    messages=messages, temperature=0.4, max_tokens=1024
-                )
-                if not isinstance(response, dict):
-                    # Streaming response — collect into a single message.
-                    content = ""
-                    for chunk in response:
-                        delta = (
-                            chunk.get("choices", [{}])[0]
-                            .get("delta", {})
-                            .get("content")
-                        )
-                        if delta:
-                            content += str(delta)
-                    return content
-                content = str(response["choices"][0]["message"]["content"])
-                return content
-            except Exception as e:
-                logger.error(f"Native VLM inference failed: {e}")
-                raise RuntimeError(f"Native VLM inference failed: {e}") from e
-        else:
-            return self._analyze_via_http(path_str, prompt_str, timeout)
+        return self._analyze_via_http(path_str, prompt_str, timeout)
