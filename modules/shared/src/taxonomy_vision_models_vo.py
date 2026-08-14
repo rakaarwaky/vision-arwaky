@@ -142,7 +142,7 @@ class MaxFrames(BaseModel):
 
 
 class BackendType(BaseModel):
-    """Value object for the active VLM backend type ('native' or 'external')."""
+    """Value object for the active VLM backend type ('external')."""
 
     value: str = "external"
 

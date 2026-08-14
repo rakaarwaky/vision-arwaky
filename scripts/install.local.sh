@@ -72,16 +72,8 @@ VENV_PIP="$VENV_DIR/bin/pip"
 # ── Install package + deps into venv ──────────────────────
 echo ""
 echo -e "${YELLOW}[4/5]${NC} Installing vision-arwaky (editable) + dependencies into venv..."
-if "$VENV_PIP" install -e ".[native]" 2>&1 | tail -4; then
-    echo -e "${GREEN}✓ Package + native deps installed into venv${NC}"
-else
-    # llama-cpp-python (native backend only) may fail to build on this
-    # Python/platform. Fall back to core deps so the external/CLI path works.
-    echo -e "${YELLOW}⚠ native extra (llama-cpp-python) failed to build — installing core only${NC}"
-    "$VENV_PIP" install -e . 2>&1 | tail -4
-    echo -e "${GREEN}✓ Package (core deps) installed into venv${NC}"
-    echo -e "${YELLOW}  Note: backend: native requires llama-cpp-python separately.${NC}"
-fi
+"$VENV_PIP" install -e . 2>&1 | tail -4
+echo -e "${GREEN}✓ Package + dependencies installed into venv${NC}"
 
 # Expose entry points on PATH via symlinks into ~/.local/bin
 for ep in vision-arwaky-cli vision-arwaky-mcp vision-arwaky-tui; do
@@ -119,52 +111,7 @@ DEPS_MISSING=()
 "$VENV_PY" -c "import cv2" 2>/dev/null || DEPS_MISSING+=("opencv-python")
 "$VENV_PY" -c "import PIL" 2>/dev/null || DEPS_MISSING+=("pillow")
 "$VENV_PY" -c "import pytesseract" 2>/dev/null || DEPS_MISSING+=("pytesseract")
-"$VENV_PY" -c "import llama_cpp" 2>/dev/null || DEPS_MISSING+=("llama-cpp-python")
 command -v ffmpeg &>/dev/null || DEPS_MISSING+=("ffmpeg (binary)")
-
-# ── GPU backend detection ───────────────────────────────
-if command -v nvidia-smi &>/dev/null; then
-    echo -e "${GREEN}✓ NVIDIA/CUDA detected${NC}"
-elif command -v rocm-smi &>/dev/null || [ -d /opt/rocm ]; then
-    echo -e "${GREEN}✓ AMD/ROCm detected${NC}"
-else
-    echo -e "${YELLOW}⚠ No GPU backend detected${NC}"
-fi
-
-# ── Build ROCm binary if needed ──────────────────────────
-ROCM_BIN_DIR="$PROJECT_DIR/llama-server-rocm"
-ROCM_BIN="$ROCM_BIN_DIR/llama-server"
-if [ ! -f "$ROCM_BIN" ] && { command -v rocm-smi &>/dev/null || [ -d /opt/rocm ]; }; then
-    echo -e "${YELLOW}  ROCm detected, building llama-server binary...${NC}"
-    mkdir -p "$ROCM_BIN_DIR"
-    
-    LLAMA_CPP_DIR="$PROJECT_DIR/llama.cpp"
-    if [ ! -d "$LLAMA_CPP_DIR" ]; then
-        git clone --depth 1 https://github.com/ggerganov/llama.cpp.git "$LLAMA_CPP_DIR"
-    fi
-    
-    cd "$LLAMA_CPP_DIR"
-    mkdir -p build && cd build
-    
-    ROCM_GFX=$(rocminfo 2>/dev/null | grep "Name:" | grep -o 'gfx[0-9a-z]*' | head -1)
-    if [ -z "$ROCM_GFX" ]; then
-        ROCM_GFX="gfx1100"
-    fi
-    
-    cmake .. -DCMAKE_BUILD_TYPE=Release -DGGML_HIP=ON -DAMDGPU_TARGETS="$ROCM_GFX"
-    cmake --build . --config Release --target llama-server -j$(nproc)
-    
-    cp bin/llama-server "$ROCM_BIN"
-    cd "$PROJECT_DIR"
-    echo -e "${GREEN}✓ ROCm binary built at $ROCM_BIN${NC}"
-fi
-
-# Check bundled ROCm binary
-if [ -f "$ROCM_BIN" ]; then
-    echo -e "${GREEN}✓ bundled ROCm binary (llama-server)${NC}"
-else
-    echo -e "${YELLOW}⚠ bundled ROCm binary not found in llama-server-rocm/${NC}"
-fi
 
 # Check test fixtures
 if [ -f "$PROJECT_DIR/tests/fixtures/test.jpeg" ] && [ -f "$PROJECT_DIR/tests/fixtures/test.mp4" ]; then

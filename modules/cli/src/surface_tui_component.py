@@ -237,9 +237,6 @@ class StatusScreen(Screen):
 
             cfg = load_config()
             selected_backend = str(cfg.get("backend", "external"))
-            native = cfg.get("native", {})
-            if not isinstance(native, dict):
-                native = {}
 
             deps_status = {}
             for name, module in [
@@ -249,7 +246,6 @@ class StatusScreen(Screen):
                 ("pytesseract", "pytesseract"),
                 ("requests", "requests"),
                 ("pyyaml", "yaml"),
-                ("llama-cpp-python", "llama_cpp"),
             ]:
                 try:
                     __import__(module)

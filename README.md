@@ -127,16 +127,9 @@ backend: external
 external:
   url: "http://localhost:8080/v1"
   model: "llava"
-
-# Use native mode when llama-cpp-python and local model files are available.
-# backend: native
-# native:
-#   model_path: "models/model.gguf"
-#   mmproj_path: "models/mmproj.gguf"
-#   n_gpu_layers: -1
 ```
 
-The native backend requires a compatible GGUF vision model and projector file. The external backend expects an OpenAI-compatible vision endpoint. OCR additionally requires the `tesseract` executable, and video operations require `ffmpeg`.
+The external backend expects an OpenAI-compatible vision endpoint. OCR additionally requires the `tesseract` executable, and video operations require `ffmpeg`.
 
 ## Development and Verification
 
