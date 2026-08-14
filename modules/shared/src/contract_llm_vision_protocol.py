@@ -29,3 +29,12 @@ class LLMVisionProtocol(ABC):
         timeout: int = 120,
     ) -> str:
         """Analyze image with custom prompt using the VLM."""
+
+    @abstractmethod
+    def analyze_video(
+        self,
+        video_path: FilePath,
+        prompt: AnalysisPrompt,
+        timeout: int = 300,
+    ) -> str:
+        """Analyze video with custom prompt using the VLM (video understanding)."""
