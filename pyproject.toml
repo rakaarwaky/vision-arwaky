@@ -23,17 +23,13 @@ dependencies = [
     "textual>=2.0.0",
 ]
 
-[project.optional-dependencies]
-# Only required for backend: "native" (in-process llama-cpp-python).
-# The "external" backend (OpenAI-compatible API) does not need it.
-native = [
-    "llama-cpp-python",
-]
-
 [project.scripts]
 vision-arwaky-mcp = "modules.root_mcp_entry:main"
 vision-arwaky-cli = "modules.root_cli_entry:cli"
 vision-arwaky-tui = "modules.root_tui_entry:main"
+
+[dependency-groups]
+dev = ["pytest"]
 
 [tool.setuptools.packages.find]
 where = ["."]
@@ -46,11 +42,11 @@ check_untyped_defs = true
 no_implicit_optional = true
 
 [[tool.mypy.overrides]]
-module = ["cv2", "mcp.*", "fastmcp.*", "llama_cpp.*", "pytesseract", "yaml", "requests", "PIL"]
+module = ["cv2", "mcp.*", "fastmcp.*", "pytesseract", "yaml", "requests", "PIL"]
 ignore_missing_imports = true
 
 # These third-party packages ship stubs that change signature between
 # releases; do not let their churn block CI for our own code.
 [[tool.mypy.overrides]]
-module = ["cv2", "llama_cpp.*"]
+module = ["cv2"]
 ignore_errors = true

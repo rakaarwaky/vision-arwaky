@@ -20,7 +20,11 @@ from modules.shared.src.contract_video_processing_protocol import (
 from modules.shared.src.contract_video_timeline_protocol import (
     VideoTimelineProtocol,
 )
+from modules.shared.src.contract_video_understanding_protocol import (
+    VideoUnderstandingProtocol,
+)
 from modules.shared.src.taxonomy_vision_models_vo import (
+    AnalysisPrompt,
     BoundingBox,
     CommandName,
     CommandOutput,
@@ -45,6 +49,7 @@ class VideoOrchestrator(RegistryServiceAggregate):
         object_tracking: ObjectTrackingProtocol,
         opencv: OpenCVImageProtocol,
         ffmpeg: FFmpegVideoProtocol,
+        video_understanding: VideoUnderstandingProtocol,
     ):
         self._video_processing = video_processing
         self._video_analysis = video_analysis
@@ -52,6 +57,7 @@ class VideoOrchestrator(RegistryServiceAggregate):
         self._object_tracking = object_tracking
         self._opencv = opencv
         self._ffmpeg = ffmpeg
+        self._video_understanding = video_understanding
 
     def execute_in_process(
         self,
@@ -147,4 +153,15 @@ class VideoOrchestrator(RegistryServiceAggregate):
                     indent=2,
                 )
             )
+        elif command.value == "analyze-video":
+            vid = FilePath(value=kwargs["video"])
+            prompt = AnalysisPrompt(value=kwargs.get("prompt"))
+            result = self._video_understanding.analyze(
+                vid,
+                prompt,
+                interval=float(kwargs.get("interval", 30.0)),
+                scene_threshold=float(kwargs.get("scene_threshold", 20.0)),
+                min_area=int(kwargs.get("min_area", 500)),
+            )
+            return CommandOutput(value=json.dumps(result.model_dump(), indent=2))
         raise ValueError(f"Unknown video command: {command.value}")

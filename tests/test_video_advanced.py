@@ -22,6 +22,15 @@ def create_test_video(num_frames=10):
     return path
 
 
+class FakeLLM:
+    def __init__(self):
+        self.calls = []
+
+    def analyze_image(self, image_path, prompt, timeout=120):
+        self.calls.append((image_path.value, prompt.value, timeout))
+        return "A test frame description."
+
+
 def make_video_orchestrator():
     """Build a VideoOrchestrator with injected ports (DI)."""
     from modules.opencv.src.capabilities_opencv_image_adapter import (
@@ -37,6 +46,9 @@ def make_video_orchestrator():
     from modules.video.src.capabilities_video_processor import (
         VideoProcessingProcessor,
     )
+    from modules.video.src.capabilities_video_understanding import (
+        VideoUnderstandingAnalyzer,
+    )
 
     opencv = OpenCVImageAdapter()
     ffmpeg = FFmpegVideoAdapter()
@@ -44,6 +56,12 @@ def make_video_orchestrator():
     video_analysis = VideoAnalysisAnalyzer(opencv)
     video_timeline = VideoTimelineGenerator(opencv, video_proc, video_analysis)
     object_tracking = ObjectTrackingTracker(opencv)
+    video_understanding = VideoUnderstandingAnalyzer(
+        video_analysis=video_analysis,
+        video_processing=video_proc,
+        llm=FakeLLM(),
+        opencv=opencv,
+    )
     return VideoOrchestrator(
         video_processing=video_proc,
         video_analysis=video_analysis,
@@ -51,6 +69,7 @@ def make_video_orchestrator():
         object_tracking=object_tracking,
         opencv=opencv,
         ffmpeg=ffmpeg,
+        video_understanding=video_understanding,
     )
 
 
@@ -193,6 +212,53 @@ class TestVideoOrchestrator:
         assert orch._video_analysis is not None
         assert orch._video_timeline is not None
         assert orch._object_tracking is not None
+        assert orch._video_understanding is not None
+
+
+class TestVideoUnderstanding:
+    def test_analyze_video_returns_bounded_structured_result(self):
+        from modules.opencv.src.capabilities_opencv_image_adapter import (
+            OpenCVImageAdapter,
+        )
+        from modules.shared.src.taxonomy_vision_models_vo import (
+            AnalysisPrompt,
+            FilePath,
+        )
+        from modules.video.src.capabilities_ffmpeg_adapter import FFmpegVideoAdapter
+        from modules.video.src.capabilities_video_analyzer import VideoAnalysisAnalyzer
+        from modules.video.src.capabilities_video_processor import (
+            VideoProcessingProcessor,
+        )
+        from modules.video.src.capabilities_video_understanding import (
+            MAX_KEY_FRAMES,
+            VideoUnderstandingAnalyzer,
+        )
+
+        opencv = OpenCVImageAdapter()
+        video_proc = VideoProcessingProcessor(opencv, FFmpegVideoAdapter())
+        video_analysis = VideoAnalysisAnalyzer(opencv)
+        fake_llm = FakeLLM()
+        capability = VideoUnderstandingAnalyzer(
+            video_analysis=video_analysis,
+            video_processing=video_proc,
+            llm=fake_llm,
+            opencv=opencv,
+        )
+        path = create_test_video(140)
+        try:
+            result = capability.analyze(
+                FilePath(value=path),
+                AnalysisPrompt(value="Describe the frame."),
+                interval=1,
+            )
+            assert result.frames
+            assert len(result.frames) == MAX_KEY_FRAMES
+            assert result.sampling["max_key_frames"] == MAX_KEY_FRAMES
+            assert len(fake_llm.calls) == len(result.frames) + 1
+            assert result.summary == "A test frame description."
+            assert all(not os.path.exists(call[0]) for call in fake_llm.calls)
+        finally:
+            os.unlink(path)
 
 
 class TestObjectTracking:

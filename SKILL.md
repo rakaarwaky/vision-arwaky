@@ -43,16 +43,9 @@ backend: external
 external:
   url: "http://localhost:8080/v1"
   model: "llava"
-
-# Native mode requires local GGUF model files.
-# backend: native
-# native:
-#   model_path: "models/model.gguf"
-#   mmproj_path: "models/mmproj.gguf"
-#   n_gpu_layers: -1
 ```
 
-External mode expects an OpenAI-compatible vision endpoint. Native mode uses `llama-cpp-python` and local model files. The repository does not require a bundled model.
+External mode expects an OpenAI-compatible vision endpoint. The repository does not require a bundled model.
 
 ## CLI reference: image
 

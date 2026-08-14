@@ -33,6 +33,7 @@ class TestCLIHandler:
             "detect-motion",
             "track",
             "timeline",
+            "analyze-video",
         ]:
             sub = parser._subparsers._group_actions[0].choices.get(cmd)
             assert sub is not None, f"Missing command: {cmd}"
@@ -64,6 +65,7 @@ class TestMCPHandler:
         data = json.loads(result)
         assert "image" in data
         assert "video" in data
+        assert "analyze-video" in {item["command"] for item in data["video"]}
         assert "memory" not in data
 
     def test_list_commands_image(self):

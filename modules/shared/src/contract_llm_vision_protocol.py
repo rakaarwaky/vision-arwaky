@@ -14,7 +14,7 @@ class LLMVisionProtocol(ABC):
     @property
     @abstractmethod
     def backend(self) -> BackendType:
-        """The active backend type: native or external."""
+        """The active backend type: external."""
 
     @property
     @abstractmethod

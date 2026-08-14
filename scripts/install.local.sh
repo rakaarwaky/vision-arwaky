@@ -39,7 +39,7 @@ CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/vision-arwaky"
 DATA_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/vision-arwaky"
 CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/vision-arwaky/memory"
 VENV_DIR="$DATA_DIR/venv"
-BIN_DIR="$HOME/.local/bin"
+BIN_DIR="${XDG_BIN_HOME:-$HOME/.local/bin}"
 mkdir -p "$CONFIG_DIR" "$DATA_DIR" "$CACHE_DIR" "$BIN_DIR"
 echo -e "${GREEN}✓ config : ${CONFIG_DIR}${NC}"
 echo -e "${GREEN}✓ data  : ${DATA_DIR}${NC}"
@@ -72,16 +72,8 @@ VENV_PIP="$VENV_DIR/bin/pip"
 # ── Install package + deps into venv ──────────────────────
 echo ""
 echo -e "${YELLOW}[4/5]${NC} Installing vision-arwaky (editable) + dependencies into venv..."
-if "$VENV_PIP" install -e ".[native]" 2>&1 | tail -4; then
-    echo -e "${GREEN}✓ Package + native deps installed into venv${NC}"
-else
-    # llama-cpp-python (native backend only) may fail to build on this
-    # Python/platform. Fall back to core deps so the external/CLI path works.
-    echo -e "${YELLOW}⚠ native extra (llama-cpp-python) failed to build — installing core only${NC}"
-    "$VENV_PIP" install -e . 2>&1 | tail -4
-    echo -e "${GREEN}✓ Package (core deps) installed into venv${NC}"
-    echo -e "${YELLOW}  Note: backend: native requires llama-cpp-python separately.${NC}"
-fi
+"$VENV_PIP" install -e . 2>&1 | tail -4
+echo -e "${GREEN}✓ Package + dependencies installed into venv${NC}"
 
 # Expose entry points on PATH via symlinks into ~/.local/bin
 for ep in vision-arwaky-cli vision-arwaky-mcp vision-arwaky-tui; do
@@ -119,15 +111,7 @@ DEPS_MISSING=()
 "$VENV_PY" -c "import cv2" 2>/dev/null || DEPS_MISSING+=("opencv-python")
 "$VENV_PY" -c "import PIL" 2>/dev/null || DEPS_MISSING+=("pillow")
 "$VENV_PY" -c "import pytesseract" 2>/dev/null || DEPS_MISSING+=("pytesseract")
-"$VENV_PY" -c "import llama_cpp" 2>/dev/null || DEPS_MISSING+=("llama-cpp-python")
 command -v ffmpeg &>/dev/null || DEPS_MISSING+=("ffmpeg (binary)")
-
-# Check bundled ROCm binary
-if [ -f "$PROJECT_DIR/llama-server-rocm/llama-server" ]; then
-    echo -e "${GREEN}✓ bundled ROCm binary (llama-server)${NC}"
-else
-    echo -e "${YELLOW}⚠ bundled ROCm binary not found in llama-server-rocm/${NC}"
-fi
 
 # Check test fixtures
 if [ -f "$PROJECT_DIR/tests/fixtures/test.jpeg" ] && [ -f "$PROJECT_DIR/tests/fixtures/test.mp4" ]; then

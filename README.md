@@ -1,6 +1,6 @@
 # Vision Arwaky
 
-Vision Arwaky is a Python 3.12+ computer-vision MCP server for image analysis, OCR, video processing, motion and scene detection, object tracking, and agent-readable video timelines. The project uses a seven-layer Agentic Engineering System (AES) architecture with dependency injection at the composition root.
+Vision Arwaky is a Python 3.12+ computer-vision MCP server for image analysis, OCR, video processing, motion and scene detection, object tracking, video timelines.
 
 ## Quick Start
 
@@ -49,46 +49,32 @@ tests/                                # Integration and feature tests
 scripts/gates.sh                      # Local mirror of the CI quality gates
 ```
 
-### AES layers
-
-| Filename prefix | Layer | Responsibility |
-|---|---|---|
-| `taxonomy_` | Taxonomy | Value objects, entities, errors, events, and constants |
-| `contract_` | Contract | Protocols and aggregate facades |
-| `utility_` | Utility | Stateless technical helpers |
-| `capabilities_` | Capabilities | Concrete processing and infrastructure adapters |
-| `agent_` | Agent | Constructor-injected feature orchestrators |
-| `surface_` | Surface | CLI, MCP, and TUI interaction boundaries |
-| `root_` | Root | Composition containers and application entry points |
-
-Surfaces delegate through the injected `RegistryServiceAggregate`; they do not construct capabilities or implement domain workflows. The root layer is the only place that assembles the concrete dependency graph.
-
 ## CLI Commands
 
 The CLI command list below is implemented by `modules/cli/src/surface_cli_controller.py` and dispatched by `modules/root_cli_entry.py`.
 
 ### Image commands
 
-| Command | Main arguments | Purpose |
-|---|---|---|
-| `analyze` | `--image`, optional `--prompt` | Analyze an image with the configured VLM, with an OpenCV fallback |
-| `ocr` | `--image`, optional `--lang` | Extract text using Tesseract OCR |
-| `elements` | `--image` | Detect visual or UI elements |
-| `compare` | `--image1`, `--image2` | Compare two screenshots and report differences |
+| Command      | Main arguments                     | Purpose                                                           |
+| ------------ | ---------------------------------- | ----------------------------------------------------------------- |
+| `analyze`  | `--image`, optional `--prompt` | Analyze an image with the configured VLM, with an OpenCV fallback |
+| `ocr`      | `--image`, optional `--lang`   | Extract text using Tesseract OCR                                  |
+| `elements` | `--image`                        | Detect visual or UI elements                                      |
+| `compare`  | `--image1`, `--image2`         | Compare two screenshots and report differences                    |
 
 ### Video commands
 
-| Command | Main arguments | Purpose |
-|---|---|---|
-| `video-info` | `--video` | Read video metadata |
-| `extract-frames` | `--video`, optional interval | Extract frames through the video processing port |
-| `convert` | input and output paths | Convert a video to another format |
-| `check-corruption` | `--video` | Check whether a video can be decoded successfully |
-| `create-gif` | video, output, start, duration | Create a GIF from a video segment |
-| `detect-scenes` | `--video`, optional threshold | Detect scene changes |
-| `detect-motion` | `--video`, optional minimum area | Detect motion events |
-| `track` | `--video`, bounding box, optional maximum frames | Track an object through a video |
-| `timeline` | `--video`, optional interval | Generate an agent-readable video timeline |
+| Command              | Main arguments                                     | Purpose                                           |
+| -------------------- | -------------------------------------------------- | ------------------------------------------------- |
+| `video-info`       | `--video`                                        | Read video metadata                               |
+| `extract-frames`   | `--video`, optional interval                     | Extract frames through the video processing port  |
+| `convert`          | input and output paths                             | Convert a video to another format                 |
+| `check-corruption` | `--video`                                        | Check whether a video can be decoded successfully |
+| `create-gif`       | video, output, start, duration                     | Create a GIF from a video segment                 |
+| `detect-scenes`    | `--video`, optional threshold                    | Detect scene changes                              |
+| `detect-motion`    | `--video`, optional minimum area                 | Detect motion events                              |
+| `track`            | `--video`, bounding box, optional maximum frames | Track an object through a video                   |
+| `timeline`         | `--video`, optional interval                     | Generate an agent-readable video timeline         |
 
 ### Test command
 
@@ -104,13 +90,13 @@ The command runs pytest in-process and, when fixtures are available, performs th
 
 The MCP entry point registers five tools over stdio:
 
-| Tool | Purpose |
-|---|---|
-| `vision_execute` | Execute a supported image or video command |
+| Tool                     | Purpose                                        |
+| ------------------------ | ---------------------------------------------- |
+| `vision_execute`       | Execute a supported image or video command     |
 | `vision_list_commands` | List the available command groups and commands |
-| `vision_help` | Read the packaged project skill documentation |
-| `vision_status` | Report dependency and capability availability |
-| `vision_cancel` | Cancel a running operation when supported |
+| `vision_help`          | Read the packaged project skill documentation  |
+| `vision_status`        | Report dependency and capability availability  |
+| `vision_cancel`        | Cancel a running operation when supported      |
 
 Start the server with:
 
@@ -127,16 +113,9 @@ backend: external
 external:
   url: "http://localhost:8080/v1"
   model: "llava"
-
-# Use native mode when llama-cpp-python and local model files are available.
-# backend: native
-# native:
-#   model_path: "models/model.gguf"
-#   mmproj_path: "models/mmproj.gguf"
-#   n_gpu_layers: -1
 ```
 
-The native backend requires a compatible GGUF vision model and projector file. The external backend expects an OpenAI-compatible vision endpoint. OCR additionally requires the `tesseract` executable, and video operations require `ffmpeg`.
+The external backend expects an OpenAI-compatible vision endpoint. OCR additionally requires the `tesseract` executable, and video operations require `ffmpeg`.
 
 ## Development and Verification
 
@@ -163,10 +142,10 @@ The test suite generates its media fixtures in CI. A local environment should ha
 
 ## Key Documents
 
-| Document | Purpose |
-|---|---|
-| [ARCHITECTURE.md](ARCHITECTURE.md) | Current seven-layer architecture and dependency rules |
-| [RULES_AES.md](RULES_AES.md) | AES naming, import, role, and quality rules |
-| [MIGRATION_PYTHON.md](MIGRATION_PYTHON.md) | Python migration playbook and verification workflow |
-| [SKILL.md](SKILL.md) | Runtime capabilities and agent-facing command reference |
-| [config.yaml](config.yaml) | Repository-local configuration defaults |
+| Document                                  | Purpose                                                 |
+| ----------------------------------------- | ------------------------------------------------------- |
+| [ARCHITECTURE.md](ARCHITECTURE.md)         | Current seven-layer architecture and dependency rules   |
+| [RULES_AES.md](RULES_AES.md)               | AES naming, import, role, and quality rules             |
+| [MIGRATION_PYTHON.md](MIGRATION_PYTHON.md) | Python migration playbook and verification workflow     |
+| [SKILL.md](SKILL.md)                       | Runtime capabilities and agent-facing command reference |
+| [config.yaml](config.yaml)                 | Repository-local configuration defaults                 |

@@ -2,6 +2,7 @@ import sys
 
 from modules.cli.src.surface_cli_command import (
     cmd_analyze,
+    cmd_analyze_video,
     cmd_check_corruption,
     cmd_compare,
     cmd_convert,
@@ -31,6 +32,7 @@ def cli():
 
     commands = {
         "analyze": cmd_analyze,
+        "analyze-video": cmd_analyze_video,
         "ocr": cmd_ocr,
         "elements": cmd_elements,
         "compare": cmd_compare,

@@ -1,16 +1,13 @@
 # config.yaml - Vision MCP Server configuration
-backend: "native"  # "native" (llama-cpp-python) or "external" (OpenAI-compatible API)
+backend: "external"  # OpenAI-compatible vision API
 
-# Native (Direct Python In-Process) Execution
-native:
-  model_path: "models/MiniCPM-V-4_6-Q8_0.gguf"
-  mmproj_path: "models/mmproj-model-f16"
-  n_ctx: 2048
-  n_threads: 4
-  n_gpu_layers: -1  # Set to -1 to offload all layers to GPU (CUDA/Metal), or 0 for CPU-only
-
-# External API Execution (Fallback / Original Mode)
+# External API Execution (OpenAI-compatible vision endpoint)
+# Official MiniCPM-V API (OpenBMB / Modelbest):
+# https://github.com/OpenBMB/MiniCPM-V/blob/main/docs/api.md
+# Free public API key, usable by anyone. Valid model IDs:
+#   MiniCPM-V-4.6-1B, MiniCPM-V-4.6-Thinking, MiniCPM-V-4.5-9B,
+#   MiniCPM-O-4.5-9B, MiniCPM-V 4.6, MiniCPM-V 4.5
 external:
-  url: "http://127.0.0.1:1234/v1"
-  model: "MiniCPM-V-4_6-Q8_0"
-  api_key: ""
+  url: "https://api.modelbest.cn/v1"
+  model: "MiniCPM-V-4.6-1B"
+  api_key: "sk-live-kmwPsO1yz9kJfbp8c6az72I-BjfZBX-5V5CmI9yTsXw"

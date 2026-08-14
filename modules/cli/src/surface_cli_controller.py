@@ -77,6 +77,26 @@ def create_parser() -> argparse.ArgumentParser:
     timeline.add_argument("--video", required=True, help="Video path")
     timeline.add_argument("--interval", type=int, default=5, help="Interval in seconds")
 
+    analyze_video = subparsers.add_parser(
+        "analyze-video", help="Smart video understanding (key-frame + VLM)"
+    )
+    analyze_video.add_argument("--video", required=True, help="Video path")
+    analyze_video.add_argument(
+        "--prompt", default=None, help="Custom per-frame analysis prompt"
+    )
+    analyze_video.add_argument(
+        "--interval",
+        type=float,
+        default=30.0,
+        help="Uniform sampling interval (frames)",
+    )
+    analyze_video.add_argument(
+        "--scene-threshold", type=float, default=20.0, help="Scene change threshold"
+    )
+    analyze_video.add_argument(
+        "--min-area", type=int, default=500, help="Minimum motion area"
+    )
+
     # --- Test command ---
     test_parser = subparsers.add_parser("test", help="Run vision-arwaky test suite")
     test_parser.add_argument(

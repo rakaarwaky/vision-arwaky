@@ -1,4 +1,0 @@
-[console_scripts]
-vision-arwaky-cli = modules.root_cli_entry:cli
-vision-arwaky-mcp = modules.root_mcp_entry:main
-vision-arwaky-tui = modules.root_tui_entry:main

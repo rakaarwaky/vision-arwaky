@@ -62,7 +62,8 @@ def vision_execute(
     min_area: int = 500,
     bbox: str = "",
     max_frames: int = 300,
-    interval: float = 1.0,
+    interval: float | None = None,
+    scene_threshold: float | None = None,
     start: float = 0.0,
     duration: float = 0.0,
     label: str = "",
@@ -87,7 +88,13 @@ def vision_execute(
       detect-motion — Detect motion events. Args: video, [min_area]
       track        — Track object. Args: video, bbox(X,Y,W,H), [max-frames]
       timeline     — Generate video timeline. Args: video, [interval]
+      analyze-video — Smart video understanding. Args: video, [prompt, interval, scene_threshold, min_area]
     """
+    effective_interval = (
+        interval
+        if interval is not None
+        else (30.0 if command == "analyze-video" else 1.0)
+    )
     kwargs = {
         "image": image,
         "image1": image1,
@@ -98,10 +105,11 @@ def vision_execute(
         "lang": lang,
         "prompt": prompt,
         "threshold": threshold,
+        "scene_threshold": (scene_threshold if scene_threshold is not None else 20.0),
         "min_area": min_area,
         "bbox": bbox,
         "max_frames": max_frames,
-        "interval": interval,
+        "interval": effective_interval,
         "start": start,
         "duration": duration,
         "label": label,
@@ -116,7 +124,7 @@ def vision_list_commands(domain: str = "") -> str:
     """List all available vision commands.
 
     Args:
-        domain: Filter by domain (image, video, memory). Empty = all.
+        domain: Filter by domain (image, video). Empty = all.
     """
     commands = {
         "image": [
@@ -187,6 +195,11 @@ def vision_list_commands(domain: str = "") -> str:
                 "args": "video, [interval]",
                 "desc": "Generate video timeline",
             },
+            {
+                "command": "analyze-video",
+                "args": "video, [prompt, interval, scene_threshold, min_area]",
+                "desc": "Analyze sampled video frames with a VLM and summarize the video",
+            },
         ],
     }
 
@@ -200,7 +213,7 @@ def vision_help(section: str = "all") -> str:
     """Read SKILL.md documentation for vision commands.
 
     Args:
-        section: Section to read (all, image, video, memory, workflows).
+        section: Section to read (all, image, video).
     """
     skill_path = Path(VISION_PROJECT) / "SKILL.md"
     if not skill_path.exists():
@@ -216,7 +229,7 @@ def vision_help(section: str = "all") -> str:
         if s.lower().startswith(section.lower()):
             return "## " + s
 
-    return f"Section '{section}' not found. Available: all, image, video, memory, workflows"
+    return f"Section '{section}' not found. Available: all, image, video"
 
 
 @mcp.tool()
@@ -231,7 +244,6 @@ def vision_status() -> str:
 
     # Read backend from config
     selected_backend = "external"
-    native_files: dict = {}
     if config_path.exists():
         try:
             with open(config_path) as f:
@@ -239,24 +251,8 @@ def vision_status() -> str:
             if not isinstance(cfg_data, dict):
                 cfg_data = {}
             selected_backend = str(cfg_data.get("backend", "external"))
-            native_cfg = cfg_data.get("native", {})
-            if isinstance(native_cfg, dict):
-                model_rel = str(native_cfg.get("model_path", "") or "")
-                mmproj_rel = str(native_cfg.get("mmproj_path", "") or "")
-                native_files = {
-                    "model_file": "MISSING"
-                    if not model_rel
-                    else (
-                        "FOUND" if (project_root / model_rel).exists() else "MISSING"
-                    ),
-                    "mmproj_file": "MISSING"
-                    if not mmproj_rel
-                    else (
-                        "FOUND" if (project_root / mmproj_rel).exists() else "MISSING"
-                    ),
-                }
-        except (OSError, ValueError, yaml.YAMLError) as e:
-            native_files["config_error"] = str(e)
+        except (OSError, ValueError, yaml.YAMLError):
+            pass
 
     status_cfg: dict[str, Any] = {
         "config_yaml_detected": config_path.exists(),
@@ -264,25 +260,19 @@ def vision_status() -> str:
         if user_config.exists()
         else "project root",
         "selected_backend": selected_backend,
-        "native_files": native_files,
     }
 
-    # Resolve LLM readiness
+    # Resolve external LLM readiness
     llm_ready = False
-    if selected_backend == "native":
-        file_match = all(v == "FOUND" for v in native_files.values())
-        llm_ready = deps.get("llama-cpp-python") == "OK" and file_match
-        deps["native_llm_state"] = "READY" if llm_ready else "NOT_READY"
-    else:
-        try:
-            import requests
+    try:
+        import requests
 
-            base_url = DEFAULT_URL
-            resp = requests.get(f"{base_url}/models", timeout=5)
-            deps["llm_endpoint"] = "OK"
-            llm_ready = resp.status_code == 200
-        except (OSError, requests.RequestException):
-            deps["llm_endpoint"] = "UNREACHABLE"
+        base_url = DEFAULT_URL
+        resp = requests.get(f"{base_url}/models", timeout=5)
+        deps["llm_endpoint"] = "OK"
+        llm_ready = resp.status_code == 200
+    except (OSError, requests.RequestException):
+        deps["llm_endpoint"] = "UNREACHABLE"
 
     caps = {
         "image_analysis": deps.get("opencv") == "OK",
