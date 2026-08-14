@@ -1,172 +1,171 @@
 ---
 name: vision-arwaky
-description: Unified Image & Video Intelligence — computer vision, OCR, video analysis, object tracking, and visual memory.
-version: 2.0.0
+description: Unified image and video intelligence for computer vision, OCR, video analysis, object tracking, and MCP integrations.
+version: 2.0.7
 ---
 
-# Vision Arwaky — Unified Image & Video Intelligence
+# Vision Arwaky
 
-Computer vision toolkit for AI agents. Handles image analysis (now with local VLM support), OCR, video processing, object tracking, and visual memory — all running locally without cloud API calls.
+Vision Arwaky is a Python computer-vision toolkit exposed through a CLI and an MCP server. It provides image analysis, OCR, screenshot comparison, video processing, scene and motion detection, object tracking, and agent-readable timelines.
 
-## Architecture
-
-```
-CLI Layer:  15 commands (analyze, ocr, video-info, extract-frames, etc.)
-MCP Layer:  5 Hydra meta-tools (vision_execute, vision_help, etc.)
-TUI Layer:  Textual-based config manager (vision-arwaky-tui)
-VLM Layer:  Local LLM adapter for AI image understanding
-SKILL.md:   This file (discovery layer)
-```
-
-## Entry Points
+## Entry points
 
 | Command | Purpose |
-|---------|---------|
-| `vision-arwaky-cli` | CLI interface — all commands |
-| `vision-arwaky-mcp` | MCP server for AI agents |
-| `vision-arwaky-tui` | Textual-based config & system management |
+|---|---|
+| `vision-arwaky-cli` | Run image, video, and test commands |
+| `vision-arwaky-mcp` | Start the MCP server over stdio |
+| `vision-arwaky-tui` | Start the Textual configuration interface |
 
-## MCP Tools (5 Hydra)
+Use `uv run <command>` during development when the project is managed by `uv`.
+
+## MCP tools
+
+The MCP server exposes five tools:
 
 | Tool | Purpose |
-|------|---------|
-| `vision_execute` | Execute ANY vision command (main entry) |
-| `vision_list_commands` | List available commands by domain |
-| `vision_help` | Read this SKILL.md documentation |
-| `vision_status` | Check dependencies and capabilities |
-| `vision_cancel` | Cancel running operations |
+|---|---|
+| `vision_execute` | Execute a supported image or video command |
+| `vision_list_commands` | List supported command groups and commands |
+| `vision_help` | Return this documentation |
+| `vision_status` | Report dependency and model availability |
+| `vision_cancel` | Cancel a running operation when supported |
 
-## VLM / Local LLM Image Analysis
+The MCP entry point is `modules/root_mcp_entry.py`, and the action surface is `modules/mcp/src/surface_mcp_action.py`.
 
-The `analyze` command sends an image + prompt to the local LLM endpoint.
-If LLM unavailable, falls back to OCR + UI element detection.
+## Backend and image analysis
 
-**Supports:** any OpenAI-compatible API (llama-server, LM Studio, Ollama, vLLM)
-or native llama-cpp-python in-process.
+The `analyze` command accepts an image path and an optional prompt. The image orchestrator uses the configured backend and falls back to OpenCV-based analysis when a language-model response is unavailable.
 
-### Configuration
+The supported backend configuration is:
 
 ```yaml
-backend: "native"  # "native" (llama-cpp-python) or "external" (API server)
-native:
-  model_path: "models/model.gguf"
-  mmproj_path: "models/mmproj.gguf"
-  n_gpu_layers: -1
+backend: external
 external:
   url: "http://localhost:8080/v1"
+  model: "llava"
+
+# Native mode requires local GGUF model files.
+# backend: native
+# native:
+#   model_path: "models/model.gguf"
+#   mmproj_path: "models/mmproj.gguf"
+#   n_gpu_layers: -1
 ```
 
-### Bundled ROCm binary
+External mode expects an OpenAI-compatible vision endpoint. Native mode uses `llama-cpp-python` and local model files. The repository does not require a bundled model.
 
-If `llama-server-rocm/llama-server` exists, native mode auto-spawns it as
-subprocess with ROCm GPU acceleration — no manual server setup needed.
+## CLI reference: image
 
-## CLI Usage — Image
+```text
+analyze
+  --image PATH
+  --prompt TEXT (optional)
+  Analyze an image or the middle frame of a supported video.
 
-```
-analyze — AI visual analysis (image or video)
-  args: --image, [--prompt]
-  output: {"source": "llm"|"opencv", "text": "...", "model": "..."}
-  note: If --image is a video (.mp4/.mov/.avi/.mkv), automatically extracts
-  the middle frame and analyzes it.
+ocr
+  --image PATH
+  --lang CODE (optional, default: eng)
+  Extract text with Tesseract OCR.
 
-ocr — Extract text via Tesseract OCR
-  args: --image, [--lang] (default: eng)
-  output: plain text
+elements
+  --image PATH
+  Detect visual or UI elements.
 
-elements — Find UI elements (buttons, inputs, etc.)
-  args: --image
-  output: [{"label": "ui_element", "bbox": {...}}, ...]
-
-compare — Compare two screenshots, find differences
-  args: --image1, --image2
-  output: {"identical": bool, "differences": [...], "phash_diff": bool}
+compare
+  --image1 PATH
+  --image2 PATH
+  Compare two screenshots and report perceptual differences.
 ```
 
-## CLI Usage — Video
+## CLI reference: video
 
-```
-video-info — Get video metadata
-  args: --video
-  output: {"fps": 30.0, "frame_count": 353, "width": 720, "height": 1280}
-  note: Duration can be calculated as frame_count / fps
+```text
+video-info
+  --video PATH
+  Read video metadata.
 
-extract-frames — Extract frames at interval
-  args: --video, [--interval] (default: 1.0 second)
-  output: ["/path/to/video_frame_0001.jpg", ...]
-  IMPORTANT: Frames are saved in the SAME directory as the source video,
-  with naming pattern: {video_filename}_frame_%04d.jpg
+extract-frames
+  --video PATH
+  --interval SECONDS (optional)
+  Extract frames through the FFmpeg video port.
 
-convert — Convert video format
-  args: --input, --output
-  output: {"success": true|false}
+convert
+  Convert a video from an input path to an output path.
 
-check-corruption — Check if video file is corrupted
-  args: --video
-  output: {"corrupted": true|false}
+check-corruption
+  --video PATH
+  Check whether a video is decodable.
 
-create-gif — Create GIF from video segment
-  args: --video, --output, [--start], [--duration]
-  output: {"success": true|false}
+create-gif
+  Create a GIF from a video segment.
 
-detect-scenes — Detect scene changes via histogram comparison
-  args: --video, [--threshold] (0-100, default: 30)
-  output: [{"timestamp": 1.5, "score": 0.85}, ...]
-  how: Converts each frame to HSV, compares color histogram correlation.
-  Low correlation = scene change. Lower threshold = more sensitive.
+detect-scenes
+  --video PATH
+  --threshold VALUE (optional)
+  Detect scene changes.
 
-detect-motion — Detect motion events via frame differencing
-  args: --video, [--min-area] (default: 500 pixels)
-  output: [{"timestamp": 2.0, "magnitude": 0.05, "direction": 45.0, "region": {...}}, ...]
-  how: Frame differencing (absdiff) → binary threshold → contour detection.
-  Filters out contours below min-area. Higher min-area = less sensitive.
+detect-motion
+  --video PATH
+  --min-area PIXELS (optional)
+  Detect motion events.
 
-track — Track object through video (OpenCV KCF/CSRT)
-  args: --video, --bbox (X,Y,W,H), [--max-frames] (default: 300)
-  output: [{"x": 100, "y": 50, "width": 200, "height": 150}, ...]
+track
+  --video PATH
+  --bbox X,Y,W,H
+  --max-frames COUNT (optional)
+  Track an object using the configured OpenCV tracker.
 
-timeline — Generate agent-readable video timeline
-  args: --video, [--interval] (default: 5 seconds)
-  output: {"video_path": "...", "total_frames": 353, "fps": 30.0, "key_frames": [...]}
-
-memory — Visual memory operations
-  subcommands:
-    store   — Store image by perceptual hash. args: --image, --label
-    search  — Find similar images. args: --query, [--max-distance]
-    list    — List all stored images
+timeline
+  --video PATH
+  --interval SECONDS (optional)
+  Generate a video timeline for agent consumption.
 ```
 
-## CLI Usage — Test
+## Test command
 
-```
-test — Run test suite + AI vision analysis
-  args: [--image], [--verbose]
-  Runs pytest on tests/, then analyzes test.jpeg with VLM,
-  then analyzes test.mp4 using smart sampling pipeline:
-    1. Scene detection — frame pada scene change
-    2. Motion detection — frame dengan motion tertinggi
-    3. Uniform sampling — tiap 30 frame
-  Output: JSON with video metadata, per-frame analyses, and summary
+```bash
+vision-arwaky-cli test [--image PATH] [--verbose]
 ```
 
-## Dependencies
+The command runs pytest in-process and can optionally run the image and video demonstration pipeline against the generated fixtures. Install the development test dependency before invoking it.
 
-| Package | Purpose | Required |
-|---------|---------|----------|
-| opencv-contrib-python-headless | Image/video processing | Yes |
-| pillow | Image I/O | Yes |
-| numpy | Array operations | Yes |
-| requests | HTTP client for LLM adapter | Yes |
-| pytesseract | OCR text extraction | Yes |
-| ffmpeg (binary) | Video conversion, GIF | Yes |
-| llama-cpp-python | Native VLM inference | Yes |
-| textual | TUI framework | Yes |
+## Configuration and system dependencies
 
-## Limitations
+The project reads configuration through `utility_config_handler`. Keep machine-specific paths and credentials outside version control. The standard runtime paths are:
 
-- OCR requires Tesseract binary installed (`dnf install tesseract`)
-- Video operations require FFmpeg binary (`dnf install ffmpeg`)
-- Object tracking uses OpenCV KCF/CSRT (not deep learning)
-- Visual memory uses perceptual hash (not neural embeddings)
-- VLM analysis requires a running local LLM server with a vision-capable model
-- LLM fallback to OCR occurs automatically if the endpoint is unreachable
+| Resource | Typical location |
+|---|---|
+| User configuration | `~/.config/vision-arwaky/config.yaml` |
+| Repository configuration | `./config.yaml` |
+| Native model files | A project or user-selected `models/` directory |
+| Video tools | `ffmpeg` and `ffprobe` available on `PATH` |
+
+Required system executables are:
+
+- `tesseract` for OCR.
+- `ffmpeg` and `ffprobe` for video operations.
+- A working OpenCV runtime for image and video processing.
+
+On Debian or Ubuntu:
+
+```bash
+sudo apt-get update
+sudo apt-get install -y ffmpeg libgl1 tesseract-ocr
+```
+
+## Development verification
+
+From the repository root:
+
+```bash
+uv sync
+bash scripts/gates.sh
+```
+
+The gates run Ruff formatting, Ruff lint, Mypy, pytest, and `lint-arwaky-cli scan .`. CI additionally builds the package and runs pytest on Python 3.12 and 3.13.
+
+## Current limitations
+
+VLM analysis requires either a reachable external vision endpoint or a compatible local native model. OCR requires the Tesseract binary. Video processing requires FFmpeg. Object tracking uses OpenCV trackers rather than a deep-learning detector.
+
+The old visual-memory CLI and MCP commands are not part of the current public surface. Do not rely on memory-related examples from older versions of this document.
