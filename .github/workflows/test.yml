@@ -8,7 +8,68 @@ on:
   workflow_dispatch:
 
 jobs:
+  format:
+    name: Format (ruff format)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+
+      - name: Install project
+        run: uv sync --no-dev
+
+      - name: Install lint deps
+        run: uv pip install ruff
+
+      - name: Check formatting
+        run: uv run ruff format --check modules/ tests/
+
+  lint:
+    name: Lint (ruff check + mypy)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+
+      - name: Install project
+        run: uv sync --no-dev
+
+      - name: Install lint deps
+        run: uv pip install ruff mypy
+
+      - name: Ruff check
+        run: uv run ruff check modules/ tests/
+
+      - name: Mypy check
+        run: uv run mypy modules/
+
+  build:
+    name: Build package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+
+      - name: Install project
+        run: uv sync --no-dev
+
+      - name: Build
+        run: uv build
+
   test:
+    name: Tests (pytest)
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -32,7 +93,7 @@ jobs:
 
       - name: Install project
         run: uv sync --no-dev
-        
+
       - name: Install additional deps (not in pyproject.toml)
         run: uv pip install opencv-contrib-python-headless pytesseract pytest
 
@@ -53,8 +114,8 @@ jobs:
           out.release()
           "
 
-      - name: Run tests only (original test suite)
-        run: uv run python3 -m pytest tests/test_vision.py -v
+      - name: Run tests
+        run: uv run python3 -m pytest tests/ -v
 
       - name: Create issue on failure
         if: failure()
@@ -69,3 +130,39 @@ jobs:
             Branch: ${{ github.ref_name }}
             Commit: ${{ github.sha }}
             Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+  self-lint:
+    name: Self-Lint (lint-arwaky-cli)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install lint-arwaky-cli (pre-built binary)
+        run: |
+          curl -fsSL \
+            https://github.com/rakaarwaky/lint-arwaky/releases/download/v3.5.0/lint-arwaky-cli \
+            -o "$RUNNER_TEMP/lint-arwaky-cli"
+          chmod +x "$RUNNER_TEMP/lint-arwaky-cli"
+          sudo mv "$RUNNER_TEMP/lint-arwaky-cli" /usr/local/bin/lint-arwaky-cli
+          lint-arwaky-cli version
+
+      - name: Install Python deps for import scan
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libgl1 tesseract-ocr ffmpeg
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+
+      - name: Install project
+        run: uv sync --no-dev
+
+      - name: Run self-lint (must be 0 violations)
+        run: |
+          output=$(lint-arwaky-cli scan . 2>&1) || true
+          echo "$output" | tail -5
+          violations=$(echo "$output" | grep -oP 'Total:\s*\K\d+') || violations="PARSE_FAILURE"
+          echo "Violations: ${violations}"
+          [ "${violations}" = "0" ]

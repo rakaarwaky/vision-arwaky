@@ -1,16 +1,23 @@
 """Tests for shared/contract layer — all protocols, ports, and models."""
+
 import json
-import os
-import tempfile
-import numpy as np
-import cv2
-from pathlib import Path
-from src.shared.vision_models_vo import (
-    BoundingBox, Detection, MotionEvent, SceneChange, MemoryEntry,
-    VideoTimeline, VisionAnalysis, FilePath, LanguageCode, OcrText,
-    CommandName, CommandOutput, MemoryLabel, DistanceThreshold,
-    SceneThreshold, MinArea, AnalysisPrompt, IntervalSeconds,
-    MaxFrames, TimeSegment, VideoInfo,
+
+from modules.shared.src.taxonomy_vision_models_vo import (
+    AnalysisPrompt,
+    BoundingBox,
+    CommandName,
+    CommandOutput,
+    Detection,
+    FilePath,
+    IntervalSeconds,
+    LanguageCode,
+    MaxFrames,
+    MinArea,
+    OcrText,
+    SceneThreshold,
+    TimeSegment,
+    VideoInfo,
+    VisionAnalysis,
 )
 
 
@@ -25,7 +32,11 @@ class TestVisionModels:
         assert d["x"] == 10
 
     def test_detection(self):
-        d = Detection(label="button", confidence=0.95, bbox=BoundingBox(x=0, y=0, width=50, height=50))
+        d = Detection(
+            label="button",
+            confidence=0.95,
+            bbox=BoundingBox(x=0, y=0, width=50, height=50),
+        )
         assert d.label == "button"
         assert d.confidence == 0.95
 
@@ -51,8 +62,6 @@ class TestVisionModels:
     def test_value_objects(self):
         assert LanguageCode(value="eng").value == "eng"
         assert FilePath(value="/tmp/test.png").value == "/tmp/test.png"
-        assert MemoryLabel(value="test").value == "test"
-        assert DistanceThreshold(value=10).value == 10
         assert SceneThreshold(value=30.0).value == 30.0
         assert MinArea(value=500).value == 500
         assert IntervalSeconds(value=1.0).value == 1.0
@@ -67,21 +76,27 @@ class TestProtocolInstantiation:
     """Test that protocols/ports can be subclassed and used."""
 
     def test_opencv_port_interface(self):
-        from src.shared.opencv_image_port import OpenCVImagePort
-        assert callable(OpenCVImagePort.read_image)
+        from modules.shared.src.contract_opencv_image_protocol import (
+            OpenCVImageProtocol,
+        )
+
+        assert callable(OpenCVImageProtocol.read_image)
 
     def test_image_processing_protocol(self):
-        from src.shared.image_processing_protocol import ImageProcessingProtocol
+        from modules.shared.src.contract_image_processing_protocol import (
+            ImageProcessingProtocol,
+        )
+
         assert callable(ImageProcessingProtocol.analyze_screenshot)
 
     def test_llm_vision_port(self):
-        from src.shared.llm_vision_port import LLMVisionPort
-        assert callable(LLMVisionPort.analyze_image)
+        from modules.shared.src.contract_llm_vision_protocol import LLMVisionProtocol
+
+        assert callable(LLMVisionProtocol.analyze_image)
 
     def test_video_processing_protocol(self):
-        from src.shared.video_processing_protocol import VideoProcessingProtocol
-        assert callable(VideoProcessingProtocol.extract_frames)
+        from modules.shared.src.contract_video_processing_protocol import (
+            VideoProcessingProtocol,
+        )
 
-    def test_visual_memory_protocol(self):
-        from src.shared.visual_memory_protocol import VisualMemoryProtocol
-        assert callable(VisualMemoryProtocol.remember_image)
+        assert callable(VideoProcessingProtocol.extract_frames)

@@ -15,7 +15,7 @@ dependencies = [
     "fastmcp",
     "pydantic",
     "opencv-contrib-python-headless",
-    "pillow",
+    "pillow>=12.3.0",
     "numpy",
     "pytesseract",
     "requests",
@@ -25,10 +25,26 @@ dependencies = [
 ]
 
 [project.scripts]
-vision-arwaky-mcp = "src.mcp_entry:main"
-vision-arwaky-cli = "src.cli_entry:cli"
-vision-arwaky-tui = "src.tui_entry:main"
+vision-arwaky-mcp = "modules.root_mcp_entry:main"
+vision-arwaky-cli = "modules.root_cli_entry:cli"
+vision-arwaky-tui = "modules.root_tui_entry:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["src*"]
+include = ["modules*"]
+exclude = ["modules.*.tests*", "tests*"]
+
+[tool.mypy]
+python_version = "3.12"
+check_untyped_defs = true
+no_implicit_optional = true
+
+[[tool.mypy.overrides]]
+module = ["cv2", "mcp.*", "fastmcp.*", "llama_cpp.*", "pytesseract", "yaml", "requests", "PIL"]
+ignore_missing_imports = true
+
+# These third-party packages ship stubs that change signature between
+# releases; do not let their churn block CI for our own code.
+[[tool.mypy.overrides]]
+module = ["cv2", "llama_cpp.*"]
+ignore_errors = true

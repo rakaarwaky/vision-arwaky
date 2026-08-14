@@ -1,10 +1,11 @@
-
 """Advanced tests for video processing."""
+
+import json
 import os
 import tempfile
-import json
-import numpy as np
+
 import cv2
+import numpy as np
 import pytest
 
 
@@ -21,13 +22,49 @@ def create_test_video(num_frames=10):
     return path
 
 
+def make_video_orchestrator():
+    """Build a VideoOrchestrator with injected ports (DI)."""
+    from modules.opencv.src.capabilities_opencv_image_adapter import (
+        OpenCVImageAdapter,
+    )
+    from modules.video.src.agent_video_orchestrator import VideoOrchestrator
+    from modules.video.src.capabilities_ffmpeg_adapter import FFmpegVideoAdapter
+    from modules.video.src.capabilities_object_tracker import ObjectTrackingTracker
+    from modules.video.src.capabilities_timeline_generator import (
+        VideoTimelineGenerator,
+    )
+    from modules.video.src.capabilities_video_analyzer import VideoAnalysisAnalyzer
+    from modules.video.src.capabilities_video_processor import (
+        VideoProcessingProcessor,
+    )
+
+    opencv = OpenCVImageAdapter()
+    ffmpeg = FFmpegVideoAdapter()
+    video_proc = VideoProcessingProcessor(opencv, ffmpeg)
+    video_analysis = VideoAnalysisAnalyzer(opencv)
+    video_timeline = VideoTimelineGenerator(opencv, video_proc, video_analysis)
+    object_tracking = ObjectTrackingTracker(opencv)
+    return VideoOrchestrator(
+        video_processing=video_proc,
+        video_analysis=video_analysis,
+        video_timeline=video_timeline,
+        object_tracking=object_tracking,
+        opencv=opencv,
+        ffmpeg=ffmpeg,
+    )
+
+
 class TestVideoProcessingProcessor:
     def test_get_info(self):
-        from src.video.capabilities_video_processing_processor import VideoProcessingProcessor
-        from src.opencv.infrastructure_opencv_image_adapter import OpenCVImageAdapter
-        from src.video.infrastructure_ffmpeg_video_adapter import FFmpegVideoAdapter
-        from src.shared.vision_models_vo import FilePath
-        
+        from modules.opencv.src.capabilities_opencv_image_adapter import (
+            OpenCVImageAdapter,
+        )
+        from modules.shared.src.taxonomy_vision_models_vo import FilePath
+        from modules.video.src.capabilities_ffmpeg_adapter import FFmpegVideoAdapter
+        from modules.video.src.capabilities_video_processor import (
+            VideoProcessingProcessor,
+        )
+
         proc = VideoProcessingProcessor(OpenCVImageAdapter(), FFmpegVideoAdapter())
         path = create_test_video()
         try:
@@ -38,11 +75,15 @@ class TestVideoProcessingProcessor:
             os.unlink(path)
 
     def test_check_corruption(self):
-        from src.video.capabilities_video_processing_processor import VideoProcessingProcessor
-        from src.opencv.infrastructure_opencv_image_adapter import OpenCVImageAdapter
-        from src.video.infrastructure_ffmpeg_video_adapter import FFmpegVideoAdapter
-        from src.shared.vision_models_vo import FilePath
-        
+        from modules.opencv.src.capabilities_opencv_image_adapter import (
+            OpenCVImageAdapter,
+        )
+        from modules.shared.src.taxonomy_vision_models_vo import FilePath
+        from modules.video.src.capabilities_ffmpeg_adapter import FFmpegVideoAdapter
+        from modules.video.src.capabilities_video_processor import (
+            VideoProcessingProcessor,
+        )
+
         proc = VideoProcessingProcessor(OpenCVImageAdapter(), FFmpegVideoAdapter())
         path = create_test_video()
         try:
@@ -51,11 +92,15 @@ class TestVideoProcessingProcessor:
             os.unlink(path)
 
     def test_check_corruption_nonexistent(self):
-        from src.video.capabilities_video_processing_processor import VideoProcessingProcessor
-        from src.opencv.infrastructure_opencv_image_adapter import OpenCVImageAdapter
-        from src.video.infrastructure_ffmpeg_video_adapter import FFmpegVideoAdapter
-        from src.shared.vision_models_vo import FilePath
-        
+        from modules.opencv.src.capabilities_opencv_image_adapter import (
+            OpenCVImageAdapter,
+        )
+        from modules.shared.src.taxonomy_vision_models_vo import FilePath
+        from modules.video.src.capabilities_ffmpeg_adapter import FFmpegVideoAdapter
+        from modules.video.src.capabilities_video_processor import (
+            VideoProcessingProcessor,
+        )
+
         proc = VideoProcessingProcessor(OpenCVImageAdapter(), FFmpegVideoAdapter())
         # Non-existent file - corrupted or exception
         try:
@@ -67,23 +112,32 @@ class TestVideoProcessingProcessor:
 
 class TestVideoAnalysis:
     def test_detect_scenes(self):
-        from src.video.capabilities_video_analysis_analyzer import VideoAnalysisAnalyzer
-        from src.opencv.infrastructure_opencv_image_adapter import OpenCVImageAdapter
-        from src.shared.vision_models_vo import FilePath, SceneThreshold
-        
+        from modules.opencv.src.capabilities_opencv_image_adapter import (
+            OpenCVImageAdapter,
+        )
+        from modules.shared.src.taxonomy_vision_models_vo import (
+            FilePath,
+            SceneThreshold,
+        )
+        from modules.video.src.capabilities_video_analyzer import VideoAnalysisAnalyzer
+
         proc = VideoAnalysisAnalyzer(OpenCVImageAdapter())
         path = create_test_video(30)
         try:
-            scenes = proc.detect_scenes(FilePath(value=path), SceneThreshold(value=30.0))
+            scenes = proc.detect_scenes(
+                FilePath(value=path), SceneThreshold(value=30.0)
+            )
             assert isinstance(scenes, list)
         finally:
             os.unlink(path)
 
     def test_detect_motion(self):
-        from src.video.capabilities_video_analysis_analyzer import VideoAnalysisAnalyzer
-        from src.opencv.infrastructure_opencv_image_adapter import OpenCVImageAdapter
-        from src.shared.vision_models_vo import FilePath, MinArea
-        
+        from modules.opencv.src.capabilities_opencv_image_adapter import (
+            OpenCVImageAdapter,
+        )
+        from modules.shared.src.taxonomy_vision_models_vo import FilePath, MinArea
+        from modules.video.src.capabilities_video_analyzer import VideoAnalysisAnalyzer
+
         proc = VideoAnalysisAnalyzer(OpenCVImageAdapter())
         path = create_test_video(30)
         try:
@@ -95,40 +149,58 @@ class TestVideoAnalysis:
 
 class TestVideoOrchestrator:
     def test_execute_video_info(self):
-        from src.video.agent_video_orchestrator import VideoOrchestrator
+        from modules.shared.src.taxonomy_vision_models_vo import CommandName
+
+        orch = make_video_orchestrator()
         path = create_test_video()
         try:
-            result = VideoOrchestrator.execute_video_cmd("video-info", {"video": path})
+            result = orch.execute_in_process(
+                CommandName(value="video-info"), {"video": path}
+            )
             assert result is not None
-            data = json.loads(result)
+            data = json.loads(result.value)
             assert "fps" in data
         finally:
             os.unlink(path)
 
     def test_execute_video_unknown(self):
-        from src.video.agent_video_orchestrator import VideoOrchestrator
-        assert VideoOrchestrator.execute_video_cmd("nonexistent", {}) is None
+        from modules.shared.src.taxonomy_vision_models_vo import CommandName
+
+        orch = make_video_orchestrator()
+        with pytest.raises(ValueError):
+            orch.execute_in_process(CommandName(value="nonexistent"), {})
 
     def test_execute_check_corruption(self):
-        from src.video.agent_video_orchestrator import VideoOrchestrator
+        from modules.shared.src.taxonomy_vision_models_vo import CommandName
+
+        orch = make_video_orchestrator()
         path = create_test_video()
         try:
-            result = VideoOrchestrator.execute_video_cmd("check-corruption", {"video": path})
+            result = orch.execute_in_process(
+                CommandName(value="check-corruption"), {"video": path}
+            )
             assert result is not None
-            data = json.loads(result)
+            data = json.loads(result.value)
             assert "corrupted" in data
         finally:
             os.unlink(path)
 
-    def test_get_opencv(self):
-        from src.video.agent_video_orchestrator import VideoOrchestrator
-        ocv = VideoOrchestrator.get_opencv()
-        assert ocv is not None
+    def test_orchestrator_ports(self):
+        orch = make_video_orchestrator()
+        assert orch._opencv is not None
+        assert orch._ffmpeg is not None
+        assert orch._video_processing is not None
+        assert orch._video_analysis is not None
+        assert orch._video_timeline is not None
+        assert orch._object_tracking is not None
 
 
 class TestObjectTracking:
     def test_tracker_init(self):
-        from src.tracking.capabilities_object_tracking_tracker import ObjectTrackingTracker
-        from src.opencv.infrastructure_opencv_image_adapter import OpenCVImageAdapter
+        from modules.opencv.src.capabilities_opencv_image_adapter import (
+            OpenCVImageAdapter,
+        )
+        from modules.video.src.capabilities_object_tracker import ObjectTrackingTracker
+
         tracker = ObjectTrackingTracker(OpenCVImageAdapter())
         assert tracker is not None

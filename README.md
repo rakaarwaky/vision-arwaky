@@ -1,6 +1,6 @@
 # Vision Arwaky
 
-Unified computer vision MCP server — image analysis, OCR, video processing, object tracking, and visual memory. Built with AES (Agentic Engineering System) layered architecture.
+Unified computer vision MCP server — image analysis, OCR, video processing, object tracking.
 
 ## Quick Start
 
@@ -29,7 +29,6 @@ src/
 ├── image/                                       ← Feature: image processing
 ├── video/                                       ← Feature: video processing
 ├── tracking/                                    ← Feature: object tracking
-├── memory/                                      ← Feature: visual memory
 ├── opencv/                                      ← Feature: shared OpenCV infra
 ├── system_utils/                                ← Feature: system utilities
 ├── cli/                                         ← Surface: CLI + TUI
