@@ -196,7 +196,9 @@ def cmd_timeline(args) -> int:
 def cmd_test(args) -> int:
     """Run the vision-arwaky test suite with optional test image."""
     try:
-        import pytest
+        import importlib
+
+        pytest: Any = importlib.import_module("pytest")
     except ImportError:
         print("❌ pytest is not installed; install it to run the test command")
         return 1
