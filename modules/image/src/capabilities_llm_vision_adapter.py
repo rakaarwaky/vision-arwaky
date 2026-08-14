@@ -357,12 +357,15 @@ class LLMVisionAdapter(LLMVisionProtocol):
             data = resp.json()
             choice = data.get("choices", [{}])[0]
             message = choice.get("message", {})
-            content = str(message.get("content", ""))
+            content = message.get("content")
+            reasoning = message.get("reasoning_content")
+            if not content and reasoning:
+                content = reasoning
             if not content:
                 logger.warning(
                     f"Empty response from LLM. Full data: {json.dumps(data)[:500]}"
                 )
-            return content
+            return str(content or "")
         except requests.exceptions.ConnectionError as e:
             logger.error(f"Cannot connect to LLM at {self.base_url}: {e}")
             raise RuntimeError(
