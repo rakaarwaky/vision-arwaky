@@ -195,8 +195,11 @@ def cmd_timeline(args) -> int:
 
 def cmd_test(args) -> int:
     """Run the vision-arwaky test suite with optional test image."""
-    import subprocess
-    import sys
+    try:
+        import pytest
+    except ImportError:
+        print("❌ pytest is not installed; install it to run the test command")
+        return 1
 
     # modules/cli/src/surface_cli_command.py -> repo root
     base = os.path.dirname(
@@ -214,12 +217,11 @@ def cmd_test(args) -> int:
     print(f"  Test image: {test_image}")
     print()
 
-    # Run pytest (safe: only trusted paths, no shell, no user input in command)
-    cmd = [sys.executable, "-m", "pytest", test_dir, "-v"]
-    result = subprocess.run(cmd, cwd=base, check=False)
+    # Run pytest in-process; the test directory is a trusted repository path.
+    result_code = pytest.main([test_dir, "-v"])
 
     print()
-    if result.returncode == 0:
+    if result_code == 0:
         print("✅ All tests passed!")
     else:
         print("❌ Some tests failed")
@@ -231,37 +233,15 @@ def cmd_test(args) -> int:
         print("  AI Vision Analysis — test image")
         print("=" * 60)
         try:
-            analyze_cmd = [
-                sys.executable,
-                "-m",
-                "modules.root_cli_entry",
+            # Reuse the injected dispatcher instead of spawning a second CLI process.
+            vision_result = _execute(
                 "analyze",
-                "--image",
-                test_image,
-                "--prompt",
-                "Describe this image in detail. What do you see?",
-            ]
-            # Safe: test_image is validated path from fixtures or trusted args.image
-            vision_result = subprocess.run(
-                analyze_cmd,
-                cwd=base,
-                capture_output=True,
-                text=True,
-                timeout=60,
-                check=False,
+                {
+                    "image": test_image,
+                    "prompt": "Describe this image in detail. What do you see?",
+                },
             )
-            if vision_result.returncode == 0:
-                print(vision_result.stdout)
-            elif vision_result.stderr:
-                # Fallback langsung melalui dispatcher
-                result_obj = _execute(
-                    "analyze",
-                    {
-                        "image": test_image,
-                        "prompt": "Describe this image in detail. What do you see?",
-                    },
-                )
-                print(result_obj)
+            print(vision_result)
         except (OSError, RuntimeError, ValueError) as e:
             print(f"  ⚠ Vision analysis unavailable: {e}")
 
@@ -428,4 +408,4 @@ def cmd_test(args) -> int:
         except (OSError, RuntimeError, ValueError) as e:
             print(f"  ⚠ Video analysis unavailable: {e}")
 
-    return result.returncode
+    return result_code
