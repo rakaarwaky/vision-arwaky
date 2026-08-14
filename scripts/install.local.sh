@@ -122,8 +122,45 @@ DEPS_MISSING=()
 "$VENV_PY" -c "import llama_cpp" 2>/dev/null || DEPS_MISSING+=("llama-cpp-python")
 command -v ffmpeg &>/dev/null || DEPS_MISSING+=("ffmpeg (binary)")
 
+# ── GPU backend detection ───────────────────────────────
+if command -v nvidia-smi &>/dev/null; then
+    echo -e "${GREEN}✓ NVIDIA/CUDA detected${NC}"
+elif command -v rocm-smi &>/dev/null || [ -d /opt/rocm ]; then
+    echo -e "${GREEN}✓ AMD/ROCm detected${NC}"
+else
+    echo -e "${YELLOW}⚠ No GPU backend detected${NC}"
+fi
+
+# ── Build ROCm binary if needed ──────────────────────────
+ROCM_BIN_DIR="$PROJECT_DIR/llama-server-rocm"
+ROCM_BIN="$ROCM_BIN_DIR/llama-server"
+if [ ! -f "$ROCM_BIN" ] && { command -v rocm-smi &>/dev/null || [ -d /opt/rocm ]; }; then
+    echo -e "${YELLOW}  ROCm detected, building llama-server binary...${NC}"
+    mkdir -p "$ROCM_BIN_DIR"
+    
+    LLAMA_CPP_DIR="$PROJECT_DIR/llama.cpp"
+    if [ ! -d "$LLAMA_CPP_DIR" ]; then
+        git clone --depth 1 https://github.com/ggerganov/llama.cpp.git "$LLAMA_CPP_DIR"
+    fi
+    
+    cd "$LLAMA_CPP_DIR"
+    mkdir -p build && cd build
+    
+    ROCM_GFX=$(rocminfo 2>/dev/null | grep "Name:" | grep -o 'gfx[0-9a-z]*' | head -1)
+    if [ -z "$ROCM_GFX" ]; then
+        ROCM_GFX="gfx1100"
+    fi
+    
+    cmake .. -DCMAKE_BUILD_TYPE=Release -DGGML_HIP=ON -DAMDGPU_TARGETS="$ROCM_GFX"
+    cmake --build . --config Release --target llama-server -j$(nproc)
+    
+    cp bin/llama-server "$ROCM_BIN"
+    cd "$PROJECT_DIR"
+    echo -e "${GREEN}✓ ROCm binary built at $ROCM_BIN${NC}"
+fi
+
 # Check bundled ROCm binary
-if [ -f "$PROJECT_DIR/llama-server-rocm/llama-server" ]; then
+if [ -f "$ROCM_BIN" ]; then
     echo -e "${GREEN}✓ bundled ROCm binary (llama-server)${NC}"
 else
     echo -e "${YELLOW}⚠ bundled ROCm binary not found in llama-server-rocm/${NC}"
