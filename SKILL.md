@@ -6,13 +6,25 @@ version: 2.0.7
 
 # Vision Arwaky
 
-Vision Arwaky is a Python computer-vision toolkit exposed through a CLI and an MCP server. It provides image analysis, OCR, screenshot comparison, video processing, scene and motion detection, object tracking, and agent-readable timelines.
+Vision Arwaky is a Python computer-vision toolkit exposed through a CLI and an MCP server. It provides image analysis, OCR, screenshot comparison, video processing, scene and motion detection, object tracking, agent-readable timelines, and bounded smart-video understanding.
+
+## Documentation map
+
+The repository uses three documentation levels with different audiences:
+
+| Document | Audience | Focus |
+|---|---|---|
+| [`PRD.md`](PRD.md) | Stakeholders and product teams | Product problem, goals, scope, metrics, and risks |
+| Feature `FRD.md` files | Engineers and QA | Functional requirements, contracts, edge cases, integrations, and test scenarios |
+| [`README.md`](README.md) | Developers | Installation, commands, configuration, testing, and contribution workflow |
+
+Feature FRDs are available for [image](modules/image/FRD.md), [video](modules/video/FRD.md), [OpenCV](modules/opencv/FRD.md), [CLI](modules/cli/FRD.md), and [MCP](modules/mcp/FRD.md).
 
 ## Entry points
 
 | Command | Purpose |
 |---|---|
-| `vision-arwaky-cli` | Run image, video, and test commands |
+| `vision-arwaky-cli` | Run image, video, smart-video, and test commands |
 | `vision-arwaky-mcp` | Start the MCP server over stdio |
 | `vision-arwaky-tui` | Start the Textual configuration interface |
 
@@ -26,15 +38,15 @@ The MCP server exposes five tools:
 |---|---|
 | `vision_execute` | Execute a supported image or video command |
 | `vision_list_commands` | List supported command groups and commands |
-| `vision_help` | Return this documentation |
+| `vision_help` | Return this documentation or a selected section |
 | `vision_status` | Report dependency and model availability |
 | `vision_cancel` | Cancel a running operation when supported |
 
-The MCP entry point is `modules/root_mcp_entry.py`, and the action surface is `modules/mcp/src/surface_mcp_action.py`.
+The MCP entry point is `modules/root_mcp_entry.py`, and the action surface is `modules/mcp/src/surface_mcp_action.py`. Command details are specified in [`modules/mcp/FRD.md`](modules/mcp/FRD.md).
 
 ## Backend and image analysis
 
-The `analyze` command accepts an image path and an optional prompt. The image orchestrator uses the configured backend and falls back to OpenCV-based analysis when a language-model response is unavailable.
+The `analyze` command accepts an image path and an optional prompt. The image orchestrator uses the configured external OpenAI-compatible vision endpoint and falls back to deterministic image processing when a language-model response is unavailable.
 
 The supported backend configuration is:
 
@@ -45,7 +57,7 @@ external:
   model: "llava"
 ```
 
-External mode expects an OpenAI-compatible vision endpoint. The repository does not require a bundled model.
+The repository does not bundle a model. External mode requires a reachable endpoint and an appropriate vision-capable model.
 
 ## CLI reference: image
 
@@ -79,10 +91,12 @@ video-info
 
 extract-frames
   --video PATH
-  --interval SECONDS (optional)
-  Extract frames through the FFmpeg video port.
+  --interval VALUE (optional)
+  Extract frames through the video processing port.
 
 convert
+  --input PATH
+  --output PATH
   Convert a video from an input path to an output path.
 
 check-corruption
@@ -90,6 +104,10 @@ check-corruption
   Check whether a video is decodable.
 
 create-gif
+  --video PATH
+  --output PATH
+  --start SECONDS (optional)
+  --duration SECONDS (optional)
   Create a GIF from a video segment.
 
 detect-scenes
@@ -110,9 +128,19 @@ track
 
 timeline
   --video PATH
-  --interval SECONDS (optional)
+  --interval VALUE (optional)
   Generate a video timeline for agent consumption.
+
+analyze-video
+  --video PATH
+  --prompt TEXT (optional)
+  --interval FRAMES (optional, default: 30)
+  --scene-threshold VALUE (optional, default: 20)
+  --min-area PIXELS (optional, default: 500)
+  Analyze bounded key frames with a VLM and synthesize a short summary.
 ```
+
+Smart-video analysis combines scene-change, motion, and uniform sampling. It caps selected frames at 120, bounds the summary prompt, handles per-frame VLM failure with fallback descriptions, and removes temporary frame files after execution.
 
 ## Test command
 
@@ -120,7 +148,7 @@ timeline
 vision-arwaky-cli test [--image PATH] [--verbose]
 ```
 
-The command runs pytest in-process and can optionally run the image and video demonstration pipeline against the generated fixtures. Install the development test dependency before invoking it.
+The command runs pytest in-process and can optionally run the image and video demonstration pipeline against generated fixtures. Install the development test dependency before invoking it.
 
 ## Configuration and system dependencies
 
@@ -130,14 +158,13 @@ The project reads configuration through `utility_config_handler`. Keep machine-s
 |---|---|
 | User configuration | `~/.config/vision-arwaky/config.yaml` |
 | Repository configuration | `./config.yaml` |
-| Native model files | A project or user-selected `models/` directory |
 | Video tools | `ffmpeg` and `ffprobe` available on `PATH` |
 
 Required system executables are:
 
 - `tesseract` for OCR.
 - `ffmpeg` and `ffprobe` for video operations.
-- A working OpenCV runtime for image and video processing.
+- A working headless OpenCV runtime for image and video processing.
 
 On Debian or Ubuntu:
 
@@ -159,6 +186,6 @@ The gates run Ruff formatting, Ruff lint, Mypy, pytest, and `lint-arwaky-cli sca
 
 ## Current limitations
 
-VLM analysis requires either a reachable external vision endpoint or a compatible local native model. OCR requires the Tesseract binary. Video processing requires FFmpeg. Object tracking uses OpenCV trackers rather than a deep-learning detector.
+VLM analysis requires a reachable external vision endpoint and a vision-capable model. OCR requires the Tesseract binary. Video processing requires FFmpeg. Object tracking uses OpenCV trackers rather than a deep-learning detector. Smart-video analysis uses a bounded representative sample rather than exhaustively sending every video frame to the VLM.
 
 The old visual-memory CLI and MCP commands are not part of the current public surface. Do not rely on memory-related examples from older versions of this document.
