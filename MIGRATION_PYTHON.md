@@ -119,18 +119,24 @@ project-root/
 
 ## Prerequisites
 
+The repository targets Python 3.12 or newer and uses `uv` for dependency management.
+
 ```bash
-# Install lint-arwaky
-pip install lint-arwaky-cli
+# Install Python dependencies and the editable project environment.
+uv sync
 
-# Verify installation
+# Install runtime tools required by OpenCV, OCR, and video tests on Debian/Ubuntu.
+sudo apt-get update
+sudo apt-get install -y ffmpeg libgl1 tesseract-ocr
+
+# Install the development quality tools into the uv environment.
+uv pip install ruff mypy pytest
+
+# Verify the repository self-lint binary when it is available locally.
 lint-arwaky-cli version
-# Expected: Lint Arwaky v1.1.0
-
-# Install external linters (optional, for external lint checks)
-pip install ruff mypy bandit
-lint-arwaky-cli install
 ```
+
+CI installs the pre-built `lint-arwaky-cli` binary and runs it with `lint-arwaky-cli scan .`. Do not use the removed `lint-arwaky-cli ci` or `lint-arwaky-cli external` commands in new automation.
 
 ---
 
@@ -569,41 +575,35 @@ Root is the **only layer** allowed to import all other layers.
 ### Example
 
 ```python
-# modules/user/src/root_user_container.py
-"""User DI container — wires all layers."""
+# modules/video/src/root_video_container.py
+"""Video feature composition container."""
 
-from modules.shared.src.user.contract_user_protocol import IUserRepositoryProtocol
-from modules.shared.src.user.contract_user_aggregate import IUserAggregate
-from modules.user.src.capabilities_user_repository import UserRepository
-from modules.user.src.agent_user_orchestrator import UserOrchestrator
-from modules.user.src.surface_user_command import GetUserCommand
+from modules.shared.src.contract_registry_service_aggregate import (
+    RegistryServiceAggregate,
+)
 
 
-class UserContainer:
-    """DI container for user feature."""
+class VideoContainer:
+    """Wire concrete video capabilities behind contract ports."""
 
-    def __init__(self, db_connection: "DatabaseConnection") -> None:
-        # Wire: capabilities → agent → surface
-        repository: IUserRepositoryProtocol = UserRepository(db_connection)
-        orchestrator: IUserAggregate = UserOrchestrator(repository)
-        self.get_user_command = GetUserCommand(orchestrator)
+    def build(self) -> RegistryServiceAggregate:
+        # Construct adapters, inject their protocols into the orchestrator,
+        # and return the aggregate facade consumed by the root dispatcher.
+        ...
 ```
 
 ```python
-# modules/root_app_entry.py
-"""Application entry point."""
+# modules/root_cli_entry.py
+"""CLI entry point: build the graph, inject the dispatcher, and dispatch args."""
 
-from modules.user.src.root_user_container import UserContainer
-
-
-def main() -> None:
-    db = create_database_connection()
-    container = UserContainer(db)
-    # start application...
+from modules.root_composition_container import build
 
 
-if __name__ == "__main__":
-    main()
+def cli() -> int:
+    dispatcher = build()
+    # The entry point injects the dispatcher into the CLI surface and routes
+    # the validated command. It does not contain feature business logic.
+    ...
 ```
 
 ### Rules Enforced
@@ -616,44 +616,41 @@ if __name__ == "__main__":
 
 ## Phase 8: Verify & CI Gate
 
-> **Skill:** `build-verify-all` — load for final build verification.
+The repository's verification workflow is defined in `.github/workflows/test.yml` and mirrored locally by `scripts/gates.sh`.
 
-### Step 1: Full AES Scan
+### Step 1: Install dependencies
 
 ```bash
+uv sync
+sudo apt-get update
+sudo apt-get install -y ffmpeg libgl1 tesseract-ocr
+```
+
+### Step 2: Run the local gate script
+
+```bash
+bash scripts/gates.sh
+```
+
+The script runs:
+
+```bash
+uv run ruff format --check modules/ tests/
+uv run ruff check modules/ tests/
+uv run mypy modules/
+uv run python3 -m pytest tests/ -q
 lint-arwaky-cli scan .
 ```
 
-**Target: 0 violations.**
+The required result is zero self-lint violations and a passing test suite.
 
-### Step 2: Run Tests
-
-```bash
-pytest
-```
-
-### Step 3: External Lint
+### Step 3: Build the package
 
 ```bash
-ruff check .
-ruff format --check .
-mypy modules/
-bandit -r modules/
+uv build
 ```
 
-### Step 4: CI Gate
-
-```bash
-lint-arwaky-cli ci . --threshold 0
-```
-
-**Exit code 0** = all checks pass. **Exit code 1** = violations found.
-
-### Step 5: External Lint via Lint Arwaky (optional)
-
-```bash
-lint-arwaky-cli external .
-```
+CI runs the package build and the test matrix on Python 3.12 and 3.13. The CI self-lint job downloads the repository's pre-built `lint-arwaky-cli` release and requires `Total: 0`.
 
 ---
 
@@ -755,7 +752,7 @@ from modules.shared.src.user.taxonomy_user_vo import UserId
 from ..shared.src.user.taxonomy_user_vo import UserId
 ```
 
-See [ARCHITECTURE.md](ARCHITECTURE.md) §12 for the full violation code reference.
+See [RULES_AES.md](RULES_AES.md) for the violation code reference and [ARCHITECTURE.md](ARCHITECTURE.md) for the dependency model.
 
 ---
 
@@ -763,6 +760,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) §12 for the full violation code referenc
 
 - Architecture: [ARCHITECTURE.md](ARCHITECTURE.md)
 - CLI Reference: [README.md](README.md)
-- PRD: [PRD.md](PRD.md)
-- Test Plan: [TEST_PLAN.md](TEST_PLAN.md)
-- Rust Migration Guide: [MIGRATION_RUST.md](MIGRATION_RUST.md)
+- Agent-facing capability reference: [SKILL.md](SKILL.md)
+- AES rules: [RULES_AES.md](RULES_AES.md)
+- Linter configuration: [lint_arwaky.config.yaml](lint_arwaky.config.yaml)
+- CI workflow: [.github/workflows/test.yml](.github/workflows/test.yml)
