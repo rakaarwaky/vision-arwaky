@@ -20,8 +20,14 @@ dependencies = [
     "pytesseract",
     "requests",
     "pyyaml",
-    "llama-cpp-python",
     "textual>=2.0.0",
+]
+
+[project.optional-dependencies]
+# Only required for backend: "native" (in-process llama-cpp-python).
+# The "external" backend (OpenAI-compatible API) does not need it.
+native = [
+    "llama-cpp-python",
 ]
 
 [project.scripts]
