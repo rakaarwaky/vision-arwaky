@@ -49,7 +49,7 @@ class VideoOrchestrator(RegistryServiceAggregate):
         object_tracking: ObjectTrackingProtocol,
         opencv: OpenCVImageProtocol,
         ffmpeg: FFmpegVideoProtocol,
-        video_understanding: VideoUnderstandingProtocol,
+        video_understanding: VideoUnderstandingProtocol | None = None,
     ):
         self._video_processing = video_processing
         self._video_analysis = video_analysis
@@ -154,6 +154,10 @@ class VideoOrchestrator(RegistryServiceAggregate):
                 )
             )
         elif command.value == "analyze-video":
+            if self._video_understanding is None:
+                raise RuntimeError(
+                    "Video understanding capability is not configured for analyze-video"
+                )
             vid = FilePath(value=kwargs["video"])
             prompt = AnalysisPrompt(value=kwargs.get("prompt"))
             result = self._video_understanding.analyze(

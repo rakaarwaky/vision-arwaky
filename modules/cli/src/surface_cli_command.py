@@ -1,6 +1,5 @@
 """CLI surface — parse args into VOs, delegate to injected aggregate, print JSON."""
 
-import json
 import os
 from typing import Any
 

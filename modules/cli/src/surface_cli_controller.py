@@ -85,7 +85,10 @@ def create_parser() -> argparse.ArgumentParser:
         "--prompt", default=None, help="Custom per-frame analysis prompt"
     )
     analyze_video.add_argument(
-        "--interval", type=float, default=30.0, help="Uniform sampling interval (frames)"
+        "--interval",
+        type=float,
+        default=30.0,
+        help="Uniform sampling interval (frames)",
     )
     analyze_video.add_argument(
         "--scene-threshold", type=float, default=20.0, help="Scene change threshold"
