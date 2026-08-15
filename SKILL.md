@@ -57,7 +57,7 @@ external:
   model: "llava"
 ```
 
-The repository does not bundle a model. External mode requires a reachable endpoint and an appropriate vision-capable model.
+The repository does not bundle a model. External mode requires a reachable endpoint and an appropriate vision-capable model. Set credentials through `LLAMA_API_KEY` or `~/.config/vision-arwaky/config.yaml`; never commit an API key to the repository.
 
 ## CLI reference: image
 
@@ -152,7 +152,7 @@ The command runs pytest in-process and can optionally run the image and video de
 
 ## Configuration and system dependencies
 
-The project reads configuration through `utility_config_handler`. Keep machine-specific paths and credentials outside version control. The standard runtime paths are:
+The project reads configuration through `utility_config_handler`. Keep machine-specific paths and credentials outside version control. Use `LLAMA_API_URL`, `LLAMA_API_KEY`, and `LLAMA_MODEL` for environment overrides. The standard runtime paths are:
 
 | Resource | Typical location |
 |---|---|
