@@ -47,6 +47,8 @@ def get_dispatcher() -> RegistryServiceAggregate:
 
 
 class MainMenu(Screen):
+    """Display the top-level navigation for configuration and diagnostics."""
+
     BINDINGS: ClassVar[list[BindingType]] = [
         Binding("1", "go_config", "Configuration"),
         Binding("2", "go_models", "Models"),
@@ -99,6 +101,8 @@ class MainMenu(Screen):
 
 
 class ConfigScreen(Screen):
+    """Edit the selected external backend URL and model configuration."""
+
     BINDINGS: ClassVar[list[BindingType]] = [Binding("escape", "go_back", "Back")]
 
     def compose(self) -> ComposeResult:
@@ -145,6 +149,8 @@ class ConfigScreen(Screen):
 
 
 class ModelScreen(Screen):
+    """Discover locally available model files."""
+
     BINDINGS: ClassVar[list[BindingType]] = [Binding("escape", "go_back", "Back")]
 
     def compose(self) -> ComposeResult:
@@ -207,6 +213,8 @@ class ModelScreen(Screen):
 
 
 class StatusScreen(Screen):
+    """Display dependency and capability readiness information."""
+
     BINDINGS: ClassVar[list[BindingType]] = [
         Binding("escape", "go_back", "Back"),
         Binding("r", "refresh", "Refresh"),
@@ -290,6 +298,8 @@ class StatusScreen(Screen):
 
 
 class TestScreen(Screen):
+    """Run lightweight image, OCR, and dispatcher smoke checks."""
+
     BINDINGS: ClassVar[list[BindingType]] = [
         Binding("escape", "go_back", "Back"),
         Binding("r", "run_test", "Run Test"),
@@ -391,6 +401,8 @@ class TestScreen(Screen):
 
 
 class VisionTUI(App):
+    """Textual application for local Vision Arwaky configuration."""
+
     TITLE = "Vision Arwaky Config"
     SCREENS: ClassVar[dict] = {}
     BINDINGS: ClassVar[list[BindingType]] = []
@@ -399,7 +411,8 @@ class VisionTUI(App):
         self.push_screen(MainMenu())
 
 
-def tui_main():
+def tui_main() -> None:
+    """Start the Textual configuration application."""
     app = VisionTUI()
     app.run()
 
