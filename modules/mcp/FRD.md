@@ -58,16 +58,16 @@ Primary implementation files are `surface_mcp_action.py`, `surface_mcp_controlle
 - **Description:** Report configuration, Python package, and system dependency readiness.
 - **Input:** None.
 - **Output:** JSON or structured status text.
-- **Business rules:** The status result must distinguish project configuration, user configuration, Python dependencies, and system binaries.
+- **Business rules:** The status result must distinguish project configuration, user configuration, Python dependencies, system binaries, configured endpoint, model, and whether a credential is present without exposing the credential.
 - **Edge cases:** No config file, no VLM model, missing FFmpeg, missing Tesseract, missing OpenCV import.
 - **Error handling:** Status must remain usable even when optional dependencies are unavailable.
 
 ### FR-MCP-005: Cancel active work
 
-- **Description:** Cancel or inspect tracked asynchronous MCP jobs when supported by the controller.
+- **Description:** Inspect or cancel tracked asynchronous MCP jobs when an asynchronous execution controller is enabled. The current command execution path is synchronous and reports cancellation as unsupported rather than pretending that a job was cancelled.
 - **Input:** Optional job identifier.
-- **Output:** JSON containing active jobs or cancellation status.
-- **Business rules:** Cancelling an unknown job must not crash the server.
+- **Output:** JSON containing active jobs, cancellation status, or an explicit `supported: false` response.
+- **Business rules:** Cancelling an unknown job must not crash the server, and the current synchronous path must clearly identify that no cancellable jobs are registered.
 - **Edge cases:** Empty job list, unknown identifier, already completed job.
 - **Error handling:** Return a controlled error object for an unknown job.
 
@@ -79,7 +79,7 @@ Primary implementation files are `surface_mcp_action.py`, `surface_mcp_controlle
 | `vision_list_commands` | Optional `domain` | JSON catalog | Discover supported commands |
 | `vision_help` | Optional `section` | Markdown string | Read agent-facing docs |
 | `vision_status` | None | Status JSON or text | Check configuration and dependencies |
-| `vision_cancel` | Optional `job_id` | Cancellation JSON | Inspect or cancel active work |
+| `vision_cancel` | Optional `job_id` | Cancellation JSON | Inspect jobs or report current cancellation support |
 
 Supported command groups are:
 
@@ -111,6 +111,7 @@ The MCP server is packaged as `vision-arwaky-mcp`. It uses FastMCP for tool regi
 - [ ] Filter the command list by `image` and `video`.
 - [ ] Read all help and the image/video help sections.
 - [ ] Report status with and without a user configuration file.
+- [ ] Verify status uses `LLAMA_API_URL`, `LLAMA_API_KEY`, and `LLAMA_MODEL` overrides without exposing the key.
 - [ ] Cancel an empty job list and an unknown job identifier.
 - [ ] Verify MCP commands route through the injected dispatcher.
 

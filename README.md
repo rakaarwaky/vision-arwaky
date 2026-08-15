@@ -136,7 +136,7 @@ external:
   model: "llava"
 ```
 
-The external backend expects an OpenAI-compatible vision endpoint. OCR additionally requires the `tesseract` executable, and video operations require `ffmpeg`.
+The external backend expects an OpenAI-compatible vision endpoint. Set credentials through `LLAMA_API_KEY` or the user-only file `~/.config/vision-arwaky/config.yaml`; never commit an API key to the repository. OCR additionally requires the `tesseract` executable, and video operations require `ffmpeg`.
 
 ## Development and Verification
 
