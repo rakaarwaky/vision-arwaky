@@ -3,8 +3,6 @@ import os
 import tempfile
 from typing import Any
 
-import cv2
-
 from modules.shared.src.contract_llm_vision_protocol import LLMVisionProtocol
 from modules.shared.src.contract_opencv_image_protocol import OpenCVImageProtocol
 from modules.shared.src.contract_video_analysis_protocol import (
@@ -78,9 +76,7 @@ class VideoUnderstandingAnalyzer(VideoUnderstandingProtocol):
                 target_idx.add(idx)
 
         # 2. Motion events — capture frames with the highest motion magnitude
-        events = self._video_analysis.detect_motion(
-            video_path, MinArea(value=min_area)
-        )
+        events = self._video_analysis.detect_motion(video_path, MinArea(value=min_area))
         events.sort(key=lambda ev: ev.magnitude, reverse=True)
         for ev in events[:top_motion]:
             idx = int(ev.timestamp * fps)
@@ -171,7 +167,7 @@ class VideoUnderstandingAnalyzer(VideoUnderstandingProtocol):
         summary_prompt = (
             "Based on these frame-by-frame descriptions, write a brief video "
             "summary (3-5 sentences) covering what happens, the setting, people "
-            f"involved, and key actions:\n\n" + "\n".join(descriptions)
+            "involved, and key actions:\n\n" + "\n".join(descriptions)
         )
         # Use the first key frame as visual context for the synthesis call.
         first_frame = FilePath(value=extracted[0][1])

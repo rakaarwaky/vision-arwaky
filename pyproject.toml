@@ -29,7 +29,7 @@ vision-arwaky-cli = "modules.root_cli_entry:cli"
 vision-arwaky-tui = "modules.root_tui_entry:main"
 
 [dependency-groups]
-dev = ["pytest"]
+dev = ["pytest", "pytest-cov", "ruff", "mypy"]
 
 [tool.setuptools.packages.find]
 where = ["."]
