@@ -2,6 +2,8 @@ import argparse
 
 
 def create_parser() -> argparse.ArgumentParser:
+    """Create the argparse parser for all public CLI commands."""
+
     parser = argparse.ArgumentParser(
         prog="vision",
         description="Vision — Unified Image & Video Intelligence CLI",

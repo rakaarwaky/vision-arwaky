@@ -32,5 +32,13 @@ jobs:
       - name: Build package
         run: uv build
 
+      - name: Smoke-test built wheel in a clean environment
+        run: |
+          uv venv "$RUNNER_TEMP/vision-arwaky-smoke"
+          uv pip install \
+            --python "$RUNNER_TEMP/vision-arwaky-smoke/bin/python" \
+            dist/*.whl
+          "$RUNNER_TEMP/vision-arwaky-smoke/bin/vision-arwaky-cli" --help
+
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
