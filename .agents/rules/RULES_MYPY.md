@@ -1,6 +1,6 @@
 # MyPy Type Checking Rules
 
-See [README.md](../README.md) for Python adapter usage and [RULES_RUFF.md](RULES_RUFF.md) for related Python linting.
+See [README.md](../../README.md) for Python adapter usage and [RULES_RUFF.md](RULES_RUFF.md) for related Python linting.
 
 MyPy is a static type checker for Python, available at https://mypy-lang.org/. It enforces type annotations and detects type inconsistencies at analysis time.
 

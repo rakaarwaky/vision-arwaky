@@ -1,10 +1,13 @@
 """MCP surface — expose aggregate facade as MCP tools (pure delegation)."""
 
 import json
+import os
 import shutil
+from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from typing import Any
 
+import requests
 import yaml
 from mcp.server.fastmcp import FastMCP
 
@@ -62,7 +65,8 @@ def vision_execute(
     min_area: int = 500,
     bbox: str = "",
     max_frames: int = 300,
-    interval: float = 1.0,
+    interval: float | None = None,
+    scene_threshold: float | None = None,
     start: float = 0.0,
     duration: float = 0.0,
     label: str = "",
@@ -87,7 +91,13 @@ def vision_execute(
       detect-motion — Detect motion events. Args: video, [min_area]
       track        — Track object. Args: video, bbox(X,Y,W,H), [max-frames]
       timeline     — Generate video timeline. Args: video, [interval]
+      analyze-video — Smart video understanding. Args: video, [prompt, interval, scene_threshold, min_area]
     """
+    effective_interval = (
+        interval
+        if interval is not None
+        else (30.0 if command == "analyze-video" else 1.0)
+    )
     kwargs = {
         "image": image,
         "image1": image1,
@@ -98,10 +108,11 @@ def vision_execute(
         "lang": lang,
         "prompt": prompt,
         "threshold": threshold,
+        "scene_threshold": (scene_threshold if scene_threshold is not None else 20.0),
         "min_area": min_area,
         "bbox": bbox,
         "max_frames": max_frames,
-        "interval": interval,
+        "interval": effective_interval,
         "start": start,
         "duration": duration,
         "label": label,
@@ -116,7 +127,7 @@ def vision_list_commands(domain: str = "") -> str:
     """List all available vision commands.
 
     Args:
-        domain: Filter by domain (image, video, memory). Empty = all.
+        domain: Filter by domain (image, video). Empty = all.
     """
     commands = {
         "image": [
@@ -187,6 +198,11 @@ def vision_list_commands(domain: str = "") -> str:
                 "args": "video, [interval]",
                 "desc": "Generate video timeline",
             },
+            {
+                "command": "analyze-video",
+                "args": "video, [prompt, interval, scene_threshold, min_area]",
+                "desc": "Analyze sampled video frames with a VLM and summarize the video",
+            },
         ],
     }
 
@@ -200,7 +216,7 @@ def vision_help(section: str = "all") -> str:
     """Read SKILL.md documentation for vision commands.
 
     Args:
-        section: Section to read (all, image, video, memory, workflows).
+        section: Section to read (all, image, video).
     """
     skill_path = Path(VISION_PROJECT) / "SKILL.md"
     if not skill_path.exists():
@@ -211,78 +227,84 @@ def vision_help(section: str = "all") -> str:
     if section == "all":
         return content
 
+    requested = section.strip().lower()
     sections = content.split("\n## ")
-    for s in sections:
-        if s.lower().startswith(section.lower()):
+    for s in sections[1:]:
+        heading = s.splitlines()[0].strip().lower()
+        if (
+            heading == requested
+            or heading.endswith(f": {requested}")
+            or heading.startswith(f"{requested}:")
+        ):
             return "## " + s
 
-    return f"Section '{section}' not found. Available: all, image, video, memory, workflows"
+    return f"Section '{section}' not found. Available: all, image, video"
+
+
+def _load_runtime_config(project_root: Path) -> tuple[Path | None, dict[str, Any]]:
+    """Load the same user-first configuration used by the runtime adapter."""
+    user_config = Path.home() / ".config" / "vision-arwaky" / "config.yaml"
+    project_config = project_root / "config.yaml"
+    config_path = user_config if user_config.exists() else project_config
+    if not config_path.exists():
+        return None, {}
+    try:
+        with config_path.open() as config_file:
+            data = yaml.safe_load(config_file)
+        return config_path, data if isinstance(data, dict) else {}
+    except (OSError, yaml.YAMLError):
+        return config_path, {}
+
+
+def _external_settings(config: dict[str, Any]) -> tuple[str, str, str]:
+    """Resolve endpoint, API key, and model using runtime precedence."""
+    external = config.get("external")
+    external_config = external if isinstance(external, dict) else {}
+    url = (
+        os.getenv("LLAMA_API_URL") or str(external_config.get("url", "")) or DEFAULT_URL
+    ).rstrip("/")
+    api_key = os.getenv("LLAMA_API_KEY") or str(external_config.get("api_key", ""))
+    model = os.getenv("LLAMA_MODEL") or str(external_config.get("model", ""))
+    return url, api_key, model
+
+
+def _package_version() -> str:
+    """Return the installed package version without failing source checkouts."""
+    try:
+        return version("vision-arwaky")
+    except PackageNotFoundError:
+        return "unknown"
 
 
 @mcp.tool()
 def vision_status() -> str:
     """Check vision server status, dependencies, and capabilities."""
     project_root = Path(VISION_PROJECT)
-    user_config = Path.home() / ".config" / "vision-arwaky" / "config.yaml"
-    config_path = (
-        user_config if user_config.exists() else (project_root / "config.yaml")
-    )
+    config_path, config = _load_runtime_config(project_root)
     deps = _check_dependencies(shutil)
-
-    # Read backend from config
-    selected_backend = "external"
-    native_files: dict = {}
-    if config_path.exists():
-        try:
-            with open(config_path) as f:
-                cfg_data = yaml.safe_load(f)
-            if not isinstance(cfg_data, dict):
-                cfg_data = {}
-            selected_backend = str(cfg_data.get("backend", "external"))
-            native_cfg = cfg_data.get("native", {})
-            if isinstance(native_cfg, dict):
-                model_rel = str(native_cfg.get("model_path", "") or "")
-                mmproj_rel = str(native_cfg.get("mmproj_path", "") or "")
-                native_files = {
-                    "model_file": "MISSING"
-                    if not model_rel
-                    else (
-                        "FOUND" if (project_root / model_rel).exists() else "MISSING"
-                    ),
-                    "mmproj_file": "MISSING"
-                    if not mmproj_rel
-                    else (
-                        "FOUND" if (project_root / mmproj_rel).exists() else "MISSING"
-                    ),
-                }
-        except (OSError, ValueError, yaml.YAMLError) as e:
-            native_files["config_error"] = str(e)
+    selected_backend = str(config.get("backend", "external"))
+    base_url, api_key, model = _external_settings(config)
 
     status_cfg: dict[str, Any] = {
-        "config_yaml_detected": config_path.exists(),
+        "config_yaml_detected": config_path is not None,
         "config_source": "~/.config/vision-arwaky/"
-        if user_config.exists()
+        if config_path is not None
+        and config_path == Path.home() / ".config" / "vision-arwaky" / "config.yaml"
         else "project root",
         "selected_backend": selected_backend,
-        "native_files": native_files,
+        "llm_endpoint": base_url,
+        "llm_model": model or None,
+        "llm_api_key_configured": bool(api_key),
     }
 
-    # Resolve LLM readiness
     llm_ready = False
-    if selected_backend == "native":
-        file_match = all(v == "FOUND" for v in native_files.values())
-        llm_ready = deps.get("llama-cpp-python") == "OK" and file_match
-        deps["native_llm_state"] = "READY" if llm_ready else "NOT_READY"
-    else:
-        try:
-            import requests
-
-            base_url = DEFAULT_URL
-            resp = requests.get(f"{base_url}/models", timeout=5)
-            deps["llm_endpoint"] = "OK"
-            llm_ready = resp.status_code == 200
-        except (OSError, requests.RequestException):
-            deps["llm_endpoint"] = "UNREACHABLE"
+    try:
+        headers = {"Authorization": f"Bearer {api_key}"} if api_key else {}
+        response = requests.get(f"{base_url}/models", headers=headers, timeout=5)
+        llm_ready = 200 <= response.status_code < 300
+        deps["llm_endpoint"] = "OK" if llm_ready else f"HTTP_{response.status_code}"
+    except (OSError, requests.RequestException):
+        deps["llm_endpoint"] = "UNREACHABLE"
 
     caps = {
         "image_analysis": deps.get("opencv") == "OK",
@@ -292,7 +314,7 @@ def vision_status() -> str:
     }
 
     status: dict[str, Any] = {
-        "server": "vision-mcp v2.0.4",
+        "server": f"vision-mcp v{_package_version()}",
         "pattern": "hybrid (5 MCP tools + unlimited CLI)",
         "configuration": status_cfg,
         "dependencies": deps,
@@ -313,7 +335,13 @@ def vision_cancel(job_id: str = "") -> str:
     """
     if not job_id:
         if not _active_processes:
-            return json.dumps({"active_jobs": 0, "message": "No active jobs"})
+            return json.dumps(
+                {
+                    "active_jobs": 0,
+                    "supported": False,
+                    "message": "Commands execute synchronously; no cancellable jobs are registered.",
+                }
+            )
         return json.dumps(
             {
                 "active_jobs": len(_active_processes),
@@ -325,4 +353,10 @@ def vision_cancel(job_id: str = "") -> str:
         proc = _active_processes.pop(job_id)
         proc.terminate()
         return json.dumps({"cancelled": job_id})
-    return json.dumps({"error": f"Job {job_id} not found"})
+    return json.dumps(
+        {
+            "error": f"Job {job_id} not found",
+            "supported": False,
+            "message": "No asynchronous jobs are registered by the current MCP execution path.",
+        }
+    )

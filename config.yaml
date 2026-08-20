@@ -1,16 +1,10 @@
 # config.yaml - Vision MCP Server configuration
-backend: "native"  # "native" (llama-cpp-python) or "external" (OpenAI-compatible API)
+backend: "external"  # OpenAI-compatible vision API
 
-# Native (Direct Python In-Process) Execution
-native:
-  model_path: "models/MiniCPM-V-4_6-Q8_0.gguf"
-  mmproj_path: "models/mmproj-model-f16"
-  n_ctx: 2048
-  n_threads: 4
-  n_gpu_layers: -1  # Set to -1 to offload all layers to GPU (CUDA/Metal), or 0 for CPU-only
-
-# External API Execution (Fallback / Original Mode)
+# Public, non-secret defaults for an OpenAI-compatible vision endpoint.
+# Keep credentials out of this tracked file.
 external:
-  url: "http://127.0.0.1:1234/v1"
-  model: "MiniCPM-V-4_6-Q8_0"
-  api_key: ""
+  url: "https://api.modelbest.cn/v1"
+  model: "MiniCPM-V-4.6-1B"
+  # Set LLAMA_API_KEY in the environment or add api_key to:
+  # ~/.config/vision-arwaky/config.yaml

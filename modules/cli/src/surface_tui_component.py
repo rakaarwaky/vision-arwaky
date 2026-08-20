@@ -11,7 +11,7 @@ from textual.binding import Binding, BindingType
 from textual.containers import Horizontal, ScrollableContainer, Vertical
 from textual.errors import TextualError
 from textual.screen import Screen
-from textual.widgets import Button, Footer, Header, Input, Label, Select, Static
+from textual.widgets import Button, Footer, Header, Input, Label, Static
 
 from modules.shared.src.contract_registry_service_aggregate import (
     RegistryServiceAggregate,
@@ -47,6 +47,8 @@ def get_dispatcher() -> RegistryServiceAggregate:
 
 
 class MainMenu(Screen):
+    """Display the top-level navigation for configuration and diagnostics."""
+
     BINDINGS: ClassVar[list[BindingType]] = [
         Binding("1", "go_config", "Configuration"),
         Binding("2", "go_models", "Models"),
@@ -99,39 +101,17 @@ class MainMenu(Screen):
 
 
 class ConfigScreen(Screen):
+    """Edit the selected external backend URL and model configuration."""
+
     BINDINGS: ClassVar[list[BindingType]] = [Binding("escape", "go_back", "Back")]
 
     def compose(self) -> ComposeResult:
         cfg = load_config()
-        backend = cfg.get("backend", "external")
-        native = cfg.get("native", {})
         ext = cfg.get("external", {})
 
         yield Header()
         yield ScrollableContainer(
             Static("[bold yellow]Configuration[/]\n", id="title"),
-            Label("Backend:"),
-            Select(
-                [("native", "native"), ("external", "external")],
-                value=backend,
-                id="backend",
-            ),
-            Label("Native - Model Path:"),
-            Input(
-                str(native.get("model_path", "")),
-                id="model_path",
-                placeholder="/path/to/model.gguf",
-            ),
-            Label("Native - MMProj:"),
-            Input(
-                str(native.get("mmproj_path", "")),
-                id="mmproj",
-                placeholder="/path/to/mmproj.gguf",
-            ),
-            Label("GPU Layers (-1=all, 0=CPU):"),
-            Input(str(native.get("n_gpu_layers", -1)), id="gpu_layers"),
-            Label("Threads:"),
-            Input(str(native.get("n_threads", 4)), id="threads"),
             Label("External URL:"),
             Input(
                 str(ext.get("url", "")),
@@ -155,18 +135,7 @@ class ConfigScreen(Screen):
 
     def save_config(self):
         cfg = load_config()
-        cfg["backend"] = self.query_one("#backend", Select).value
-        native = cfg.setdefault("native", {})
-        native["model_path"] = self.query_one("#model_path", Input).value
-        native["mmproj_path"] = self.query_one("#mmproj", Input).value
-        try:
-            native["n_gpu_layers"] = int(self.query_one("#gpu_layers", Input).value)
-        except ValueError:
-            pass
-        try:
-            native["n_threads"] = int(self.query_one("#threads", Input).value)
-        except ValueError:
-            pass
+        cfg["backend"] = "external"
         ext = cfg.setdefault("external", {})
         ext["url"] = self.query_one("#ext_url", Input).value
         ext["model"] = self.query_one("#ext_model", Input).value
@@ -180,6 +149,8 @@ class ConfigScreen(Screen):
 
 
 class ModelScreen(Screen):
+    """Discover locally available model files."""
+
     BINDINGS: ClassVar[list[BindingType]] = [Binding("escape", "go_back", "Back")]
 
     def compose(self) -> ComposeResult:
@@ -242,6 +213,8 @@ class ModelScreen(Screen):
 
 
 class StatusScreen(Screen):
+    """Display dependency and capability readiness information."""
+
     BINDINGS: ClassVar[list[BindingType]] = [
         Binding("escape", "go_back", "Back"),
         Binding("r", "refresh", "Refresh"),
@@ -272,9 +245,6 @@ class StatusScreen(Screen):
 
             cfg = load_config()
             selected_backend = str(cfg.get("backend", "external"))
-            native = cfg.get("native", {})
-            if not isinstance(native, dict):
-                native = {}
 
             deps_status = {}
             for name, module in [
@@ -284,7 +254,6 @@ class StatusScreen(Screen):
                 ("pytesseract", "pytesseract"),
                 ("requests", "requests"),
                 ("pyyaml", "yaml"),
-                ("llama-cpp-python", "llama_cpp"),
             ]:
                 try:
                     __import__(module)
@@ -329,6 +298,8 @@ class StatusScreen(Screen):
 
 
 class TestScreen(Screen):
+    """Run lightweight image, OCR, and dispatcher smoke checks."""
+
     BINDINGS: ClassVar[list[BindingType]] = [
         Binding("escape", "go_back", "Back"),
         Binding("r", "run_test", "Run Test"),
@@ -430,6 +401,8 @@ class TestScreen(Screen):
 
 
 class VisionTUI(App):
+    """Textual application for local Vision Arwaky configuration."""
+
     TITLE = "Vision Arwaky Config"
     SCREENS: ClassVar[dict] = {}
     BINDINGS: ClassVar[list[BindingType]] = []
@@ -438,7 +411,8 @@ class VisionTUI(App):
         self.push_screen(MainMenu())
 
 
-def tui_main():
+def tui_main() -> None:
+    """Start the Textual configuration application."""
     app = VisionTUI()
     app.run()
 

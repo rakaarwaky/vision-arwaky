@@ -22,6 +22,9 @@ from modules.shared.src.contract_video_processing_protocol import (
 from modules.shared.src.contract_video_timeline_protocol import (
     VideoTimelineProtocol,
 )
+from modules.shared.src.contract_video_understanding_protocol import (
+    VideoUnderstandingProtocol,
+)
 from modules.shared.src.taxonomy_vision_models_vo import (
     AnalysisPrompt,
     BackendType,
@@ -30,6 +33,7 @@ from modules.shared.src.taxonomy_vision_models_vo import (
     CommandOutput,
     Detection,
     FilePath,
+    FrameAnalysis,
     IntervalSeconds,
     LanguageCode,
     MaxFrames,
@@ -43,6 +47,7 @@ from modules.shared.src.taxonomy_vision_models_vo import (
     TimeSegment,
     VideoInfo,
     VideoTimeline,
+    VideoUnderstanding,
     VisionAnalysis,
 )
 from modules.shared.src.utility_async_runner import run_async
@@ -69,6 +74,7 @@ __all__ = [
     "Detection",
     "FFmpegVideoProtocol",
     "FilePath",
+    "FrameAnalysis",
     "ImageProcessingProtocol",
     "IntervalSeconds",
     "LLMVisionProtocol",
@@ -91,6 +97,8 @@ __all__ = [
     "VideoProcessingProtocol",
     "VideoTimeline",
     "VideoTimelineProtocol",
+    "VideoUnderstanding",
+    "VideoUnderstandingProtocol",
     "VisionAnalysis",
     "file_exists",
     "find_config",

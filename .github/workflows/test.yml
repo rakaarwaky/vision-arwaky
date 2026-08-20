@@ -19,11 +19,8 @@ jobs:
         with:
           version: "latest"
 
-      - name: Install project
-        run: uv sync --no-dev
-
-      - name: Install lint deps
-        run: uv pip install ruff
+      - name: Install project and development tools
+        run: uv sync --dev
 
       - name: Check formatting
         run: uv run ruff format --check modules/ tests/
@@ -39,11 +36,8 @@ jobs:
         with:
           version: "latest"
 
-      - name: Install project
-        run: uv sync --no-dev
-
-      - name: Install lint deps
-        run: uv pip install ruff mypy
+      - name: Install project and development tools
+        run: uv sync --dev
 
       - name: Ruff check
         run: uv run ruff check modules/ tests/
@@ -91,11 +85,8 @@ jobs:
       - name: Set up Python ${{ matrix.python-version }}
         run: uv python install ${{ matrix.python-version }}
 
-      - name: Install project
-        run: uv sync --no-dev
-
-      - name: Install additional deps (not in pyproject.toml)
-        run: uv pip install opencv-contrib-python-headless pytesseract pytest
+      - name: Install project and development tools
+        run: uv sync --dev
 
       - name: Generate test fixtures
         run: |
@@ -114,8 +105,8 @@ jobs:
           out.release()
           "
 
-      - name: Run tests
-        run: uv run python3 -m pytest tests/ -v
+      - name: Run tests with coverage report
+        run: uv run python3 -m pytest tests/ -v --cov=modules --cov-report=term-missing
 
       - name: Create issue on failure
         if: failure()
@@ -130,6 +121,31 @@ jobs:
             Branch: ${{ github.ref_name }}
             Commit: ${{ github.sha }}
             Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+  cli-e2e:
+    name: CLI End-to-End Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libgl1 tesseract-ocr ffmpeg
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+
+      - name: Set up Python 3.12
+        run: uv python install 3.12
+
+      - name: Install project and development tools
+        run: uv sync --dev
+
+      - name: Run CLI E2E suite
+        run: uv run python3 -m pytest tests/test_cli_e2e.py -v
 
   self-lint:
     name: Self-Lint (lint-arwaky-cli)

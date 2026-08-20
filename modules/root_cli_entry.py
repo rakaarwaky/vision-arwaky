@@ -2,6 +2,7 @@ import sys
 
 from modules.cli.src.surface_cli_command import (
     cmd_analyze,
+    cmd_analyze_video,
     cmd_check_corruption,
     cmd_compare,
     cmd_convert,
@@ -21,7 +22,8 @@ from modules.cli.src.surface_cli_controller import create_parser
 from modules.root_composition_container import build
 
 
-def cli():
+def cli() -> None:
+    """Parse CLI arguments, build the graph, and dispatch one command."""
     parser = create_parser()
     args = parser.parse_args()
 
@@ -31,6 +33,7 @@ def cli():
 
     commands = {
         "analyze": cmd_analyze,
+        "analyze-video": cmd_analyze_video,
         "ocr": cmd_ocr,
         "elements": cmd_elements,
         "compare": cmd_compare,

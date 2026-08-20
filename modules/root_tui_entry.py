@@ -4,7 +4,8 @@ from modules.cli.src.surface_tui_component import set_tui_dispatcher, tui_main
 from modules.root_composition_container import build
 
 
-def main():
+def main() -> None:
+    """Build the dependency graph and start the Textual interface."""
     graph = build()
     set_tui_dispatcher(graph["dispatcher"])
     tui_main()
