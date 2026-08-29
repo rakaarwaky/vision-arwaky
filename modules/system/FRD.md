@@ -4,17 +4,17 @@
 
 The `system` module manages core infrastructure and application-level lifecycle services for Vision Arwaky across 3 primary areas:
 1. **Workspace Initialization & XDG Management**: Provisioning local workspaces, XDG Base Directory specification compliance (`~/.config/vision-arwaky`, `~/.local/share/vision-arwaky`, `~/.cache/vision-arwaky`, `~/.local/state/vision-arwaky`), embedding `.agents/skills/vision-arwaky/SKILL.md`, and managing `.git/info/exclude`.
-2. **Configuration Management**: Reading and resolving settings across XDG/env/local files, and overwriting/mutating persistent configuration values.
-3. **Job Management & Process Lifecycle**: Monitoring server and dependency status, tracking active jobs, and handling process cancellation/cleanup.
+2. **Configuration Management**: Reading and resolving settings across XDG/env/local files, and overwriting/mutating persistent configuration values (via `utility_config_handler`).
+3. **Job Management & Process Lifecycle**: Monitoring server and dependency status (via `utility_dependency_checker`, `utility_llm_check`, `utility_version`), tracking active jobs, and handling process cancellation/cleanup.
 
 ```text
 CLI / MCP Surface
        │
        ▼
-RootDispatcher
+Root Entry Dispatcher
        │
        ▼
-SystemOrchestrator
+SystemOrchestrator (`agent_system_orchestrator.py`)
        │
        ├── CapabilitiesSystemWorkspace (XDG + Skill + Symlinks + Git Exclude)
        ├── CapabilitiesSystemConfiguration (Read / Overwrite config YAML)
@@ -49,7 +49,7 @@ SystemOrchestrator
 ### FR-SYS-003: Job Management & Process Lifecycle
 - **Description:** Manage in-flight vision processes, server status monitoring, and operation cancellation.
 - **Capabilities:**
-  1. **Server Status Monitoring**: Inspect external LLM endpoint connectivity, system binary availability (`ffmpeg`, `tesseract`), and Python library readiness (`cv2`, `PIL`, `pytesseract`).
+  1. **Server Status Monitoring**: Inspect external LLM endpoint connectivity via `utility_llm_check`, system binary availability via `utility_dependency_checker` (`ffmpeg`, `tesseract`), and Python library readiness (`cv2`, `PIL`, `pytesseract`).
   2. **Active Job Tracking**: Maintain registry of running asynchronous video/image operations.
   3. **Job Cancellation**: Gracefully terminate and clean up running processes by `job_id`.
 - **Output:** JSON server status report or job cancellation confirmation.

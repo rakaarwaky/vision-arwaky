@@ -8,7 +8,7 @@ The video feature provides deterministic media processing and optional VLM-backe
 CLI / MCP surface
         │
         ▼
-RootDispatcher
+Root Entry Dispatcher
         │
         ▼
 VideoOrchestrator

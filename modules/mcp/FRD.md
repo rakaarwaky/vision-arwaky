@@ -2,7 +2,7 @@
 
 ## System Overview
 
-The MCP module exposes Vision Arwaky to AI agents through a FastMCP server. It provides a small, stable tool surface and routes command execution to the same injected root dispatcher used by the CLI. The MCP layer is an adapter, not a second feature implementation.
+The MCP module exposes Vision Arwaky to AI agents through a FastMCP server over stdio. It provides a small, stable tool surface (6 tools) and routes command execution to the local `RootMCPDispatcher` in `root_mcp_entry.py`. The MCP surface is an adapter that delegates pure domain execution to orchestrators and technical checks to shared utilities.
 
 ```text
 MCP client
@@ -17,22 +17,25 @@ FastMCP tools
    └── vision_cancel
    │
    ▼
-MCP action surface
+MCP action surface (`surface_mcp_action.py`)
    │
    ▼
-RootDispatcher → Image / Video / Workspace graph
+RootMCPDispatcher (`root_mcp_entry.py`)
+   ├── ImageContainer  → ImageOrchestrator
+   ├── VideoContainer  → VideoOrchestrator
+   └── SystemContainer → SystemOrchestrator
 ```
 
-Primary implementation files are `surface_mcp_action.py`, `surface_mcp_controller.py`, and `root_mcp_entry.py`.
+Primary implementation files are `modules/mcp/src/surface_mcp_action.py`, `modules/mcp/src/surface_mcp_controller.py` (deprecated helper), and `modules/root_mcp_entry.py`.
 
 ## Functional Requirements
 
 ### FR-MCP-001: Execute vision commands
 
-- **Description:** Execute any supported workspace, image, or video command through the injected root dispatcher.
+- **Description:** Execute any supported workspace, image, or video command through the injected `RootMCPDispatcher`.
 - **Input:** Command name plus command-specific paths and scalar options.
 - **Output:** A JSON string containing the command result or an `error` object.
-- **Business rules:** The MCP surface must not instantiate feature capabilities directly.
+- **Business rules:** The MCP surface must not instantiate feature capabilities directly; commands are routed by domain (`CommandDomain.from_command`).
 - **Edge cases:** Missing command arguments, invalid command name, missing dispatcher, unavailable external dependency, VLM failure.
 - **Error handling:** Convert expected key, type, value, runtime, and OS errors into JSON error responses.
 
@@ -48,7 +51,7 @@ Primary implementation files are `surface_mcp_action.py`, `surface_mcp_controlle
 - **Description:** Return the available workspace, image, and video command catalog for agent planning.
 - **Input:** Optional `domain` filter: `workspace`, `image`, or `video`.
 - **Output:** JSON array for a filtered domain or JSON object containing all domains.
-- **Business rules:** The catalog must contain every public command and must not advertise removed memory commands.
+- **Business rules:** The catalog must contain every public command and must not advertise removed or internal commands.
 - **Edge cases:** Unknown domain, empty domain, command additions.
 - **Error handling:** Unknown domains should return the full supported catalog rather than a misleading partial result.
 
@@ -57,16 +60,16 @@ Primary implementation files are `surface_mcp_action.py`, `surface_mcp_controlle
 - **Description:** Return the agent-facing `SKILL.md` or a selected section.
 - **Input:** `section` with `all`, `workspace`, `image`, or `video`.
 - **Output:** Markdown text.
-- **Business rules:** Help content must be read from the repository’s current `SKILL.md`.
+- **Business rules:** Help content must be read from the repository’s current `SKILL.md` with fallback to `EMBEDDED_SKILL_MD`.
 - **Edge cases:** Missing file, unknown section, stale section heading.
 - **Error handling:** Return a clear not-found message and list supported sections.
 
 ### FR-MCP-005: Report status
 
-- **Description:** Report configuration, Python package, and system dependency readiness.
+- **Description:** Report configuration, Python package, and system dependency readiness via shared utilities.
 - **Input:** None.
 - **Output:** JSON or structured status text.
-- **Business rules:** Must report reachable external endpoint, detected configuration source, and system binary presence without crashing when tools are missing.
+- **Business rules:** Must report reachable external endpoint via `utility_llm_check`, detected configuration source via `utility_config_handler`, and system binary presence via `utility_dependency_checker`.
 - **Edge cases:** Unreachable local endpoint, non-standard configuration locations, missing system binaries.
 - **Error handling:** Return structured degraded-state payload instead of raising an uncaught exception.
 

@@ -16,12 +16,12 @@ uv sync
 sudo apt-get update
 sudo apt-get install -y ffmpeg libgl1 tesseract-ocr
 
-# Run the CLI through the package environment.
+# Run the CLI through the package environment (or use 'va' alias).
 uv run vision-arwaky-cli --help
-uv run vision-arwaky-cli init
-uv run vision-arwaky-cli analyze --image photo.png --prompt "Describe this scene"
-uv run vision-arwaky-cli ocr --image scan.jpg
-uv run vision-arwaky-cli analyze-video --video recording.mp4
+uv run va init
+uv run va analyze --image photo.png --prompt "Describe this scene"
+uv run va ocr --image scan.jpg
+uv run va analyze-video --video recording.mp4
 
 # Start the MCP server over stdio.
 uv run vision-arwaky-mcp
@@ -30,14 +30,15 @@ uv run vision-arwaky-mcp
 uv run vision-arwaky-tui
 ```
 
-For an editable installation, use `uv sync` from the repository root. The package exposes the same three console scripts after installation: `vision-arwaky-cli`, `vision-arwaky-mcp`, and `vision-arwaky-tui`.
+For an editable installation, use `uv sync` from the repository root. The package exposes the console scripts after installation: `va`, `vision-arwaky-cli`, `vision-arwaky-mcp`, and `vision-arwaky-tui`.
 
 ## Product and Feature Documentation
 
 | Document | Audience | Purpose |
 |---|---|---|
 | [PRD.md](PRD.md) | Stakeholders, product, design, engineering | Product problem, goals, scope, requirements, metrics, and risks |
-| [System FRD](modules/system/FRD.md) | Engineers and QA | Workspace initialization, XDG paths, and configuration |
+| [Shared FRD](modules/shared/FRD.md) | Engineers and QA | Taxonomy VOs, contract protocols, and stateless pure utilities |
+| [System FRD](modules/system/FRD.md) | Engineers and QA | Workspace initialization, XDG paths, configuration, and job lifecycle |
 | [Image FRD](modules/image/FRD.md) | Engineers and QA | Image analysis, OCR, comparison, and VLM behavior |
 | [Video FRD](modules/video/FRD.md) | Engineers and QA | Video processing, analysis, tracking, and smart video |
 | [CLI FRD](modules/cli/FRD.md) | Engineers and QA | Parser, command handlers, and CLI contract |
