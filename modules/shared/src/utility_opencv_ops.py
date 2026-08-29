@@ -239,3 +239,70 @@ def calc_optical_flow(prev: numpy.ndarray, next_img: numpy.ndarray) -> numpy.nda
     """
     flow: Any = None
     return cv2.calcOpticalFlowFarneback(prev, next_img, flow, 0.5, 3, 15, 3, 5, 1.2, 0)
+
+
+def apply_threshold(
+    image: numpy.ndarray,
+    thresh: int,
+    maxval: int,
+    thresh_type: int = cv2.THRESH_BINARY,
+) -> numpy.ndarray:
+    """Apply fixed-level threshold to an image."""
+    _, result = cv2.threshold(image, thresh, maxval, thresh_type)
+    return result
+
+
+def apply_dilate(
+    image: numpy.ndarray,
+    kernel_size: tuple[int, int] = (3, 3),
+    iterations: int = 1,
+) -> numpy.ndarray:
+    """Dilate an image using a rectangular structuring element."""
+    kernel = numpy.ones(kernel_size, dtype=numpy.uint8)
+    return cv2.dilate(image, kernel, iterations=iterations)
+
+
+def apply_gaussian_blur(
+    image: numpy.ndarray,
+    kernel_size: tuple[int, int] = (21, 21),
+) -> numpy.ndarray:
+    """Blur an image using a Gaussian filter."""
+    return cv2.GaussianBlur(image, kernel_size, 0)
+
+
+def compute_histogram_hsv(
+    image: numpy.ndarray,
+    hue_bins: int = 50,
+    sat_bins: int = 60,
+) -> numpy.ndarray:
+    """Calculate normalized 2D HSV histogram."""
+    hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    hist = cv2.calcHist([hsv], [0, 1], None, [hue_bins, sat_bins], [0, 180, 0, 256])
+    cv2.normalize(hist, hist)
+    return hist
+
+
+def compute_moments(contour: Any) -> dict[str, float]:
+    """Calculate all of the moments up to the 3rd order of a polygon or rasterized shape."""
+    return cv2.moments(contour)
+
+
+def resize_image(image: numpy.ndarray, width: int, height: int) -> numpy.ndarray:
+    """Resize an image to the specified width and height."""
+    return cv2.resize(image, (width, height))
+
+
+def pad_image_border(
+    image: numpy.ndarray,
+    top: int,
+    bottom: int,
+    left: int,
+    right: int,
+    value: list[int] | None = None,
+) -> numpy.ndarray:
+    """Form a border around an image with constant value."""
+    if value is None:
+        value = [0, 0, 0]
+    return cv2.copyMakeBorder(
+        image, top, bottom, left, right, cv2.BORDER_CONSTANT, value=value
+    )
