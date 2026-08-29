@@ -1,10 +1,13 @@
 """TUI entry point and dispatcher aggregate."""
 
+from typing import Any
+
 from modules.cli.src.surface_tui_component import set_tui_dispatcher, tui_main
-from modules.image.src.root_image_container import ImageContainer
+from modules.image.src.root_image_container import ImageContainer, build_image_feature
 from modules.shared.src.contract_registry_service_aggregate import (
     RegistryServiceAggregate,
 )
+from modules.shared.src.taxonomy_command_vo import CommandDomain
 from modules.shared.src.taxonomy_vision_vo import CommandName, CommandOutput
 from modules.system.src.root_system_container import SystemContainer
 from modules.video.src.root_video_container import VideoContainer
@@ -15,28 +18,20 @@ class TuiDispatcher(RegistryServiceAggregate):
 
     def __init__(self) -> None:
         """Initialize dispatcher with orchestrator references."""
-        self._image = ImageContainer().orchestrator
-        self._video = VideoContainer().orchestrator
+        image_feat = build_image_feature()
+        self._image = ImageContainer(llm_port=image_feat["llm"]).orchestrator
+        self._video = VideoContainer(llm_port=image_feat["llm"]).orchestrator
         self._system = SystemContainer().orchestrator
 
     def execute_in_process(
-        self, command: CommandName, kwargs: dict[str, object]
+        self, command: CommandName, kwargs: dict[str, Any]
     ) -> CommandOutput:
-        if command.value in {"analyze", "ocr", "compare"}:
+        domain = CommandDomain.from_command(command.value)
+        if domain == CommandDomain.IMAGE:
             return self._image.execute_in_process(command, kwargs)
-        if command.value in {
-            "video-info",
-            "extract-frames",
-            "check-corruption",
-            "detect-scenes",
-            "detect-motion",
-            "track",
-            "analyze-video",
-        }:
+        if domain == CommandDomain.VIDEO:
             return self._video.execute_in_process(command, kwargs)
-        if command.value in {"init"}:
-            return self._system.execute_in_process(command, kwargs)
-        raise ValueError(f"Unknown command: {command.value}")
+        return self._system.execute_in_process(command, kwargs)
 
     def __repr__(self) -> str:
         return "TuiDispatcher()"

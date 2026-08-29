@@ -20,20 +20,9 @@ from modules.image.src.root_image_container import ImageContainer
 from modules.shared.src.contract_registry_service_aggregate import (
     RegistryServiceAggregate,
 )
+from modules.shared.src.taxonomy_command_vo import CommandDomain
 from modules.system.src.root_system_container import SystemContainer
 from modules.video.src.root_video_container import VideoContainer
-
-IMAGE_COMMANDS = {"analyze", "ocr", "compare"}
-VIDEO_COMMANDS = {
-    "video-info",
-    "extract-frames",
-    "check-corruption",
-    "detect-scenes",
-    "detect-motion",
-    "track",
-    "analyze-video",
-}
-SYSTEM_COMMANDS = {"init"}
 
 COMMANDS = {
     "init": cmd_init,
@@ -54,9 +43,10 @@ def _resolve_orchestrator(
     command: str,
 ) -> RegistryServiceAggregate:
     """Return the orchestrator for the given command."""
-    if command in IMAGE_COMMANDS:
+    domain = CommandDomain.from_command(command)
+    if domain == CommandDomain.IMAGE:
         return ImageContainer().orchestrator
-    if command in VIDEO_COMMANDS:
+    if domain == CommandDomain.VIDEO:
         return VideoContainer().orchestrator
     return SystemContainer().orchestrator
 

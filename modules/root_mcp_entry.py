@@ -19,21 +19,10 @@ from modules.mcp.src.surface_mcp_action import (
 from modules.shared.src.contract_registry_service_aggregate import (
     RegistryServiceAggregate,
 )
+from modules.shared.src.taxonomy_command_vo import CommandDomain
 from modules.shared.src.taxonomy_vision_vo import CommandName, CommandOutput
 from modules.system.src.root_system_container import SystemContainer
 from modules.video.src.root_video_container import VideoContainer
-
-IMAGE_COMMANDS = {"analyze", "ocr", "compare"}
-VIDEO_COMMANDS = {
-    "video-info",
-    "extract-frames",
-    "check-corruption",
-    "detect-scenes",
-    "detect-motion",
-    "track",
-    "analyze-video",
-}
-SYSTEM_COMMANDS = {"init", "get-config", "set-config", "config", "status", "cancel"}
 
 
 class RootMCPDispatcher(RegistryServiceAggregate):
@@ -44,7 +33,7 @@ class RootMCPDispatcher(RegistryServiceAggregate):
     def __init__(self) -> None:
         """Initialize domain orchestrators for MCP dispatch."""
         image_feat = build_image_feature()
-        self._image = ImageContainer().orchestrator
+        self._image = ImageContainer(llm_port=image_feat["llm"]).orchestrator
         self._video = VideoContainer(llm_port=image_feat["llm"]).orchestrator
         self._system = SystemContainer().orchestrator
 
@@ -52,13 +41,12 @@ class RootMCPDispatcher(RegistryServiceAggregate):
         self, command: CommandName, kwargs: dict[str, Any]
     ) -> CommandOutput:
         """Execute a command against the matching domain orchestrator."""
-        if command.value in IMAGE_COMMANDS:
+        domain = CommandDomain.from_command(command.value)
+        if domain == CommandDomain.IMAGE:
             return self._image.execute_in_process(command, kwargs)
-        if command.value in VIDEO_COMMANDS:
+        if domain == CommandDomain.VIDEO:
             return self._video.execute_in_process(command, kwargs)
-        if command.value in SYSTEM_COMMANDS:
-            return self._system.execute_in_process(command, kwargs)
-        raise ValueError(f"Unknown command: {command.value}")
+        return self._system.execute_in_process(command, kwargs)
 
 
 mcp_server = FastMCP("Vision")
