@@ -4,6 +4,7 @@ from modules.shared.src.taxonomy_vision_vo import (
     AnalysisPrompt,
     FilePath,
     VideoUnderstanding,
+    VideoUnderstandingConfig,
 )
 
 
@@ -21,9 +22,6 @@ class VideoUnderstandingProtocol(ABC):
         self,
         video_path: FilePath,
         prompt: AnalysisPrompt,
-        interval: float = 30.0,
-        scene_threshold: float = 20.0,
-        min_area: int = 500,
-        top_motion: int = 5,
+        config: VideoUnderstandingConfig | None = None,
     ) -> VideoUnderstanding:
         """Produce a structured understanding of the video."""

@@ -2,3 +2,13 @@ exclude_paths:
 - "tests/**"
 - "scripts/**"
 - "*.md"
+
+tools:
+  pydocstyle:
+    enabled: true
+    exclude_rules:
+      - D203
+  pylint:
+    enabled: true
+    exclude_rules:
+      - R0903

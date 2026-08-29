@@ -14,6 +14,7 @@ from mcp.server.fastmcp import FastMCP
 from modules.shared.src.contract_registry_service_aggregate import (
     RegistryServiceAggregate,
 )
+from modules.shared.src.taxonomy_vision_constant import EMBEDDED_SKILL_MD
 from modules.shared.src.taxonomy_vision_vo import CommandName
 
 from .surface_mcp_controller import _check_dependencies
@@ -22,6 +23,7 @@ mcp = FastMCP("Vision")
 
 VISION_PROJECT = str(Path(__file__).resolve().parents[3])
 DEFAULT_URL = "http://127.0.0.1:1234/v1"
+CONFIG_YAML = "config.yaml"
 
 _dispatcher: RegistryServiceAggregate | None = None
 
@@ -184,13 +186,12 @@ def vision_list_commands(domain: str = "") -> str:
 
 @mcp.tool()
 def vision_help(section: str = "all") -> str:
-    """Read SKILL.md documentation for vision commands.
+    """Return SKILL.md documentation for vision commands.
 
     Args:
         section: Section to read (all, image, video, workspace).
-    """
-    from modules.shared.src.taxonomy_vision_constant import EMBEDDED_SKILL_MD
 
+    """
     skill_path = Path(VISION_PROJECT) / "SKILL.md"
     if skill_path.exists():
         content = skill_path.read_text()
