@@ -8,13 +8,13 @@ All file system I/O for workspace setup lives here.
 from __future__ import annotations
 
 import os
-import shutil
 from pathlib import Path
 
 from modules.shared.src.contract_workspace_protocol import WorkspaceProtocol
 from modules.shared.src.taxonomy_vision_constant import EMBEDDED_SKILL_MD
 from modules.shared.src.taxonomy_vision_vo import FilePath
 from modules.shared.src.taxonomy_xdg_paths_vo import XDGPaths
+from modules.shared.src.utility_xdg_paths import ensure_xdg_dirs
 
 
 # ─── Block 1: Class Definition & Constructor ──────────────
@@ -37,7 +37,7 @@ class CapabilitiesSystemWorkspace(WorkspaceProtocol):
         created_items: dict[str, str] = {}
 
         # Step 1: Ensure XDG directories exist
-        XDGPaths.ensure_dirs()
+        ensure_xdg_dirs()
         created_items["xdg_config"] = str(XDGPaths.config_dir())
         created_items["xdg_data"] = str(XDGPaths.data_dir())
         created_items["xdg_cache"] = str(XDGPaths.cache_dir())
@@ -85,19 +85,25 @@ class CapabilitiesSystemWorkspace(WorkspaceProtocol):
 
     @staticmethod
     def _ensure_symlink(link_path: Path, target_path: Path) -> None:
-        """Create a symlink pointing to target_path, falling back to directory."""
+        """Create or replace a symlink pointing to target_path.
+
+        Only removes existing *symlinks* or *plain files*. Raises ``OSError``
+        when ``link_path`` already exists as a real directory — callers must
+        resolve that conflict explicitly rather than silently deleting data.
+        If ``os.symlink`` fails, the error is re-raised so callers can report
+        the actual outcome rather than misreporting success.
+        """
         if link_path.is_symlink():
             link_path.unlink(missing_ok=True)
+        elif link_path.is_dir():
+            raise OSError(
+                f"Cannot create symlink: '{link_path}' is a real directory. "
+                "Remove or relocate it manually before initialising the workspace."
+            )
         elif link_path.exists():
-            if link_path.is_dir():
-                shutil.rmtree(link_path, ignore_errors=True)
-            else:
-                link_path.unlink(missing_ok=True)
+            link_path.unlink(missing_ok=True)
 
-        try:
-            os.symlink(target_path, link_path, target_is_directory=True)
-        except OSError:
-            link_path.mkdir(parents=True, exist_ok=True)
+        os.symlink(target_path, link_path, target_is_directory=True)
 
     @staticmethod
     def _parse_git_dir_exclude(git_entry: Path, current: Path) -> Path | None:
@@ -151,7 +157,14 @@ class CapabilitiesSystemWorkspace(WorkspaceProtocol):
 
         if target_file.exists():
             content = target_file.read_text(encoding="utf-8")
-            missing = [e for e in entries if e not in content]
+            # Compare full patterns only; ignore comment lines to avoid false positives
+            # (e.g. ".venv-backup" substring-matching ".venv").
+            existing_patterns = {
+                line.strip()
+                for line in content.splitlines()
+                if line.strip() and not line.strip().startswith("#")
+            }
+            missing = [e for e in entries if e not in existing_patterns]
             if missing:
                 return cls._append_missing_entries(target_file, missing, entries)
             return f"{target_file.name} already contains required entries"

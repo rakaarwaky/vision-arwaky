@@ -143,6 +143,7 @@ from modules.shared.src.utility_system_utils import (
     validate_path,
 )
 from modules.shared.src.utility_version import get_package_version
+from modules.shared.src.utility_xdg_paths import ensure_xdg_dirs
 
 __all__ = [
     "ALL_COMMANDS",
@@ -218,6 +219,7 @@ __all__ = [
     "compute_phash",
     "detect_edges",
     "dict_to_command_output",
+    "ensure_xdg_dirs",
     "extract_frames_at_indices",
     "extract_middle_frame",
     "file_exists",

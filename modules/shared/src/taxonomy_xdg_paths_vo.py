@@ -61,16 +61,5 @@ class XDGPaths:
             return Path(env_value)
         return Path.home() / ".local" / "bin"
 
-    @staticmethod
-    def ensure_dirs() -> None:
-        """Create all required XDG directories."""
-        for dir_fn in [
-            XDGPaths.config_dir,
-            XDGPaths.data_dir,
-            XDGPaths.cache_dir,
-            XDGPaths.state_dir,
-        ]:
-            dir_fn().mkdir(parents=True, exist_ok=True)
-
 
 __all__ = ["APP_NAME", "XDGPaths"]
