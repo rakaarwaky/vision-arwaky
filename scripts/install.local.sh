@@ -1,183 +1,405 @@
 #!/usr/bin/env bash
-# install.local.sh — Local development install for vision-arwaky
-# Usage: ./scripts/install.local.sh
+# ==============================================================================
+# Vision Arwaky - Automated Installer Script (XDG-Compliant)
+# ==============================================================================
+# All data, virtual environments, binaries, configs, caches, and logs strictly
+# adhere to the Linux XDG Base Directory Specification:
+#   - Binaries : $XDG_BIN_HOME    (default: ~/.local/bin)
+#   - Data/Venv: $XDG_DATA_HOME   (default: ~/.local/share/vision-arwaky/venv)
+#   - Config   : $XDG_CONFIG_HOME (default: ~/.config/vision-arwaky)
+#   - Cache    : $XDG_CACHE_HOME  (default: ~/.cache/vision-arwaky)
+#   - State/Log: $XDG_STATE_HOME  (default: ~/.local/state/vision-arwaky)
+# ==============================================================================
 
 set -euo pipefail
 
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-CYAN='\033[0;36m'
-NC='\033[0m'
+# Colors and formatting
+RED=$'\033[0;31m'
+GREEN=$'\033[0;32m'
+YELLOW=$'\033[0;33m'
+BLUE=$'\033[0;34m'
+CYAN=$'\033[0;36m'
+BOLD=$'\033[1m'
+RESET=$'\033[0m'
 
-PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-cd "$PROJECT_DIR"
+# Helpers
+info()    { printf "%s[i]%s %s\n" "$CYAN" "$RESET" "$*"; }
+success() { printf "%s[✓]%s %s\n" "$GREEN" "$RESET" "$*"; }
+warn()    { printf "%s[!]%s %s\n" "$YELLOW" "$RESET" "$*"; }
+error()   { printf "%s[✗]%s %s\n" "$RED" "$RESET" "$*" >&2; }
+header()  { printf "\n%s%s=== %s ===%s\n" "$BOLD" "$BLUE" "$*" "$RESET"; }
 
-echo -e "${CYAN}══════════════════════════════════════════════${NC}"
-echo -e "${CYAN}  vision-arwaky — Local Install${NC}"
-echo -e "${CYAN}══════════════════════════════════════════════${NC}"
-echo ""
+# Resolve Repository Root
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+cd "$REPO_ROOT"
 
-# ── Check Python ──────────────────────────────────────────
-echo -e "${YELLOW}[1/5]${NC} Checking Python version..."
-PYTHON="${PYTHON:-python3}"
-if ! command -v "$PYTHON" &>/dev/null; then
-    echo -e "${RED}✗ Python not found. Install Python 3.12+ first.${NC}"
-    exit 1
-fi
+# XDG Base Directory Resolutions
+XDG_BIN_DIR="${XDG_BIN_HOME:-$HOME/.local/bin}"
+XDG_CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/vision-arwaky"
+XDG_DATA_ROOT="${XDG_DATA_HOME:-$HOME/.local/share}/vision-arwaky"
+XDG_VENV_DIR="$XDG_DATA_ROOT/venv"
+XDG_CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/vision-arwaky"
+XDG_STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/vision-arwaky"
 
-$PYTHON -c "import sys; assert sys.version_info >= (3, 12), 'Python 3.12+ required'" 2>/dev/null || {
-    echo -e "${RED}✗ Python 3.12+ required${NC}"
-    exit 1
+# Configuration variables & Defaults
+DEV_MODE=0
+REINSTALL=0
+CREATE_SYMLINKS=1
+CHECK_ONLY=0
+BIN_DIR="$XDG_BIN_DIR"
+VENV_DIR="$XDG_VENV_DIR"
+PYTHON_BIN="python3"
+
+show_help() {
+    cat << 'EOF'
+Vision Arwaky - Automated Installer (Strict XDG Standard)
+
+Usage:
+  ./scripts/install.local.sh [OPTIONS]
+
+Options:
+  --dev             Install developer & test dependencies (pytest, ruff, mypy, etc.)
+  --reinstall       Clean existing XDG installation and reinstall completely from scratch
+  --no-symlink      Do not create symlinks in ~/.local/bin
+  --bin-dir <path>  Target directory for CLI symlinks (default: $XDG_BIN_HOME or ~/.local/bin)
+  --python <path>   Path to Python 3 binary (default: python3)
+  --check-only      Run prerequisite checks only and exit
+  -h, --help        Show this help message and exit
+
+XDG Base Directory Layout:
+  Binaries     : $XDG_BIN_HOME    -> ~/.local/bin
+  Venv & Data  : $XDG_DATA_HOME   -> ~/.local/share/vision-arwaky/venv
+  Config       : $XDG_CONFIG_HOME -> ~/.config/vision-arwaky
+  Cache        : $XDG_CACHE_HOME  -> ~/.cache/vision-arwaky
+  Logs & State : $XDG_STATE_HOME  -> ~/.local/state/vision-arwaky
+
+Examples:
+  ./scripts/install.local.sh                # Install Vision Arwaky into XDG paths
+  ./scripts/install.local.sh --reinstall    # Purge old install and reinstall cleanly
+  ./scripts/install.local.sh --dev          # Install with developer tools
+EOF
+    exit 0
 }
-echo -e "${GREEN}✓ Python $($PYTHON --version)${NC}"
 
-# ── Create XDG dirs ───────────────────────────────────────
-echo ""
-echo -e "${YELLOW}[2/5]${NC} Creating XDG directories..."
-CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/vision-arwaky"
-DATA_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/vision-arwaky"
-CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/vision-arwaky/memory"
-VENV_DIR="$DATA_DIR/venv"
-BIN_DIR="${XDG_BIN_HOME:-$HOME/.local/bin}"
-mkdir -p "$CONFIG_DIR" "$DATA_DIR" "$CACHE_DIR" "$BIN_DIR"
-echo -e "${GREEN}✓ config : ${CONFIG_DIR}${NC}"
-echo -e "${GREEN}✓ data  : ${DATA_DIR}${NC}"
-echo -e "${GREEN}✓ cache : ${CACHE_DIR}${NC}"
-echo -e "${GREEN}✓ venv  : ${VENV_DIR}${NC}"
-
-# Copy default config if not exists
-if [ ! -f "$CONFIG_DIR/config.yaml" ]; then
-    if [ -f "$PROJECT_DIR/config.yaml" ]; then
-        cp "$PROJECT_DIR/config.yaml" "$CONFIG_DIR/config.yaml"
-        echo -e "${GREEN}✓ Default config copied to $CONFIG_DIR/config.yaml${NC}"
-    fi
-else
-    echo -e "${GREEN}✓ Config already exists at $CONFIG_DIR/config.yaml${NC}"
-fi
-
-# ── Create isolated venv (do not touch system Python) ─────
-echo ""
-echo -e "${YELLOW}[3/5]${NC} Creating isolated virtualenv in XDG data dir..."
-if [ ! -x "$VENV_DIR/bin/python" ]; then
-    "$PYTHON" -m venv "$VENV_DIR"
-    echo -e "${GREEN}✓ venv created${NC}"
-else
-    echo -e "${GREEN}✓ venv already exists${NC}"
-fi
-VENV_PY="$VENV_DIR/bin/python"
-VENV_PIP="$VENV_DIR/bin/pip"
-"$VENV_PY" -m pip install --upgrade pip wheel setuptools 2>&1 | tail -1
-
-# ── Install package + deps into venv ──────────────────────
-echo ""
-echo -e "${YELLOW}[4/5]${NC} Installing vision-arwaky (editable) + dependencies into venv..."
-"$VENV_PIP" install -e . 2>&1 | tail -4
-echo -e "${GREEN}✓ Package + dependencies installed into venv${NC}"
-
-# Expose entry points on PATH via symlinks into ~/.local/bin
-for ep in vision-arwaky-cli vision-arwaky-mcp vision-arwaky-tui; do
-    if [ -x "$VENV_DIR/bin/$ep" ]; then
-        ln -sf "$VENV_DIR/bin/$ep" "$BIN_DIR/$ep"
-    fi
+# Parse Command Line Arguments
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --dev)
+            DEV_MODE=1
+            shift
+            ;;
+        --reinstall|--clean)
+            REINSTALL=1
+            shift
+            ;;
+        --no-symlink)
+            CREATE_SYMLINKS=0
+            shift
+            ;;
+        --bin-dir)
+            if [[ -z "${2:-}" ]]; then
+                error "Argument --bin-dir requires a path"
+                exit 1
+            fi
+            BIN_DIR="$2"
+            shift 2
+            ;;
+        --python)
+            if [[ -z "${2:-}" ]]; then
+                error "Argument --python requires a binary name/path"
+                exit 1
+            fi
+            PYTHON_BIN="$2"
+            shift 2
+            ;;
+        --check-only)
+            CHECK_ONLY=1
+            shift
+            ;;
+        -h|--help)
+            show_help
+            ;;
+        *)
+            error "Unknown option: $1"
+            echo "Run './scripts/install.local.sh --help' for usage instructions."
+            exit 1
+            ;;
+    esac
 done
 
-# ── Install missing system binaries ───────────────────────
-echo ""
-echo -e "${YELLOW}[5/7]${NC} Installing system binaries (tesseract, ffmpeg)..."
-install_pkg() {
-    # $1 = binary name; installs the distro-appropriate packages via sudo.
-    local bin="$1"
-    if command -v "$bin" >/dev/null 2>&1; then
-        echo -e "${GREEN}✓ ${bin} already installed${NC}"
-        return 0
-    fi
-    if command -v dnf >/dev/null 2>&1; then
-        local pkgs="tesseract tesseract-data-eng"
-        [ "$bin" = "ffmpeg" ] && pkgs="ffmpeg"
-        sudo dnf install -y $pkgs
-    elif command -v apt-get >/dev/null 2>&1; then
-        local pkgs="tesseract-ocr tesseract-ocr-eng"
-        [ "$bin" = "ffmpeg" ] && pkgs="ffmpeg"
-        sudo apt-get install -y $pkgs
-    elif command -v pacman >/dev/null 2>&1; then
-        local pkgs="tesseract tesseract-data-eng"
-        [ "$bin" = "ffmpeg" ] && pkgs="ffmpeg"
-        sudo pacman -S --noconfirm $pkgs
-    elif command -v brew >/dev/null 2>&1; then
-        brew install "$bin"
+printf "\n%s%s" "$BOLD" "$CYAN"
+cat << 'EOF'
+  _    _ _     _                   _                           _            
+ | |  | (_)   (_)                 / \   _ ____      ____ _ | | ___   _  
+ | |  | | |__  _  ___  _ __      / _ \ | '__\ \ /\ / / _` || |/ / | | | 
+ \ \  / /| '_ \| |/ _ \| '_ \    / ___ \| |   \ V  V / (_| ||   <| |_| | 
+  \_\/_/ |_| |_|_|\___/|_| |_|  /_/   \_\_|    \_/\_/ \__,_||_|\_\\__, | 
+                                                                   |___/  
+EOF
+printf "%s" "$RESET"
+printf "%sInstaller for Vision Arwaky Engine (Strict XDG)%s\n" "$BOLD" "$RESET"
+printf "Repo: %s\n\n" "$REPO_ROOT"
+
+# ==============================================================================
+# 1. System Prerequisite Checks
+# ==============================================================================
+header "1. Checking System Prerequisites"
+
+MISSING_REQ=0
+
+# OS check
+OS_TYPE="$(uname -s)"
+info "Operating System: $OS_TYPE ($(uname -m))"
+
+# Check Python executable
+if ! command -v "$PYTHON_BIN" >/dev/null 2>&1; then
+    error "Python executable '$PYTHON_BIN' not found."
+    info "Please install Python 3 (>= 3.12):"
+    echo "  - Ubuntu/Debian: sudo apt update && sudo apt install -y python3 python3-venv python3-pip"
+    echo "  - Arch Linux:    sudo pacman -S python python-pip"
+    echo "  - Fedora:        sudo dnf install python3 python3-pip"
+    MISSING_REQ=1
+else
+    PY_VER_RAW="$("$PYTHON_BIN" -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}")' 2>/dev/null || echo "0.0.0")"
+    PY_MAJOR="$("$PYTHON_BIN" -c 'import sys; print(sys.version_info.major)' 2>/dev/null || echo "0")"
+    PY_MINOR="$("$PYTHON_BIN" -c 'import sys; print(sys.version_info.minor)' 2>/dev/null || echo "0")"
+
+    if [[ "$PY_MAJOR" -lt 3 ]] || { [[ "$PY_MAJOR" -eq 3 ]] && [[ "$PY_MINOR" -lt 12 ]]; }; then
+        error "Python version $PY_VER_RAW is too old. Requires Python >= 3.12."
+        MISSING_REQ=1
     else
-        echo -e "${RED}✗ No supported package manager found to install ${bin}${NC}"
-        return 1
+        success "Python found: $PYTHON_BIN (version $PY_VER_RAW)"
     fi
-    if command -v "$bin" >/dev/null 2>&1; then
-        echo -e "${GREEN}✓ ${bin} installed${NC}"
+fi
+
+# Check FFmpeg and Tesseract
+if command -v ffmpeg >/dev/null 2>&1; then
+    FFMPEG_VER="$(ffmpeg -version 2>&1 | sed -n '1p')"
+    success "FFmpeg found: $FFMPEG_VER"
+else
+    warn "FFmpeg is not installed or not in PATH!"
+    info "To install FFmpeg on Linux:"
+    echo "  - Ubuntu/Debian: sudo apt update && sudo apt install -y ffmpeg"
+    echo "  - Arch Linux:    sudo pacman -S ffmpeg"
+    echo "  - Fedora:        sudo dnf install ffmpeg"
+fi
+
+if command -v tesseract >/dev/null 2>&1; then
+    TESS_VER="$(tesseract --version 2>&1 | sed -n '1p')"
+    success "Tesseract found: $TESS_VER"
+else
+    warn "Tesseract is not installed or not in PATH!"
+    info "To install Tesseract on Linux:"
+    echo "  - Ubuntu/Debian: sudo apt update && sudo apt install -y tesseract-ocr tesseract-ocr-eng"
+    echo "  - Arch Linux:    sudo pacman -S tesseract tesseract-data-eng"
+    echo "  - Fedora:        sudo dnf install tesseract tesseract-data-eng"
+fi
+
+# Check venv module capability
+if [[ "$MISSING_REQ" -eq 0 ]]; then
+    if ! "$PYTHON_BIN" -c "import venv" >/dev/null 2>&1; then
+        error "Python 'venv' module is missing."
+        info "Please install python3-venv:"
+        echo "  - Ubuntu/Debian: sudo apt install -y python3-venv"
+        MISSING_REQ=1
     else
-        echo -e "${RED}✗ ${bin} still missing after install${NC}"
-        return 1
+        success "Python venv module is available"
     fi
-}
-install_pkg tesseract
-install_pkg ffmpeg
-
-# ── Verify CLI ─────────────────────────────────────────────
-echo ""
-echo -e "${YELLOW}[6/7]${NC} Verifying CLI entry points..."
-if [ -x "$BIN_DIR/vision-arwaky-cli" ]; then
-    echo -e "${GREEN}✓ vision-arwaky-cli — $("$BIN_DIR/vision-arwaky-cli" --help 2>&1 | head -1)${NC}"
-else
-    echo -e "${RED}✗ vision-arwaky-cli not found${NC}"
 fi
 
-if [ -x "$BIN_DIR/vision-arwaky-mcp" ]; then
-    echo -e "${GREEN}✓ vision-arwaky-mcp — MCP server${NC}"
-else
-    echo -e "${RED}✗ vision-arwaky-mcp not found${NC}"
+if [[ "$MISSING_REQ" -ne 0 ]]; then
+    error "Cannot proceed due to missing prerequisite dependencies."
+    exit 1
 fi
 
-if [ -x "$BIN_DIR/vision-arwaky-tui" ]; then
-    echo -e "${GREEN}✓ vision-arwaky-tui — TUI config${NC}"
-else
-    echo -e "${RED}✗ vision-arwaky-tui not found${NC}"
+if [[ "$CHECK_ONLY" -eq 1 ]]; then
+    success "Prerequisite check completed successfully."
+    exit 0
 fi
 
-# ── Check deps ─────────────────────────────────────────────
-echo ""
-echo -e "${YELLOW}[7/7]${NC} Dependency check (against venv)..."
-DEPS_MISSING=()
+# ==============================================================================
+# 2. XDG Directory Structure Setup
+# ==============================================================================
+header "2. Initializing XDG Directories"
 
-"$VENV_PY" -c "import cv2" 2>/dev/null || DEPS_MISSING+=("opencv-python")
-"$VENV_PY" -c "import PIL" 2>/dev/null || DEPS_MISSING+=("pillow")
-"$VENV_PY" -c "import pytesseract" 2>/dev/null || DEPS_MISSING+=("pytesseract")
-command -v ffmpeg &>/dev/null || DEPS_MISSING+=("ffmpeg (binary)")
+info "Creating standard XDG directories..."
+mkdir -p "$XDG_CONFIG_DIR" "$XDG_DATA_ROOT" "$XDG_CACHE_DIR" "$XDG_STATE_DIR" "$BIN_DIR"
+success "XDG directories prepared:"
+echo "  - Config : $XDG_CONFIG_DIR"
+echo "  - Data   : $XDG_DATA_ROOT"
+echo "  - Cache  : $XDG_CACHE_DIR"
+echo "  - State  : $XDG_STATE_DIR"
+echo "  - Bin    : $BIN_DIR"
 
-# Check test fixtures
-if [ -f "$PROJECT_DIR/tests/fixtures/test.jpeg" ] && [ -f "$PROJECT_DIR/tests/fixtures/test.mp4" ]; then
-    echo -e "${GREEN}✓ test fixtures (test.jpeg + test.mp4)${NC}"
+# Copy default config if not exists
+if [ ! -f "$XDG_CONFIG_DIR/config.yaml" ]; then
+    if [ -f "$REPO_ROOT/config.yaml" ]; then
+        cp "$REPO_ROOT/config.yaml" "$XDG_CONFIG_DIR/config.yaml"
+        success "Default config copied to $XDG_CONFIG_DIR/config.yaml"
+    fi
 else
-    echo -e "${YELLOW}⚠ test fixtures not complete${NC}"
+    success "Config already exists at $XDG_CONFIG_DIR/config.yaml"
 fi
 
-if [ ${#DEPS_MISSING[@]} -eq 0 ]; then
-    echo -e "${GREEN}✓ All optional dependencies found${NC}"
+# Clean old in-tree .venv before setup
+if [[ -e "$REPO_ROOT/.venv" ]] || [[ -L "$REPO_ROOT/.venv" ]]; then
+    rm -rf "$REPO_ROOT/.venv"
+fi
+
+# ==============================================================================
+# 3. XDG Virtual Environment Setup
+# ==============================================================================
+header "3. Setting Up XDG Virtual Environment ($VENV_DIR)"
+
+VENV_PYTHON="$VENV_DIR/bin/python"
+
+if [[ "$REINSTALL" -eq 1 ]] && [[ -d "$VENV_DIR" ]]; then
+    info "Purging existing XDG virtual environment at $VENV_DIR (--reinstall)..."
+    rm -rf "$VENV_DIR"
+fi
+
+if [[ ! -d "$VENV_DIR" ]] || [[ ! -f "$VENV_PYTHON" ]]; then
+    info "Creating clean XDG virtual environment at $VENV_DIR..."
+    mkdir -p "$(dirname "$VENV_DIR")"
+    "$PYTHON_BIN" -m venv "$VENV_DIR"
+    success "XDG Virtual environment created at $VENV_DIR"
 else
-    echo -e "${YELLOW}⚠ Missing optional deps:${NC}"
-    for dep in "${DEPS_MISSING[@]}"; do
-        echo "    - $dep"
+    info "Using existing XDG virtual environment at $VENV_DIR"
+fi
+
+# Determine package installer (uv or pip)
+USE_UV=0
+if command -v uv >/dev/null 2>&1; then
+    USE_UV=1
+    info "Found 'uv' package manager - using fast installation mode"
+fi
+
+# Upgrade pip, wheel, setuptools inside XDG venv
+info "Upgrading pip, wheel, setuptools in XDG environment..."
+if [[ "$USE_UV" -eq 1 ]]; then
+    uv pip install --python "$VENV_PYTHON" --upgrade pip setuptools wheel >/dev/null 2>&1 || true
+else
+    "$VENV_PYTHON" -m pip install --upgrade pip setuptools wheel --quiet
+fi
+success "Packaging tools updated"
+
+# ==============================================================================
+# 4. Installing Dependencies & Vision Arwaky
+# ==============================================================================
+header "4. Installing Dependencies into XDG Environment"
+
+if [[ "$DEV_MODE" -eq 1 ]]; then
+    info "Installing Vision Arwaky with dev dependencies (--dev)..."
+    if [[ "$USE_UV" -eq 1 ]]; then
+        uv pip install --python "$VENV_PYTHON" -e "$REPO_ROOT[dev]"
+    else
+        "$VENV_PYTHON" -m pip install -e "$REPO_ROOT[dev]"
+    fi
+else
+    info "Installing Vision Arwaky package (editable)..."
+    if [[ "$USE_UV" -eq 1 ]]; then
+        uv pip install --python "$VENV_PYTHON" -e "$REPO_ROOT"
+    else
+        "$VENV_PYTHON" -m pip install -e "$REPO_ROOT"
+    fi
+fi
+success "Vision Arwaky package installed successfully"
+
+# ==============================================================================
+# 5. CLI Symlinks Setup (~/.local/bin)
+# ==============================================================================
+if [[ "$CREATE_SYMLINKS" -eq 1 ]]; then
+    header "5. Setting Up Global CLI Commands ($BIN_DIR)"
+    mkdir -p "$BIN_DIR"
+
+    COMMANDS=("vision-arwaky-cli" "vision-arwaky-mcp" "vision-arwaky-tui")
+    for cmd in "${COMMANDS[@]}"; do
+        SRC_EXE="$VENV_DIR/bin/$cmd"
+        DEST_EXE="$BIN_DIR/$cmd"
+
+        if [[ -f "$SRC_EXE" ]]; then
+            ln -sf "$SRC_EXE" "$DEST_EXE"
+            success "Linked $DEST_EXE -> $SRC_EXE"
+        else
+            warn "Executable $SRC_EXE not found; skipping link."
+        fi
     done
+
+    # Check if BIN_DIR is in PATH
+    if [[ ":$PATH:" != *":$BIN_DIR:"* ]]; then
+        warn "$BIN_DIR is not currently in your PATH!"
+        info "To run vision-arwaky commands from any terminal, add this to your ~/.bashrc or ~/.zshrc:"
+        printf "\n  %sexport PATH=\"%s:\$PATH\"%s\n\n" "$BOLD" "$BIN_DIR" "$RESET"
+    else
+        success "$BIN_DIR is already in your PATH"
+    fi
 fi
 
-# ── Done ──────────────────────────────────────────────────
+# ==============================================================================
+# 6. Workspace Initialization (.vision-arwaky -> XDG, .venv -> XDG Venv)
+# ==============================================================================
+header "6. Initializing Workspace Symlink"
+
+CLI_EXEC="$VENV_DIR/bin/vision-arwaky-cli"
+if [[ -f "$CLI_EXEC" ]]; then
+    info "Initializing workspace (.vision-arwaky, SKILL.md, and .git/info/exclude)..."
+    "$CLI_EXEC" init "$REPO_ROOT" >/dev/null 2>&1 || true
+    success "Local workspace initialized"
+fi
+
+# Ensure in-tree .venv is a symlink pointing to XDG venv for tools/IDEs/agents
+rm -rf "$REPO_ROOT/.venv"
+ln -sf "$VENV_DIR" "$REPO_ROOT/.venv"
+success "In-tree .venv symlinked -> $VENV_DIR"
+
+# Write UV_PROJECT_ENVIRONMENT to .env if not already present
+if [[ ! -f "$REPO_ROOT/.env" ]] || ! grep -q "UV_PROJECT_ENVIRONMENT" "$REPO_ROOT/.env"; then
+    echo "UV_PROJECT_ENVIRONMENT=\"$VENV_DIR\"" >> "$REPO_ROOT/.env"
+    success ".env updated with UV_PROJECT_ENVIRONMENT"
+fi
+
+# ==============================================================================
+# 7. Verification & Smoke Test
+# ==============================================================================
+header "7. Verifying Installation"
+
+if [[ -f "$CLI_EXEC" ]]; then
+    if "$CLI_EXEC" --help >/dev/null 2>&1; then
+        success "vision-arwaky-cli runs and is ready to use!"
+    else
+        warn "CLI execution check returned an unexpected status."
+    fi
+else
+    warn "vision-arwaky-cli binary was not found at $CLI_EXEC"
+fi
+
+# ==============================================================================
+# Summary
+# ==============================================================================
+printf "\n%s%s========================================================================%s\n" "$BOLD" "$GREEN" "$RESET"
+printf "%s%s[✓] Vision Arwaky installation complete! (100%% XDG Compliant)%s\n" "$BOLD" "$GREEN" "$RESET"
+printf "%s%s========================================================================%s\n\n" "$BOLD" "$GREEN" "$RESET"
+
+echo "XDG Directory Layout:"
+echo "  - Venv & Data: $VENV_DIR"
+echo "  - Binaries   : $BIN_DIR"
+echo "  - Config     : $XDG_CONFIG_DIR"
+echo "  - Cache      : $XDG_CACHE_DIR"
+echo "  - Logs/State : $XDG_STATE_DIR"
 echo ""
-echo -e "${CYAN}══════════════════════════════════════════════${NC}"
-echo -e "${GREEN}  vision-arwaky installed (venv: ${VENV_DIR})!${NC}"
-echo -e "${CYAN}══════════════════════════════════════════════${NC}"
+echo "CLI Commands:"
+echo "  - vision-arwaky-cli   : Command line image & video analysis tool"
+echo "  - vision-arwaky-mcp   : FastMCP server over stdio"
+echo "  - vision-arwaky-tui   : Interactive Textual configuration UI"
 echo ""
-echo -e "  ${GREEN}vision-arwaky-cli${NC}    — CLI interface"
-echo -e "  ${GREEN}vision-arwaky-mcp${NC}    — MCP server"
-echo -e "  ${GREEN}vision-arwaky-tui${NC}    — TUI config"
+echo "Quick Test / Examples:"
+echo "  1) Initialize any workspace:"
+echo "     vision-arwaky-cli init /path/to/project"
 echo ""
-echo -e "  Quick start:"
-echo -e "    ${CYAN}vision-arwaky-cli test${NC}    — Run test suite"
-echo -e "    ${CYAN}vision-arwaky-cli analyze --image foto.jpg --prompt \"Describe\"${NC}"
+echo "  2) Extract text with OCR:"
+echo "     vision-arwaky-cli ocr --image document.png"
+echo ""
+echo "  3) Analyze video scene transitions:"
+echo "     vision-arwaky-cli detect-scenes --video recording.mp4"
 echo ""
