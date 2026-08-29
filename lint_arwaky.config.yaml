@@ -11,12 +11,26 @@ thresholds:
 # ─── Adapters ─────────────────────────────────────────────────────────
 # All adapters listed. The system auto-filters by detected language.
 adapters:
+  # Rust
+  - name: "clippy"
+    weight: 1.0
+  - name: "rustfmt"
+    weight: 1.0
+  - name: "cargo-audit"
+    weight: 1.0
   # Python
   - name: "ruff"
     weight: 1.0
   - name: "mypy"
     weight: 1.0
   - name: "bandit"
+    weight: 1.0
+  # TypeScript/JavaScript
+  - name: "eslint"
+    weight: 1.0
+  - name: "tsc"
+    weight: 1.0
+  - name: "prettier"
     weight: 1.0
   # Internal
   - name: "architecture"

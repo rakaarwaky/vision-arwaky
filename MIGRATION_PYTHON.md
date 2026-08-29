@@ -764,5 +764,5 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) §12 for the full violation code referenc
 - Architecture: [ARCHITECTURE.md](ARCHITECTURE.md)
 - CLI Reference: [README.md](README.md)
 - PRD: [PRD.md](PRD.md)
-- Test and QA requirements: [PRD.md](PRD.md#acceptance-criteria) and feature FRDs under `modules/*/FRD.md`
-- Python migration guide: this document
+- Test Plan: [TEST_PLAN.md](TEST_PLAN.md)
+- Rust Migration Guide: [MIGRATION_RUST.md](MIGRATION_RUST.md)
