@@ -5,16 +5,17 @@ Implements SystemJobProtocol — status reporting, dependency inspection, and op
 
 from __future__ import annotations
 
-import os
-import shutil
-from importlib.metadata import PackageNotFoundError, version
 from typing import Any
-
-import requests
 
 from modules.shared.src.contract_system_job_protocol import SystemJobProtocol
 from modules.shared.src.taxonomy_vision_constant import DEFAULT_MODELS_TIMEOUT_S
-from modules.shared.src.taxonomy_xdg_paths_vo import XDGPaths
+from modules.shared.src.utility_config_handler import (
+    find_active_config,
+    resolve_external_settings,
+)
+from modules.shared.src.utility_dependency_checker import check_all_dependencies
+from modules.shared.src.utility_llm_check import check_llm_endpoint
+from modules.shared.src.utility_version import get_package_version
 
 
 # ─── Block 1: Class Definition & Constructor ──────────────
@@ -28,36 +29,22 @@ class CapabilitiesSystemJob(SystemJobProtocol):
     # ─── Block 2: Public Contract (SystemJobProtocol ONLY) ────
     def get_status(self) -> dict[str, Any]:
         """Inspect dependencies, endpoint connectivity, and server capability status."""
-        deps = self._check_dependencies()
-        base_url = (os.getenv("LLAMA_API_URL") or "http://127.0.0.1:1234/v1").rstrip(
-            "/"
+        deps = check_all_dependencies()
+        base_url, api_key, model = resolve_external_settings()
+
+        llm_ready, llm_status = check_llm_endpoint(
+            base_url, api_key, timeout=DEFAULT_MODELS_TIMEOUT_S
         )
-        api_key = os.getenv("LLAMA_API_KEY") or ""
-        model = os.getenv("LLAMA_MODEL") or None
+        deps["llm_endpoint"] = llm_status
 
-        llm_ready = False
-        try:
-            headers = {"Authorization": f"Bearer {api_key}"} if api_key else {}
-            response = requests.get(
-                f"{base_url}/models",
-                headers=headers,
-                timeout=DEFAULT_MODELS_TIMEOUT_S,
-            )
-            llm_ready = 200 <= response.status_code < 300
-            deps["llm_endpoint"] = "OK" if llm_ready else f"HTTP_{response.status_code}"
-        except (OSError, requests.RequestException):
-            deps["llm_endpoint"] = "UNREACHABLE"
-
-        config_path = XDGPaths.config_dir() / "config.yaml"
+        config_path = find_active_config()
         return {
-            "server": f"vision-mcp v{self._package_version()}",
+            "server": f"vision-mcp v{get_package_version()}",
             "configuration": {
-                "config_yaml_detected": config_path.exists(),
-                "config_source": str(config_path)
-                if config_path.exists()
-                else "project root",
+                "config_yaml_detected": config_path is not None,
+                "config_source": str(config_path) if config_path else "none",
                 "llm_endpoint": base_url,
-                "llm_model": model,
+                "llm_model": model or None,
                 "llm_api_key_configured": bool(api_key),
             },
             "dependencies": deps,
@@ -100,28 +87,6 @@ class CapabilitiesSystemJob(SystemJobProtocol):
     # ─── Block 3: Dunder Methods, Factories & Helpers ─────────
     def __repr__(self) -> str:
         return f"CapabilitiesSystemJob(active={len(self._active_processes)})"
-
-    @staticmethod
-    def _package_version() -> str:
-        try:
-            return version("vision-arwaky")
-        except PackageNotFoundError:
-            return "unknown"
-
-    @staticmethod
-    def _check_dependencies() -> dict[str, str]:
-        deps: dict[str, str] = {}
-        for lib in ["cv2", "PIL", "pytesseract"]:
-            try:
-                __import__(lib)
-                deps[lib.lower().replace("cv2", "opencv")] = "OK"
-            except ImportError:
-                deps[lib.lower().replace("cv2", "opencv")] = "MISSING"
-
-        for bin_name in ["ffmpeg", "ffprobe", "tesseract"]:
-            deps[bin_name] = "OK" if shutil.which(bin_name) else "MISSING"
-
-        return deps
 
 
 __all__ = ["CapabilitiesSystemJob"]
