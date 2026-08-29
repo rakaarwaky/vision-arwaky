@@ -6,7 +6,6 @@ from modules.shared.src.contract_tesseract_ocr_protocol import (
 from modules.shared.src.taxonomy_vision_vo import (
     FilePath,
     LanguageCode,
-    VisionAnalysis,
 )
 
 logger = logging.getLogger("mcp_server.infrastructure.tesseract")
@@ -14,8 +13,6 @@ logger = logging.getLogger("mcp_server.infrastructure.tesseract")
 
 class TesseractOCRAdapter(TesseractOCRProtocol):
     """Infrastructure adapter for OCR operations via Tesseract."""
-
-    _taxonomy_marker = VisionAnalysis
 
     def extract_text(self, image_path: FilePath, language: LanguageCode) -> str:
         try:

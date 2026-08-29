@@ -8,13 +8,9 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Any
 
-from modules.shared.src.taxonomy_vision_vo import CommandOutput
-
 
 class SystemConfigurationProtocol(ABC):
     """Protocol for reading and mutating configuration with XDG precedence."""
-
-    _taxonomy_marker = CommandOutput
 
     @abstractmethod
     def get_config(self, key: Any = "") -> Any:

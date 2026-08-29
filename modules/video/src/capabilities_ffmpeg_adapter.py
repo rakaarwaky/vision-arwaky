@@ -2,7 +2,6 @@ import asyncio
 import logging
 
 from modules.shared.src.contract_ffmpeg_video_protocol import FFmpegVideoProtocol
-from modules.shared.src.taxonomy_vision_vo import VideoInfo
 from modules.shared.src.utility_system_utils import get_ffmpeg_path
 
 logger = logging.getLogger("mcp_server.infrastructure.ffmpeg")
@@ -11,8 +10,6 @@ FFMPEG_TIMEOUT_SECONDS = 120.0
 
 class FFmpegVideoAdapter(FFmpegVideoProtocol):
     """Infrastructure adapter for FFmpeg operations."""
-
-    _taxonomy_marker = VideoInfo
 
     async def run(
         self,

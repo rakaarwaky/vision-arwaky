@@ -15,8 +15,6 @@ class VideoUnderstandingProtocol(ABC):
     analyzes each with a VLM, then synthesizes a summary.
     """
 
-    _taxonomy_marker = VideoUnderstanding
-
     @abstractmethod
     def analyze(
         self,

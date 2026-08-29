@@ -48,8 +48,6 @@ class VideoUnderstandingAnalyzer(VideoUnderstandingProtocol):
     generated frame files when the analysis finishes.
     """
 
-    _taxonomy_marker = VideoUnderstanding
-
     def __init__(
         self,
         video_analysis: VideoAnalysisProtocol,

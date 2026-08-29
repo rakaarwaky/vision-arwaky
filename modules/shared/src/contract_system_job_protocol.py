@@ -8,13 +8,9 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Any
 
-from modules.shared.src.taxonomy_vision_vo import CommandOutput
-
 
 class SystemJobProtocol(ABC):
     """Protocol for monitoring system status and cancelling in-flight operations."""
-
-    _taxonomy_marker = CommandOutput
 
     @abstractmethod
     def get_status(self) -> dict[str, Any]:

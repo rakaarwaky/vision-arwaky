@@ -4,14 +4,11 @@ from modules.shared.src.taxonomy_vision_vo import (
     FilePath,
     IntervalSeconds,
     VideoInfo,
-    VisionAnalysis,
 )
 
 
 class VideoProcessingProtocol(ABC):
     """Abstract protocol defining Video Processing capabilities."""
-
-    _taxonomy_marker = VisionAnalysis
 
     @abstractmethod
     async def extract_frames(
