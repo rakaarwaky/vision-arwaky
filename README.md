@@ -18,9 +18,10 @@ sudo apt-get install -y ffmpeg libgl1 tesseract-ocr
 
 # Run the CLI through the package environment.
 uv run vision-arwaky-cli --help
+uv run vision-arwaky-cli init
 uv run vision-arwaky-cli analyze --image photo.png --prompt "Describe this scene"
 uv run vision-arwaky-cli ocr --image scan.jpg
-uv run vision-arwaky-cli analyze-video --video recording.mp4 --interval 30
+uv run vision-arwaky-cli analyze-video --video recording.mp4
 
 # Start the MCP server over stdio.
 uv run vision-arwaky-mcp
@@ -36,6 +37,7 @@ For an editable installation, use `uv sync` from the repository root. The packag
 | Document | Audience | Purpose |
 |---|---|---|
 | [PRD.md](PRD.md) | Stakeholders, product, design, engineering | Product problem, goals, scope, requirements, metrics, and risks |
+| [System FRD](modules/system/FRD.md) | Engineers and QA | Workspace initialization, XDG paths, and configuration |
 | [Image FRD](modules/image/FRD.md) | Engineers and QA | Image analysis, OCR, comparison, and VLM behavior |
 | [Video FRD](modules/video/FRD.md) | Engineers and QA | Video processing, analysis, tracking, and smart video |
 | [CLI FRD](modules/cli/FRD.md) | Engineers and QA | Parser, command handlers, and CLI contract |
@@ -43,17 +45,17 @@ For an editable installation, use `uv sync` from the repository root. The packag
 
 ## Architecture
 
-The source tree is organized as feature modules. Layer identity is encoded in filenames, while dependency wiring is performed by the root composition containers.
+The source tree is organized as feature modules. Layer identity is encoded in filenames, while dependency wiring is performed by per-module composition containers (`ImageContainer`, `VideoContainer`, `SystemContainer`).
 
 ```text
 modules/
-├── root_cli_entry.py                 # CLI bootstrap and dispatcher wiring
+├── root_cli_entry.py                 # CLI bootstrap and argument dispatching
 ├── root_mcp_entry.py                 # MCP bootstrap and tool registration
 ├── root_tui_entry.py                 # TUI bootstrap
-├── root_composition_container.py     # Application-wide dependency graph
 ├── shared/                           # Taxonomy, contracts, and OpenCV pure utilities
-├── image/                            # Image analysis, OCR, and image orchestration
-├── video/                            # Video processing, analysis, tracking, and smart understanding
+├── image/                            # Image container, analysis, OCR, and image orchestration
+├── video/                            # Video container, processing, analysis, tracking, and smart understanding
+├── system/                           # System container, workspace provisioning, and configuration
 ├── cli/                              # CLI and TUI surfaces
 └── mcp/                              # MCP controller and action surfaces
 
@@ -61,11 +63,18 @@ tests/                                # Focused unit and end-to-end tests
 scripts/gates.sh                      # Local mirror of the CI quality gates
 ```
 
-The implementation uses typed contracts and constructor injection. The image and video feature roots compose capabilities, the global root connects them, and CLI/MCP surfaces delegate through the same `RootDispatcher`.
+The implementation uses typed contracts and constructor injection. Each module defines its own composition root container (`ImageContainer`, `VideoContainer`, `SystemContainer`), and CLI/MCP/TUI surfaces directly delegate to the appropriate domain container on demand.
+
 
 ## CLI Commands
 
 The CLI command list below is implemented by `modules/cli/src/surface_cli_controller.py` and dispatched by `modules/root_cli_entry.py`.
+
+### Workspace commands
+
+| Command | Main arguments | Purpose |
+|---|---|---|
+| `init` | `[target_dir]` (optional, default: `.`) | Initialize `.vision-arwaky` symlinks to XDG and create `.agents/skills/vision-arwaky/SKILL.md` |
 
 ### Image commands
 
@@ -80,26 +89,24 @@ The CLI command list below is implemented by `modules/cli/src/surface_cli_contro
 | Command | Main arguments | Purpose |
 |---|---|---|
 | `video-info` | `--video` | Read video metadata |
-| `extract-frames` | `--video`, optional `--interval` | Extract frames at an interval |
+| `extract-frames` | `--video` | Extract frames at locked interval |
 | `check-corruption` | `--video` | Check whether a video can be decoded successfully |
-| `detect-scenes` | `--video`, optional `--threshold` | Detect scene changes |
-| `detect-motion` | `--video`, optional `--min-area` | Detect motion events |
-| `track` | `--video`, `--bbox`, optional `--max-frames` | Track an object through a video |
-| `analyze-video` | `--video`, optional `--prompt`, `--interval`, `--scene-threshold`, `--min-area` | Analyze bounded key frames with a VLM and synthesize a summary |
+| `detect-scenes` | `--video` | Detect scene changes |
+| `detect-motion` | `--video` | Detect motion events |
+| `track` | `--video`, `--bbox` | Track an object through a video |
+| `analyze-video` | `--video`, optional `--prompt` | Analyze bounded key frames with a VLM and synthesize a summary |
 
 Smart-video analysis selects scene-change, motion, and uniform samples. The implementation caps selected frames at 12, bounds the summary prompt, and removes generated frame files after the command completes.
 
-> The old `memory` CLI has been removed. Visual-memory commands should not be added to new integrations unless the feature is reintroduced as a complete AES slice.
-
-
 ## MCP Tools
 
-The MCP entry point registers five tools over stdio:
+The MCP entry point registers six tools over stdio:
 
 | Tool | Purpose |
 |---|---|
-| `vision_execute` | Execute a supported image or video command |
-| `vision_list_commands` | List available image and video commands, including `analyze-video` |
+| `vision_init` | Initialize workspace directory structure and provision skill guide |
+| `vision_execute` | Execute a supported workspace, image, or video command |
+| `vision_list_commands` | List available workspace, image, and video commands |
 | `vision_help` | Read the packaged project skill documentation |
 | `vision_status` | Report dependency and capability availability |
 | `vision_cancel` | Cancel a running operation when supported |
@@ -112,9 +119,17 @@ uv run vision-arwaky-mcp
 
 Agents can discover the current command contract through `vision_list_commands`. The MCP feature details are documented in [modules/mcp/FRD.md](modules/mcp/FRD.md).
 
-## Configuration
+## Configuration & XDG Standards
 
-Configuration is loaded from the user configuration directory and the repository-local configuration file. The exact precedence is handled by `utility_config_handler`; keep secrets and machine-specific model paths outside version control.
+Configuration is loaded from the user configuration directory and the repository-local configuration file. All runtime artifacts adhere strictly to the Linux XDG Base Directory specification:
+
+| Resource | Typical location | Environment Variable |
+|---|---|---|
+| Configuration | `~/.config/vision-arwaky/config.yaml` | `$XDG_CONFIG_HOME/vision-arwaky` |
+| User Data & Venv | `~/.local/share/vision-arwaky` | `$XDG_DATA_HOME/vision-arwaky` |
+| Cache | `~/.cache/vision-arwaky` | `$XDG_CACHE_HOME/vision-arwaky` |
+| Logs & State | `~/.local/state/vision-arwaky` | `$XDG_STATE_HOME/vision-arwaky` |
+| Executable Binaries | `~/.local/bin` | `$XDG_BIN_HOME` |
 
 ```yaml
 backend: external
@@ -141,7 +156,7 @@ Individual checks are useful during development:
 uv run ruff format --check modules/ tests/
 uv run ruff check modules/ tests/
 uv run mypy modules/
-uv run python3 -m pytest tests/ -q
+uv run pytest tests/ -q
 uv build
 lint-arwaky-cli scan .
 ```

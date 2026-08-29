@@ -46,6 +46,8 @@ def build_system_orchestrator(
 
 
 class SystemFeature(TypedDict):
+    """Composition of system domain capability ports and orchestrator."""
+
     workspace: WorkspaceProtocol
     config: SystemConfigurationProtocol
     job: SystemJobProtocol
@@ -62,6 +64,7 @@ class SystemContainer:
         job_port: CapabilitiesSystemJob | None = None,
         orchestrator: SystemOrchestrator | None = None,
     ) -> None:
+        """Initialize the system domain container with optional injected ports."""
         self._workspace = workspace_port or build_system_workspace()
         self._config = config_port or build_system_configuration()
         self._job = job_port or build_system_job()
