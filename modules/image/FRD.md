@@ -79,10 +79,10 @@ The feature uses the following shared contracts:
 
 | Integration | Purpose |
 |---|---|
-| OpenCV | Image decoding, processing, and perceptual comparison |
+| OpenCV Utilities | Image decoding, processing, and perceptual comparison pure functions |
 | Tesseract | OCR execution through the Tesseract adapter |
 | External VLM | OpenAI-compatible `/chat/completions` endpoint for image understanding |
-| Root composition | Injects OpenCV, OCR, and VLM capabilities into the image orchestrator |
+| Root composition | Injects OCR and VLM capabilities into the image orchestrator |
 | CLI and MCP | Public command surfaces |
 
 ## Non-functional Requirements
@@ -90,7 +90,7 @@ The feature uses the following shared contracts:
 - **Performance:** Deterministic operations must not require a network call.
 - **Reliability:** VLM failures must be handled through a fallback or explicit controlled error.
 - **Security:** Image paths and endpoint configuration must not be interpolated into shell commands.
-- **Compatibility:** The feature must work with Python 3.12 and 3.13 and the OpenCV runtime installed by CI.
+- **Compatibility:** The feature must work with Python 3.12+ and the OpenCV runtime installed by CI.
 - **Maintainability:** The orchestrator must depend on contracts and constructor-injected ports.
 
 ## Test Scenarios / QA Checklist
@@ -99,11 +99,11 @@ The feature uses the following shared contracts:
 - [ ] Analyze a valid image when the VLM endpoint is unavailable and verify fallback behavior.
 - [ ] Run OCR with the default `eng` language.
 - [ ] Run OCR with a missing Tesseract executable and verify the diagnostic error.
-- [ ] Detect elements in an image with and without detectable UI elements.
 - [ ] Compare identical screenshots and verify `identical=true`.
 - [ ] Compare different screenshots and verify differences are returned.
 - [ ] Verify missing input files produce controlled errors.
 - [ ] Verify the image root container injects every required port.
+
 
 ## Assumptions and Constraints
 

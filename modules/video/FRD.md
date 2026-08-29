@@ -81,11 +81,10 @@ Primary implementation modules are under `modules/video/src/`:
 
 ### FR-VID-006: Analyze video with a VLM
 
-
 - **Description:** Select representative key frames, analyze each frame, and synthesize a short summary.
-- **Input:** `video`, optional prompt, interval, scene threshold, and minimum motion area.
+- **Input:** `video` path and optional `prompt`.
 - **Output:** `VideoUnderstanding` containing video metadata, sampling statistics, per-frame analyses, and a summary.
-- **Business rules:** Scene changes, top motion events, and uniform sampling contribute candidates. The implementation caps selected frames at 120 and caps summary prompt input at 12,000 characters. Generated frame files are removed after execution.
+- **Business rules:** Scene changes, top motion events, and uniform sampling contribute candidates. The implementation caps selected frames at 12 and bounds the summary prompt. Generated frame files are removed after execution.
 - **Edge cases:** No frames extracted, failed frame write, unavailable VLM, long video, empty analysis response, corrupted source video.
 - **Error handling:** Per-frame VLM failures become fallback frame descriptions; summary failures fall back to joined frame descriptions; media resources are always released.
 
@@ -99,7 +98,7 @@ Primary implementation modules are under `modules/video/src/`:
 | `detect-scenes` | `video`, `threshold` | Scene event list | Detect transitions |
 | `detect-motion` | `video`, `min_area` | Motion event list | Detect motion |
 | `track` | `video`, `bbox`, `max_frames` | Bounding-box list | Track an object |
-| `analyze-video` | `video`, optional `prompt`, `interval`, `scene_threshold`, `min_area` | `VideoUnderstanding` JSON | Smart video understanding |
+| `analyze-video` | `video`, optional `prompt` | `VideoUnderstanding` JSON | Smart video understanding |
 
 The feature uses these shared contracts:
 
@@ -110,13 +109,12 @@ The feature uses these shared contracts:
 - `contract_ffmpeg_video_protocol.py`
 - `contract_llm_vision_protocol.py`
 
-
 ## Integration Points
 
 | Integration | Purpose |
 |---|---|
-| OpenCV | Frame capture, frame decoding, scene and motion processing |
-| FFmpeg | Video metadata, conversion, corruption checks, and media operations |
+| OpenCV Utilities | Frame capture, frame decoding, scene and motion processing pure functions |
+| FFmpeg | Video metadata and corruption checks |
 | External VLM | Per-frame descriptions and summary synthesis for `analyze-video` |
 | Root composition | Wires the image VLM adapter into video understanding |
 | CLI | Exposes all video commands as `vision-arwaky-cli` subcommands |
@@ -135,17 +133,15 @@ The feature uses these shared contracts:
 
 - [ ] Read metadata from a generated valid MP4.
 - [ ] Extract frames with a normal interval and an interval larger than the video.
-- [ ] Convert a video and create a GIF segment with valid and invalid segments.
 - [ ] Detect corruption for a valid, missing, and malformed file.
 - [ ] Detect scenes and motion in static and changing videos.
 - [ ] Track an object with a valid bounding box and handle an invalid bounding box.
-- [ ] Generate a timeline for a video with no detected events.
 - [ ] Run smart-video analysis with a fake VLM and verify structured output.
-- [ ] Verify smart-video sampling never exceeds 120 frames.
+- [ ] Verify smart-video sampling never exceeds 12 frames.
 - [ ] Verify per-frame VLM failure produces fallback descriptions.
 - [ ] Verify generated frame paths do not exist after smart-video analysis returns.
 - [ ] Verify `analyze-video` is present in both CLI parser and MCP discovery.
-- [ ] Verify Python 3.12 and 3.13 CI test jobs pass.
+
 
 ## Assumptions and Constraints
 
