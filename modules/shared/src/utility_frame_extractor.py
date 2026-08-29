@@ -22,7 +22,9 @@ def extract_middle_frame(video_path: str) -> str | None:
             return None
         fd, thumb = tempfile.mkstemp(suffix=".jpg")
         os.close(fd)
-        cv2.imwrite(thumb, frame)
+        if not cv2.imwrite(thumb, frame):
+            os.unlink(thumb)
+            return None
         return thumb
     finally:
         cap.release()

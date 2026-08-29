@@ -5,6 +5,7 @@ Module-level functions only — no classes, no state.
 
 from __future__ import annotations
 
+import hashlib
 import logging
 from typing import Any
 
@@ -17,7 +18,7 @@ from modules.shared.src.taxonomy_vision_vo import (
     VideoInfo,
 )
 
-logger = logging.getLogger("mcp_server.utility.opencv")
+logger = logging.getLogger("modules.shared.utility.opencv_ops")
 
 
 def read_image(path: str | FilePath) -> numpy.ndarray | None:
@@ -166,7 +167,7 @@ def compute_phash(image: numpy.ndarray) -> str:
         return hash_val.tobytes().hex()
     except (AttributeError, RuntimeError, TypeError, ValueError, cv2.error) as e:
         logger.warning(f"pHash computation fallback used: {e}")
-        return str(hash(image.tobytes()))
+        return hashlib.sha1(image.tobytes()).hexdigest()
 
 
 def open_video_capture(path: str | FilePath) -> cv2.VideoCapture:

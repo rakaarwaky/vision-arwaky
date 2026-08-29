@@ -3,8 +3,6 @@ from __future__ import annotations
 
 import requests
 
-DEFAULT_LLM_URL = "http://127.0.0.1:1234/v1"
-
 
 def check_llm_endpoint(
     base_url: str,
