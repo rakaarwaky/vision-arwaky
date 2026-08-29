@@ -1,5 +1,3 @@
-import cv2
-
 from modules.shared.src.contract_image_processing_protocol import (
     ImageProcessingProtocol,
 )
@@ -23,12 +21,15 @@ from modules.shared.src.taxonomy_vision_vo import (
     VisionAnalysis,
 )
 from modules.shared.src.utility_opencv_ops import (
+    apply_threshold,
     compute_abs_diff,
     compute_phash,
     find_contours,
     get_bounding_box,
     get_contour_area,
+    pad_image_border,
     read_image,
+    resize_image,
     to_grayscale,
 )
 
@@ -107,25 +108,22 @@ class ImageProcessingProcessor(ImageProcessingProtocol):
             h2, w2 = img2.shape[:2]
             scale = min(w1 / w2, h1 / h2)
             new_w, new_h = int(w2 * scale), int(h2 * scale)
-            img2 = cv2.resize(img2, (new_w, new_h))
+            img2 = resize_image(img2, new_w, new_h)
             # Center-pad if needed
             if new_w < w1 or new_h < h1:
-                padded = cv2.copyMakeBorder(
+                img2 = pad_image_border(
                     img2,
-                    0,
-                    h1 - new_h,
-                    0,
-                    w1 - new_w,
-                    cv2.BORDER_CONSTANT,
-                    value=[0, 0, 0],
+                    top=0,
+                    bottom=h1 - new_h,
+                    left=0,
+                    right=w1 - new_w,
                 )
-                img2 = padded
 
         diff = compute_abs_diff(img1, img2)
         gray_diff = to_grayscale(diff)
 
-        _, thresh = cv2.threshold(
-            gray_diff, IMAGE_DIFF_THRESHOLD, IMAGE_MAX_PIXEL_VALUE, cv2.THRESH_BINARY
+        thresh = apply_threshold(
+            gray_diff, IMAGE_DIFF_THRESHOLD, IMAGE_MAX_PIXEL_VALUE
         )
         contours = find_contours(thresh)
 

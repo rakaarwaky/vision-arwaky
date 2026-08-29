@@ -35,16 +35,10 @@ def build_image_processing(
 
 
 def build_image_orchestrator(
-    tesseract_port: TesseractOCRAdapter,
-    llm_port: LLMVisionAdapter,
     image_processing_port: ImageProcessingProcessor,
 ) -> ImageOrchestrator:
-    """Instantiate Image Agent Orchestrator with injected ports."""
-    return ImageOrchestrator(
-        image_processing=image_processing_port,
-        tesseract=tesseract_port,
-        llm=llm_port,
-    )
+    """Instantiate Image Agent Orchestrator with the single routing port."""
+    return ImageOrchestrator(image_processing=image_processing_port)
 
 
 class ImageContainer:
@@ -63,7 +57,7 @@ class ImageContainer:
             self._tesseract, self._llm
         )
         self._orchestrator = orchestrator or build_image_orchestrator(
-            self._tesseract, self._llm, self._image_processing
+            self._image_processing
         )
 
     @property

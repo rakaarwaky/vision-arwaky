@@ -6,12 +6,8 @@ from typing import Any
 from modules.shared.src.contract_image_processing_protocol import (
     ImageProcessingProtocol,
 )
-from modules.shared.src.contract_llm_vision_protocol import LLMVisionProtocol
 from modules.shared.src.contract_registry_service_aggregate import (
     RegistryServiceAggregate,
-)
-from modules.shared.src.contract_tesseract_ocr_protocol import (
-    TesseractOCRProtocol,
 )
 from modules.shared.src.taxonomy_vision_vo import (
     AnalysisPrompt,
@@ -28,12 +24,8 @@ class ImageOrchestrator(RegistryServiceAggregate):
     def __init__(
         self,
         image_processing: ImageProcessingProtocol,
-        tesseract: TesseractOCRProtocol,
-        llm: LLMVisionProtocol,
     ):
         self._image_processing = image_processing
-        self._tesseract = tesseract
-        self._llm = llm
 
     def execute_in_process(
         self,

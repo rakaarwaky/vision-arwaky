@@ -31,7 +31,7 @@ from modules.shared.src.utility_config_handler import (
 )
 from modules.shared.src.utility_llm_check import check_llm_endpoint
 
-logger = logging.getLogger("mcp_server.infrastructure.llm")
+logger = logging.getLogger("modules.image.capabilities.llm_vision_adapter")
 
 
 class LLMVisionAdapter(LLMVisionProtocol):
@@ -50,7 +50,7 @@ class LLMVisionAdapter(LLMVisionProtocol):
         res_url, res_key, res_model = resolve_external_settings(merged)
         self.base_url = (base_url or res_url).rstrip("/")
         self.api_key = api_key or res_key
-        self._model = model or res_model
+        self._resolved_model: str | None = model or res_model
 
     @property
     def config(self) -> dict[str, Any]:
@@ -63,14 +63,18 @@ class LLMVisionAdapter(LLMVisionProtocol):
 
     @property
     def model(self) -> ModelName:
-        if self._model:
-            return ModelName(value=self._model)
+        """Pure accessor; model resolution happens once and is cached."""
+        if self._resolved_model is None:
+            self._resolved_model = self._discover_model()
+        return ModelName(value=self._resolved_model)
 
+    def _discover_model(self) -> str:
+        """Query the endpoint once for an available model id."""
         is_ready, _ = check_llm_endpoint(
             self.base_url, self.api_key, DEFAULT_MODELS_TIMEOUT_S
         )
         if not is_ready:
-            return ModelName(value="local-model")
+            return "local-model"
 
         try:
             session = requests.Session()
@@ -88,13 +92,13 @@ class LLMVisionAdapter(LLMVisionProtocol):
             data = resp.json()
             models = data.get("data", [])
             if models:
-                self._model = str(models[0]["id"])
-                logger.info(f"Auto-selected model: {self._model}")
-                return ModelName(value=self._model)
+                selected = str(models[0]["id"])
+                logger.info(f"Auto-selected model: {selected}")
+                return selected
         except (requests.RequestException, KeyError, ValueError) as e:
             logger.warning(f"Failed to list models: {e}")
 
-        return ModelName(value="local-model")
+        return "local-model"
 
     @staticmethod
     def _encode_image(path: str) -> str:

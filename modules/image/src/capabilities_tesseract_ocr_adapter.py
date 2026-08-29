@@ -8,7 +8,7 @@ from modules.shared.src.taxonomy_vision_vo import (
     LanguageCode,
 )
 
-logger = logging.getLogger("mcp_server.infrastructure.tesseract")
+logger = logging.getLogger("modules.image.capabilities.tesseract_ocr_adapter")
 
 
 class TesseractOCRAdapter(TesseractOCRProtocol):
