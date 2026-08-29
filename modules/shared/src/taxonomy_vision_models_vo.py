@@ -10,14 +10,6 @@ class BoundingBox(BaseModel):
     height: int = Field(..., description="Height of the box")
 
 
-class Detection(BaseModel):
-    """Object detection result."""
-
-    label: str = Field(..., description="Object class label")
-    confidence: float = Field(..., description="Detection confidence (0-1)")
-    bbox: BoundingBox = Field(..., description="Object bounding box")
-
-
 class MotionEvent(BaseModel):
     """Visual motion event."""
 
@@ -38,25 +30,11 @@ class SceneChange(BaseModel):
     score: float = Field(..., description="Similarity score change")
 
 
-class VideoTimeline(BaseModel):
-    """Structured timeline of a video for Agentic reasoning."""
-
-    video_path: str
-    total_frames: int
-    fps: float
-    key_frames: list[dict] = Field(
-        ..., description="List of frames with paths and detections"
-    )
-
-
 class VisionAnalysis(BaseModel):
     """Result from VLM-based image analysis."""
 
     source: str = Field(..., description="Analysis source: 'llm' or 'opencv'")
     text: str = Field(..., description="Analytical description or OCR text")
-    elements: list[Detection] = Field(
-        default_factory=list, description="Detected UI elements (opencv only)"
-    )
     model: str | None = Field(
         default=None, description="LLM model used when source='llm'"
     )
@@ -75,13 +53,6 @@ class LanguageCode(BaseModel):
     """Value object for OCR language codes (e.g., 'eng')."""
 
     value: str = "eng"
-
-
-class TimeSegment(BaseModel):
-    """Value object representing a video time segment start and duration."""
-
-    start: float | None = None
-    duration: float | None = None
 
 
 class VideoInfo(BaseModel):

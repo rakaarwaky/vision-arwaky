@@ -7,7 +7,6 @@ from modules.shared.src.contract_image_processing_protocol import (
     ImageProcessingProtocol,
 )
 from modules.shared.src.contract_llm_vision_protocol import LLMVisionProtocol
-from modules.shared.src.contract_opencv_image_protocol import OpenCVImageProtocol
 from modules.shared.src.contract_registry_service_aggregate import (
     RegistryServiceAggregate,
 )
@@ -29,14 +28,13 @@ class ImageOrchestrator(RegistryServiceAggregate):
     def __init__(
         self,
         image_processing: ImageProcessingProtocol,
-        opencv: OpenCVImageProtocol,
         tesseract: TesseractOCRProtocol,
         llm: LLMVisionProtocol,
     ):
         self._image_processing = image_processing
-        self._opencv = opencv
         self._tesseract = tesseract
         self._llm = llm
+
 
     def execute_in_process(
         self,
@@ -60,13 +58,6 @@ class ImageOrchestrator(RegistryServiceAggregate):
             lang_val = kwargs.get("lang") or "eng"
             lang = LanguageCode(value=lang_val)
             return CommandOutput(value=cap.extract_text(img, lang).value)
-        elif command.value == "elements":
-            img = FilePath(value=kwargs["image"])
-            return CommandOutput(
-                value=json.dumps(
-                    [e.model_dump() for e in cap.find_elements(img)], indent=2
-                )
-            )
         elif command.value == "compare":
             img1 = FilePath(value=kwargs["image1"])
             img2 = FilePath(value=kwargs["image2"])
@@ -76,3 +67,4 @@ class ImageOrchestrator(RegistryServiceAggregate):
                 )
             )
         raise ValueError(f"Unknown image command: {command.value}")
+
