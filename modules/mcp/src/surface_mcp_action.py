@@ -26,28 +26,38 @@ DEFAULT_URL = "http://127.0.0.1:1234/v1"
 _dispatcher: RegistryServiceAggregate | None = None
 
 
-def set_mcp_dispatcher(dispatcher: RegistryServiceAggregate) -> None:
-    """Inject the aggregate facade used by all MCP commands."""
+def set_mcp_dispatcher(dispatcher: RegistryServiceAggregate | None) -> None:
+    """Inject the aggregate facade used by MCP commands (optional)."""
     global _dispatcher
     _dispatcher = dispatcher
 
 
-def get_dispatcher() -> RegistryServiceAggregate:
-    """Return the injected aggregate facade."""
-    if _dispatcher is None:
-        raise RuntimeError(
-            "No dispatcher injected. Call set_mcp_dispatcher() before running commands."
-        )
+def get_dispatcher() -> RegistryServiceAggregate | None:
+    """Return the injected aggregate facade if present."""
     return _dispatcher
 
 
 def _execute_in_process(command: str, kwargs: dict) -> str:
-    """Route command to the appropriate feature orchestrator via the facade."""
+    """Route command to the injected aggregate dispatcher."""
     try:
-        result = get_dispatcher().execute_in_process(CommandName(value=command), kwargs)
-        return result.value
+        if _dispatcher is None:
+            raise RuntimeError(
+                "No dispatcher configured. Call set_mcp_dispatcher() before execution."
+            )
+        cmd_vo = CommandName(value=command)
+        return _dispatcher.execute_in_process(cmd_vo, kwargs).value
     except (KeyError, TypeError, ValueError, RuntimeError, OSError) as e:
         return json.dumps({"error": str(e)})
+
+
+@mcp.tool()
+def vision_init(target_dir: str = ".") -> str:
+    """Initialize workspace directory structure, XDG symlinks, and SKILL.md guide.
+
+    Args:
+        target_dir: Target directory path to initialize (default: current directory).
+    """
+    return _execute_in_process("init", {"target_dir": target_dir})
 
 
 @mcp.tool()
@@ -61,8 +71,12 @@ def vision_execute(
     output_path: str = "",
     prompt: str = "",
     lang: str = "eng",
+    target_dir: str = ".",
 ) -> str:
     """Execute safe vision commands.
+
+    WORKSPACE COMMANDS:
+      init         — Initialize workspace (.vision-arwaky symlinks, skill guide). Args: target_dir
 
     VIDEO COMMANDS:
       video-info   — Get video metadata. Args: video
@@ -87,6 +101,7 @@ def vision_execute(
         "output_path": output_path,
         "lang": lang,
         "prompt": prompt,
+        "target_dir": target_dir,
     }
     return _execute_in_process(command, kwargs)
 
@@ -96,9 +111,16 @@ def vision_list_commands(domain: str = "") -> str:
     """List all available vision commands.
 
     Args:
-        domain: Filter by domain (image, video). Empty = all.
+        domain: Filter by domain (image, video, workspace). Empty = all.
     """
     commands = {
+        "workspace": [
+            {
+                "command": "init",
+                "args": "[target_dir]",
+                "desc": "Initialize workspace with .vision-arwaky symlinks and SKILL.md",
+            }
+        ],
         "image": [
             {
                 "command": "analyze",
@@ -165,13 +187,15 @@ def vision_help(section: str = "all") -> str:
     """Read SKILL.md documentation for vision commands.
 
     Args:
-        section: Section to read (all, image, video).
+        section: Section to read (all, image, video, workspace).
     """
-    skill_path = Path(VISION_PROJECT) / "SKILL.md"
-    if not skill_path.exists():
-        return "SKILL.md not found. Run: vision --help"
+    from modules.shared.src.taxonomy_vision_constant import EMBEDDED_SKILL_MD
 
-    content = skill_path.read_text()
+    skill_path = Path(VISION_PROJECT) / "SKILL.md"
+    if skill_path.exists():
+        content = skill_path.read_text()
+    else:
+        content = EMBEDDED_SKILL_MD
 
     if section == "all":
         return content
@@ -187,7 +211,7 @@ def vision_help(section: str = "all") -> str:
         ):
             return "## " + s
 
-    return f"Section '{section}' not found. Available: all, image, video"
+    return f"Section '{section}' not found. Available: all, image, video, workspace"
 
 
 def _load_runtime_config(project_root: Path) -> tuple[Path | None, dict[str, Any]]:
@@ -264,7 +288,7 @@ def vision_status() -> str:
 
     status: dict[str, Any] = {
         "server": f"vision-mcp v{_package_version()}",
-        "pattern": "hybrid (5 MCP tools + unlimited CLI)",
+        "pattern": "hybrid (6 MCP tools + unlimited CLI)",
         "configuration": status_cfg,
         "dependencies": deps,
         "capabilities": caps,

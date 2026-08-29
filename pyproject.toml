@@ -50,3 +50,15 @@ ignore_missing_imports = true
 [[tool.mypy.overrides]]
 module = ["cv2"]
 ignore_errors = true
+
+[tool.pytest.ini_options]
+testpaths = [
+    "modules/video/tests",
+    "modules/image/tests",
+    "modules/system/tests",
+    "modules/cli/tests",
+    "modules/mcp/tests",
+    "modules/shared/tests",
+]
+pythonpath = ["."]
+python_files = ["unit_*.py", "test_*.py"]

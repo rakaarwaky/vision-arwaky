@@ -10,6 +10,18 @@ def create_parser() -> argparse.ArgumentParser:
     )
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
+    # --- Workspace commands ---
+    init_cmd = subparsers.add_parser(
+        "init",
+        help="Initialize workspace directory structure, XDG symlinks, and SKILL.md",
+    )
+    init_cmd.add_argument(
+        "target_dir",
+        nargs="?",
+        default=".",
+        help="Target workspace directory (default: .)",
+    )
+
     # --- Image commands ---
     analyze = subparsers.add_parser(
         "analyze", help="Analyze screenshot or image with AI vision"
@@ -61,4 +73,3 @@ def create_parser() -> argparse.ArgumentParser:
     )
 
     return parser
-
