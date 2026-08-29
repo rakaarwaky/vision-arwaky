@@ -1,51 +1,4 @@
-"""Locked tuning constants for the vision system.
-
-These values are bound here to keep single vision calls predictable and bounded.
-"""
-
-from __future__ import annotations
-
-# --- Frame extraction / uniform sampling ------------------------------------
-FRAME_EXTRACTION_INTERVAL_S: float = 1.0
-MAX_EXTRACT_FRAMES: int = 30
-
-# --- Scene detection --------------------------------------------------------
-SCENE_THRESHOLD: float = 30.0
-HIST_HUE_BINS: int = 50
-HIST_SAT_BINS: int = 60
-
-# --- Motion detection -------------------------------------------------------
-MIN_MOTION_AREA: int = 500
-MOTION_DIFF_THRESHOLD: int = 25
-MOTION_MAX_PIXEL_VALUE: int = 255
-GAUSSIAN_BLUR_KERNEL: tuple[int, int] = (21, 21)
-DILATION_KERNEL_SIZE: tuple[int, int] = (3, 3)
-DILATION_ITERATIONS: int = 2
-
-# --- Object tracking --------------------------------------------------------
-MAX_TRACK_FRAMES: int = 300
-
-# --- Smart video understanding bounds ---------------------------------------
-MAX_SMART_VIDEO_FRAMES: int = 12
-MAX_SUMMARY_PROMPT_CHARS: int = 12000
-ANALYZE_VIDEO_INTERVAL_S: float = 30.0
-TOP_MOTION_EVENTS_LIMIT: int = 5
-DEFAULT_VIDEO_FPS: float = 30.0
-
-# --- Image processing & comparison bounds -----------------------------------
-IMAGE_DIFF_THRESHOLD: int = 30
-IMAGE_MAX_PIXEL_VALUE: int = 255
-MIN_DIFF_CONTOUR_AREA: int = 50
-DEFAULT_OCR_LANGUAGE: str = "eng"
-
-# --- VLM HTTP endpoint defaults ---------------------------------------------
-DEFAULT_VLM_TIMEOUT_S: int = 120
-DEFAULT_MODELS_TIMEOUT_S: int = 10
-DEFAULT_VLM_TEMPERATURE: float = 0.4
-DEFAULT_VLM_MAX_TOKENS: int = 2048
-
-# --- Embedded SKILL.md for workspace provisioning ---------------------------
-EMBEDDED_SKILL_MD: str = """---
+---
 name: vision-arwaky
 description: Unified image and video intelligence for computer vision, OCR, video analysis, object tracking, and MCP integrations.
 version: 2.0.7
@@ -213,33 +166,4 @@ The gates run Ruff formatting, Ruff lint, Mypy, pytest, and `lint-arwaky-cli sca
 ## Current limitations
 
 VLM analysis requires a reachable external vision endpoint and a vision-capable model. OCR requires the Tesseract binary. Video processing requires FFmpeg. Object tracking uses OpenCV trackers rather than a deep-learning detector. Smart-video analysis uses a bounded representative sample rather than exhaustively sending every video frame to the VLM.
-"""
 
-__all__ = [
-    "ANALYZE_VIDEO_INTERVAL_S",
-    "DEFAULT_MODELS_TIMEOUT_S",
-    "DEFAULT_OCR_LANGUAGE",
-    "DEFAULT_VIDEO_FPS",
-    "DEFAULT_VLM_MAX_TOKENS",
-    "DEFAULT_VLM_TEMPERATURE",
-    "DEFAULT_VLM_TIMEOUT_S",
-    "DILATION_ITERATIONS",
-    "DILATION_KERNEL_SIZE",
-    "EMBEDDED_SKILL_MD",
-    "FRAME_EXTRACTION_INTERVAL_S",
-    "GAUSSIAN_BLUR_KERNEL",
-    "HIST_HUE_BINS",
-    "HIST_SAT_BINS",
-    "IMAGE_DIFF_THRESHOLD",
-    "IMAGE_MAX_PIXEL_VALUE",
-    "MAX_EXTRACT_FRAMES",
-    "MAX_SMART_VIDEO_FRAMES",
-    "MAX_SUMMARY_PROMPT_CHARS",
-    "MAX_TRACK_FRAMES",
-    "MIN_DIFF_CONTOUR_AREA",
-    "MIN_MOTION_AREA",
-    "MOTION_DIFF_THRESHOLD",
-    "MOTION_MAX_PIXEL_VALUE",
-    "SCENE_THRESHOLD",
-    "TOP_MOTION_EVENTS_LIMIT",
-]

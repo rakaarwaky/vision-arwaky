@@ -156,4 +156,3 @@ The gates run Ruff formatting, Ruff lint, Mypy, pytest, and `lint-arwaky-cli sca
 
 VLM analysis requires a reachable external vision endpoint and a vision-capable model. OCR requires the Tesseract binary. Video processing requires FFmpeg. Object tracking uses OpenCV trackers rather than a deep-learning detector. Smart-video analysis uses a bounded representative sample rather than exhaustively sending every video frame to the VLM.
 
-The old visual-memory CLI and MCP commands are not part of the current public surface. Do not rely on memory-related examples from older versions of this document.
