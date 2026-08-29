@@ -22,7 +22,8 @@ from modules.cli.src.surface_cli_controller import create_parser
 from modules.root_composition_container import build
 
 
-def cli():
+def cli() -> None:
+    """Parse CLI arguments, build the graph, and dispatch one command."""
     parser = create_parser()
     args = parser.parse_args()
 

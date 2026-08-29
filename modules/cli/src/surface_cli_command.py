@@ -42,29 +42,30 @@ def _execute(command: str, kwargs: dict[str, Any]) -> str:
 
 def _extract_middle_frame(file_path: str) -> str | None:
     """Extract the middle frame of a video file to a temp JPG (returns temp path)."""
+    import importlib
     import tempfile
 
-    import cv2 as _cv2
-
-    cap = _cv2.VideoCapture(file_path)
+    cv2: Any = importlib.import_module("cv2")
+    cap = cv2.VideoCapture(file_path)
     try:
-        total = int(cap.get(_cv2.CAP_PROP_FRAME_COUNT))
+        total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         if total <= 0:
             return None
         mid = total // 2
-        cap.set(_cv2.CAP_PROP_POS_FRAMES, mid)
+        cap.set(cv2.CAP_PROP_POS_FRAMES, mid)
         ret, frame = cap.read()
         if not ret:
             return None
         fd, thumb = tempfile.mkstemp(suffix=".jpg")
         os.close(fd)
-        _cv2.imwrite(thumb, frame)
+        cv2.imwrite(thumb, frame)
         return thumb
     finally:
         cap.release()
 
 
 def cmd_analyze(args) -> int:
+    """Analyze an image or a supported video's middle frame."""
     file_path = args.image
     prompt = AnalysisPrompt(value=args.prompt) if args.prompt else None
     ext = os.path.splitext(file_path)[1].lower()
@@ -91,6 +92,7 @@ def cmd_analyze(args) -> int:
 
 
 def cmd_ocr(args) -> int:
+    """Extract text from an image with Tesseract OCR."""
     lang = getattr(args, "lang", "eng") or "eng"
     result = _execute("ocr", {"image": args.image, "lang": lang})
     print(result)
@@ -98,24 +100,28 @@ def cmd_ocr(args) -> int:
 
 
 def cmd_elements(args) -> int:
+    """Detect visual or UI elements in an image."""
     result = _execute("elements", {"image": args.image})
     print(result)
     return 0
 
 
 def cmd_compare(args) -> int:
+    """Compare two screenshots and print structured differences."""
     result = _execute("compare", {"image1": args.image1, "image2": args.image2})
     print(result)
     return 0
 
 
 def cmd_video_info(args) -> int:
+    """Print metadata for a video file."""
     result = _execute("video-info", {"video": args.video})
     print(result)
     return 0
 
 
 def cmd_extract_frames(args) -> int:
+    """Extract sampled frames from a video file."""
     interval = IntervalSeconds(value=float(args.interval))
     result = _execute(
         "extract-frames", {"video": args.video, "interval": interval.value}
@@ -125,18 +131,21 @@ def cmd_extract_frames(args) -> int:
 
 
 def cmd_convert(args) -> int:
+    """Convert a video to the requested output format."""
     result = _execute("convert", {"input_path": args.input, "output_path": args.output})
     print(result)
     return 0
 
 
 def cmd_check_corruption(args) -> int:
+    """Check whether a video can be opened and decoded."""
     result = _execute("check-corruption", {"video": args.video})
     print(result)
     return 0
 
 
 def cmd_create_gif(args) -> int:
+    """Create a GIF from an optional segment of a video."""
     segment = TimeSegment(start=args.start, duration=args.duration)
     result = _execute(
         "create-gif",
@@ -152,6 +161,7 @@ def cmd_create_gif(args) -> int:
 
 
 def cmd_detect_scenes(args) -> int:
+    """Detect scene changes in a video."""
     threshold = SceneThreshold(value=float(args.threshold))
     result = _execute(
         "detect-scenes", {"video": args.video, "threshold": threshold.value}
@@ -161,6 +171,7 @@ def cmd_detect_scenes(args) -> int:
 
 
 def cmd_detect_motion(args) -> int:
+    """Detect motion events in a video."""
     min_area = MinArea(value=int(args.min_area))
     result = _execute(
         "detect-motion", {"video": args.video, "min_area": min_area.value}
@@ -170,6 +181,7 @@ def cmd_detect_motion(args) -> int:
 
 
 def cmd_track(args) -> int:
+    """Track an object from an initial bounding box through a video."""
     x, y, w, h = [int(v) for v in args.bbox.split(",")]
     bbox = BoundingBox(x=x, y=y, width=w, height=h)
     max_frames = MaxFrames(value=int(args.max_frames))
@@ -186,6 +198,7 @@ def cmd_track(args) -> int:
 
 
 def cmd_timeline(args) -> int:
+    """Generate an agent-readable timeline from a video."""
     interval = IntervalSeconds(value=float(args.interval))
     result = _execute("timeline", {"video": args.video, "interval": interval.value})
     print(result)
@@ -193,6 +206,7 @@ def cmd_timeline(args) -> int:
 
 
 def cmd_analyze_video(args) -> int:
+    """Analyze bounded representative video frames with a VLM."""
     result = _execute(
         "analyze-video",
         {
