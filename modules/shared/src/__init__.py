@@ -69,6 +69,7 @@ from modules.shared.src.taxonomy_vision_vo import (
     Timestamp,
     VideoInfo,
     VideoUnderstanding,
+    VideoUnderstandingConfig,
     VisionAnalysis,
 )
 from modules.shared.src.taxonomy_xdg_paths_vo import (
@@ -153,6 +154,7 @@ __all__ = [
     "VideoProcessingError",
     "VideoProcessingProtocol",
     "VideoUnderstanding",
+    "VideoUnderstandingConfig",
     "VideoUnderstandingProtocol",
     "VisionAnalysis",
     "VisionDomainError",
