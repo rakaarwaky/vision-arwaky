@@ -2,10 +2,13 @@ name: CI
 
 on:
   pull_request:
-    branches: [main]
+    branches: [develop, main]
   push:
-    branches: [main]
+    branches: [develop, main]
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   format:
@@ -61,6 +64,15 @@ jobs:
 
       - name: Build
         run: uv build
+
+      - name: Smoke-test built wheel in a clean environment
+        run: |
+          uv python install 3.12
+          uv venv "$RUNNER_TEMP/vision-arwaky-smoke"
+          uv pip install \
+            --python "$RUNNER_TEMP/vision-arwaky-smoke/bin/python" \
+            dist/*.whl
+          "$RUNNER_TEMP/vision-arwaky-smoke/bin/vision-arwaky-cli" --help
 
   test:
     name: Tests (pytest)
@@ -156,7 +168,7 @@ jobs:
       - name: Install lint-arwaky-cli (pre-built binary)
         run: |
           curl -fsSL \
-            https://github.com/rakaarwaky/lint-arwaky/releases/download/v3.5.0/lint-arwaky-cli \
+            https://github.com/rakaarwaky/lint-arwaky/releases/download/v3.6.1/lint-arwaky-cli \
             -o "$RUNNER_TEMP/lint-arwaky-cli"
           chmod +x "$RUNNER_TEMP/lint-arwaky-cli"
           sudo mv "$RUNNER_TEMP/lint-arwaky-cli" /usr/local/bin/lint-arwaky-cli
@@ -172,8 +184,8 @@ jobs:
         with:
           version: "latest"
 
-      - name: Install project
-        run: uv sync --no-dev
+      - name: Install project and development tools
+        run: uv sync --dev
 
       - name: Run self-lint (must be 0 violations)
         run: |
