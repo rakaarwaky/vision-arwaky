@@ -63,6 +63,9 @@ testpaths = [
 ]
 pythonpath = ["."]
 python_files = ["unit_*.py", "test_*.py"]
+filterwarnings = [
+    "ignore::pydantic_settings.IncompleteFieldDefinitionWarning",
+]
 
 [tool.pydocstyle]
 ignore = ["D203"]

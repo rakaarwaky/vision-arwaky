@@ -16,6 +16,7 @@ class ObjectTrackingTracker(ObjectTrackingProtocol):
     """Track objects through video frames using OpenCV trackers."""
 
     def __init__(self):
+        # No instance state required; tracker instances are created on demand per call.
         pass
 
     def _create_tracker(self):

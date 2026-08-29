@@ -36,6 +36,7 @@ class VideoAnalysisAnalyzer(VideoAnalysisProtocol):
     """Analyze video for scene changes and motion events."""
 
     def __init__(self):
+        # No instance state required; all methods are stateless and operate on video files.
         pass
 
     def detect_scenes(
@@ -86,6 +87,53 @@ class VideoAnalysisAnalyzer(VideoAnalysisProtocol):
         cap.release()
         return scenes
 
+    def _compute_motion_direction(
+        self, cnt, x: int, y: int, w: int, h: int
+    ) -> float | None:
+        """Compute motion direction in degrees from contour moments, or None if indeterminate."""
+        moments = cv2.moments(cnt)
+        if moments["m00"] <= 0:
+            return None
+        cx = int(moments["m10"] / moments["m00"]) - x - w // 2
+        cy = int(moments["m01"] / moments["m00"]) - y - h // 2
+        return round(numpy.degrees(numpy.arctan2(cy, cx)) % 360, 1)
+
+    def _find_motion_events(
+        self,
+        thresh,
+        frame,
+        frame_idx: int,
+        fps: float,
+        min_area_val: float,
+    ) -> list[MotionEvent]:
+        """Extract motion events from a threshold image for a single frame pair."""
+        contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        frame_area = frame.shape[0] * frame.shape[1]
+        timestamp = frame_idx / fps if fps > 0 else frame_idx
+        events: list[MotionEvent] = []
+
+        for cnt in contours:
+            area = cv2.contourArea(cnt)
+            if area < min_area_val:
+                continue
+
+            x, y, w, h = cv2.boundingRect(cnt)
+            magnitude = area / frame_area
+            direction = self._compute_motion_direction(cnt, x, y, w, h)
+
+            events.append(
+                MotionEvent(
+                    timestamp=Timestamp(value=round(timestamp, 2)),
+                    magnitude=MotionMagnitude(value=round(magnitude, 6)),
+                    direction=(
+                        MotionDirection(value=direction) if direction is not None else None
+                    ),
+                    region=BoundingBox(x=x, y=y, width=w, height=h),
+                )
+            )
+
+        return events
+
     def detect_motion(
         self, video_path: FilePath, min_area: MinArea
     ) -> list[MotionEvent]:
@@ -116,46 +164,15 @@ class VideoAnalysisAnalyzer(VideoAnalysisProtocol):
                     MOTION_MAX_PIXEL_VALUE,
                     cv2.THRESH_BINARY,
                 )[1]
-
-                # Use standard structuring element kernel
                 kernel = numpy.ones(DILATION_KERNEL_SIZE, dtype=numpy.uint8)
                 thresh = cv2.dilate(thresh, kernel, iterations=DILATION_ITERATIONS)
-                contours, _ = cv2.findContours(
-                    thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+                events.extend(
+                    self._find_motion_events(thresh, frame, frame_idx, fps, min_area_val)
                 )
-
-                for cnt in contours:
-                    area = cv2.contourArea(cnt)
-                    if area < min_area_val:
-                        continue
-
-                    x, y, w, h = cv2.boundingRect(cnt)
-                    timestamp = frame_idx / fps if fps > 0 else frame_idx
-                    magnitude = area / (frame.shape[0] * frame.shape[1])
-
-                    # Compute direction from moments
-                    moments = cv2.moments(cnt)
-                    direction = None
-                    if moments["m00"] > 0:
-                        cx = int(moments["m10"] / moments["m00"]) - x - w // 2
-                        cy = int(moments["m01"] / moments["m00"]) - y - h // 2
-                        direction = round(numpy.degrees(numpy.arctan2(cy, cx)) % 360, 1)
-
-                    events.append(
-                        MotionEvent(
-                            timestamp=Timestamp(value=round(timestamp, 2)),
-                            magnitude=MotionMagnitude(value=round(magnitude, 6)),
-                            direction=(
-                                MotionDirection(value=direction)
-                                if direction is not None
-                                else None
-                            ),
-                            region=BoundingBox(x=x, y=y, width=w, height=h),
-                        )
-                    )
 
             prev_gray = gray
             frame_idx += 1
 
         cap.release()
         return events
+

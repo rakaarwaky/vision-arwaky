@@ -86,8 +86,10 @@ class CapabilitiesSystemWorkspace(WorkspaceProtocol):
     @staticmethod
     def _ensure_symlink(link_path: Path, target_path: Path) -> None:
         """Create a symlink pointing to target_path, falling back to directory."""
-        if link_path.is_symlink() or link_path.exists():
-            if link_path.is_dir() and not link_path.is_symlink():
+        if link_path.is_symlink():
+            link_path.unlink(missing_ok=True)
+        elif link_path.exists():
+            if link_path.is_dir():
                 shutil.rmtree(link_path, ignore_errors=True)
             else:
                 link_path.unlink(missing_ok=True)
@@ -98,7 +100,22 @@ class CapabilitiesSystemWorkspace(WorkspaceProtocol):
             link_path.mkdir(parents=True, exist_ok=True)
 
     @staticmethod
-    def _find_git_exclude_file(target_path: Path) -> Path | None:
+    def _parse_git_dir_exclude(git_entry: Path, current: Path) -> Path | None:
+        """Parse gitdir: line from a gitfile and return the exclude path."""
+        try:
+            line = git_entry.read_text(encoding="utf-8").strip()
+            if line.startswith("gitdir:"):
+                git_dir_raw = line.split("gitdir:", 1)[1].strip()
+                git_dir = Path(git_dir_raw)
+                if not git_dir.is_absolute():
+                    git_dir = (current / git_dir).resolve()
+                return git_dir / "info" / "exclude"
+        except OSError:
+            pass
+        return None
+
+    @classmethod
+    def _find_git_exclude_file(cls, target_path: Path) -> Path | None:
         """Find .git/info/exclude in target_path or parent directory."""
         current: Path | None = target_path
         while current is not None:
@@ -106,20 +123,21 @@ class CapabilitiesSystemWorkspace(WorkspaceProtocol):
             if git_entry.is_dir():
                 return git_entry / "info" / "exclude"
             if git_entry.is_file():
-                try:
-                    line = git_entry.read_text(encoding="utf-8").strip()
-                    if line.startswith("gitdir:"):
-                        git_dir_raw = line.split("gitdir:", 1)[1].strip()
-                        git_dir = Path(git_dir_raw)
-                        if not git_dir.is_absolute():
-                            git_dir = (current / git_dir).resolve()
-                        return git_dir / "info" / "exclude"
-                except OSError:
-                    pass
+                exclude_file = cls._parse_git_dir_exclude(git_entry, current)
+                if exclude_file is not None:
+                    return exclude_file
             if current == current.parent:
                 break
             current = current.parent
         return None
+
+    @classmethod
+    def _append_missing_entries(cls, target_file: Path, missing: list[str], entries: list[str]) -> str:
+        """Append missing entries to an existing exclude file."""
+        with target_file.open("a", encoding="utf-8") as f:
+            for m in missing:
+                f.write(f"\n{m}\n")
+        return f"{target_file.name} updated with {', '.join(missing)}"
 
     @classmethod
     def _ensure_git_exclude(cls, target_path: Path) -> str:
@@ -135,10 +153,7 @@ class CapabilitiesSystemWorkspace(WorkspaceProtocol):
             content = target_file.read_text(encoding="utf-8")
             missing = [e for e in entries if e not in content]
             if missing:
-                with target_file.open("a", encoding="utf-8") as f:
-                    for m in missing:
-                        f.write(f"\n{m}\n")
-                return f"{target_file.name} updated with {', '.join(missing)}"
+                return cls._append_missing_entries(target_file, missing, entries)
             return f"{target_file.name} already contains required entries"
 
         target_file.write_text("\n".join(entries) + "\n", encoding="utf-8")
