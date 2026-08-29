@@ -10,11 +10,6 @@ from modules.shared.src.taxonomy_vision_models_vo import (
     AnalysisPrompt,
     BoundingBox,
     CommandName,
-    IntervalSeconds,
-    MaxFrames,
-    MinArea,
-    SceneThreshold,
-    TimeSegment,
 )
 
 _dispatcher: RegistryServiceAggregate | None = None
@@ -99,13 +94,6 @@ def cmd_ocr(args) -> int:
     return 0
 
 
-def cmd_elements(args) -> int:
-    """Detect visual or UI elements in an image."""
-    result = _execute("elements", {"image": args.image})
-    print(result)
-    return 0
-
-
 def cmd_compare(args) -> int:
     """Compare two screenshots and print structured differences."""
     result = _execute("compare", {"image1": args.image1, "image2": args.image2})
@@ -122,17 +110,7 @@ def cmd_video_info(args) -> int:
 
 def cmd_extract_frames(args) -> int:
     """Extract sampled frames from a video file."""
-    interval = IntervalSeconds(value=float(args.interval))
-    result = _execute(
-        "extract-frames", {"video": args.video, "interval": interval.value}
-    )
-    print(result)
-    return 0
-
-
-def cmd_convert(args) -> int:
-    """Convert a video to the requested output format."""
-    result = _execute("convert", {"input_path": args.input, "output_path": args.output})
+    result = _execute("extract-frames", {"video": args.video})
     print(result)
     return 0
 
@@ -144,38 +122,16 @@ def cmd_check_corruption(args) -> int:
     return 0
 
 
-def cmd_create_gif(args) -> int:
-    """Create a GIF from an optional segment of a video."""
-    segment = TimeSegment(start=args.start, duration=args.duration)
-    result = _execute(
-        "create-gif",
-        {
-            "video": args.video,
-            "output_path": args.output,
-            "start": segment.start,
-            "duration": segment.duration,
-        },
-    )
-    print(result)
-    return 0
-
-
 def cmd_detect_scenes(args) -> int:
     """Detect scene changes in a video."""
-    threshold = SceneThreshold(value=float(args.threshold))
-    result = _execute(
-        "detect-scenes", {"video": args.video, "threshold": threshold.value}
-    )
+    result = _execute("detect-scenes", {"video": args.video})
     print(result)
     return 0
 
 
 def cmd_detect_motion(args) -> int:
     """Detect motion events in a video."""
-    min_area = MinArea(value=int(args.min_area))
-    result = _execute(
-        "detect-motion", {"video": args.video, "min_area": min_area.value}
-    )
+    result = _execute("detect-motion", {"video": args.video})
     print(result)
     return 0
 
@@ -184,23 +140,13 @@ def cmd_track(args) -> int:
     """Track an object from an initial bounding box through a video."""
     x, y, w, h = [int(v) for v in args.bbox.split(",")]
     bbox = BoundingBox(x=x, y=y, width=w, height=h)
-    max_frames = MaxFrames(value=int(args.max_frames))
     result = _execute(
         "track",
         {
             "video": args.video,
             "bbox": f"{bbox.x},{bbox.y},{bbox.width},{bbox.height}",
-            "max_frames": max_frames.value,
         },
     )
-    print(result)
-    return 0
-
-
-def cmd_timeline(args) -> int:
-    """Generate an agent-readable timeline from a video."""
-    interval = IntervalSeconds(value=float(args.interval))
-    result = _execute("timeline", {"video": args.video, "interval": interval.value})
     print(result)
     return 0
 
@@ -212,96 +158,8 @@ def cmd_analyze_video(args) -> int:
         {
             "video": args.video,
             "prompt": getattr(args, "prompt", None),
-            "interval": float(getattr(args, "interval", 30.0)),
-            "scene_threshold": float(getattr(args, "scene_threshold", 20.0)),
-            "min_area": int(getattr(args, "min_area", 500)),
         },
     )
     print(result)
     return 0
 
-
-def cmd_test(args) -> int:
-    """Run the vision-arwaky test suite with optional test image."""
-    try:
-        import importlib
-
-        pytest: Any = importlib.import_module("pytest")
-    except ImportError:
-        print("❌ pytest is not installed; install it to run the test command")
-        return 1
-
-    # modules/cli/src/surface_cli_command.py -> repo root
-    base = os.path.dirname(
-        os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    )
-    test_dir = os.path.join(base, "tests")
-    fixtures = os.path.join(test_dir, "fixtures")
-    default_image = os.path.join(fixtures, "test.jpeg")
-
-    print("=" * 60)
-    print("  Vision Arwaky — Test Suite")
-    print("=" * 60)
-    print(f"  Fixtures: {fixtures}")
-    test_image = args.image if args.image else default_image
-    print(f"  Test image: {test_image}")
-    print()
-
-    # Run pytest in-process; the test directory is a trusted repository path.
-    result_code = pytest.main([test_dir, "-v"])
-
-    print()
-    if result_code == 0:
-        print("✅ All tests passed!")
-    else:
-        print("❌ Some tests failed")
-
-    # Run AI vision analysis on test image
-    if os.path.exists(test_image):
-        print()
-        print("=" * 60)
-        print("  AI Vision Analysis — test image")
-        print("=" * 60)
-        try:
-            # Reuse the injected dispatcher instead of spawning a second CLI process.
-            vision_result = _execute(
-                "analyze",
-                {
-                    "image": test_image,
-                    "prompt": "Describe this image in detail. What do you see?",
-                },
-            )
-            print(vision_result)
-        except (OSError, RuntimeError, ValueError) as e:
-            print(f"  ⚠ Vision analysis unavailable: {e}")
-
-    # Run AI video understanding on test video.
-    # Delegates to the VideoUnderstanding capability in the video feature
-    # layer (scene + motion + uniform key-frame selection, per-frame VLM,
-    # and synthesized summary) instead of duplicating the logic here.
-    test_video = os.path.join(fixtures, "test.mp4")
-    if os.path.exists(test_video):
-        print()
-        print("=" * 60)
-        print("  AI Video Understanding — test.mp4")
-        print("=" * 60)
-        try:
-            video_result = _execute(
-                "analyze-video",
-                {
-                    "video": test_video,
-                    "prompt": (
-                        "Describe this video frame in detail. "
-                        "What objects, people, actions do you see?"
-                    ),
-                    "interval": 30.0,
-                    "scene_threshold": 20.0,
-                    "min_area": 500,
-                },
-            )
-            print(video_result)
-            print("\n  ✅ Video analysis complete")
-        except (OSError, RuntimeError, ValueError) as e:
-            print(f"  ⚠ Video analysis unavailable: {e}")
-
-    return result_code

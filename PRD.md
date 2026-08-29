@@ -49,9 +49,9 @@ The product includes the following capabilities:
 |---|---|
 | Image analysis | VLM-backed image analysis with a deterministic fallback |
 | OCR | Text extraction through Tesseract |
-| Image inspection | UI element detection and screenshot comparison |
-| Video processing | Metadata, frame extraction, conversion, GIF creation, and corruption checks |
-| Video analysis | Scene changes, motion events, object tracking, and agent-readable timelines |
+| Image inspection | Screenshot comparison with perceptual hashing and bounding diffs |
+| Video processing | Metadata extraction, frame extraction, and corruption checks |
+| Video analysis | Scene changes, motion events, and object tracking |
 | Smart video understanding | Bounded key-frame selection, per-frame VLM analysis, and summary generation |
 | Agent integration | MCP tools for execution, discovery, help, status, and cancellation |
 | Local operation | Configuration through repository or user config with FFmpeg, Tesseract, and OpenCV support |
@@ -65,13 +65,14 @@ The current product does not include visual-memory storage or search commands, a
 
 ### P0 — Must Have
 
-- [ ] The CLI must expose `analyze`, `ocr`, `elements`, `compare`, the supported video commands, `analyze-video`, and `test`.
+- [ ] The CLI must expose `analyze`, `ocr`, `compare`, `video-info`, `extract-frames`, `check-corruption`, `detect-scenes`, `detect-motion`, `track`, and `analyze-video`.
 - [ ] The MCP server must expose `vision_execute`, `vision_list_commands`, `vision_help`, `vision_status`, and `vision_cancel`.
 - [ ] `vision_list_commands` must list every supported image and video command, including `analyze-video`.
 - [ ] Every public execution path must route through the injected aggregate and root composition graph.
 - [ ] Smart-video analysis must cap selected frames, bound summary prompt size, and remove temporary frame files after execution.
 - [ ] The package must build and the complete test suite must pass on supported Python versions.
 - [ ] The self-lint scan must finish with zero violations.
+
 
 ### P1 — Should Have
 

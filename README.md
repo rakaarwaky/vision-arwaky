@@ -36,10 +36,9 @@ For an editable installation, use `uv sync` from the repository root. The packag
 | Document | Audience | Purpose |
 |---|---|---|
 | [PRD.md](PRD.md) | Stakeholders, product, design, engineering | Product problem, goals, scope, requirements, metrics, and risks |
-| [Image FRD](modules/image/FRD.md) | Engineers and QA | Image analysis, OCR, elements, comparison, and VLM behavior |
-| [Video FRD](modules/video/FRD.md) | Engineers and QA | Video processing, analysis, tracking, timelines, and smart video |
-| [OpenCV FRD](modules/opencv/FRD.md) | Engineers and QA | Shared OpenCV adapter and media resource contract |
-| [CLI FRD](modules/cli/FRD.md) | Engineers and QA | Parser, command handlers, test command, and CLI contract |
+| [Image FRD](modules/image/FRD.md) | Engineers and QA | Image analysis, OCR, comparison, and VLM behavior |
+| [Video FRD](modules/video/FRD.md) | Engineers and QA | Video processing, analysis, tracking, and smart video |
+| [CLI FRD](modules/cli/FRD.md) | Engineers and QA | Parser, command handlers, and CLI contract |
 | [MCP FRD](modules/mcp/FRD.md) | Engineers and QA | MCP tools, command discovery, status, help, and cancellation |
 
 ## Architecture
@@ -52,14 +51,13 @@ modules/
 ├── root_mcp_entry.py                 # MCP bootstrap and tool registration
 ├── root_tui_entry.py                 # TUI bootstrap
 ├── root_composition_container.py     # Application-wide dependency graph
-├── shared/                           # Taxonomy, contracts, and shared utilities
+├── shared/                           # Taxonomy, contracts, and OpenCV pure utilities
 ├── image/                            # Image analysis, OCR, and image orchestration
-├── video/                            # Video processing, analysis, tracking, and timelines
-├── opencv/                           # OpenCV capability adapters
+├── video/                            # Video processing, analysis, tracking, and smart understanding
 ├── cli/                              # CLI and TUI surfaces
 └── mcp/                              # MCP controller and action surfaces
 
-tests/                                # Integration and feature tests
+tests/                                # Focused unit and end-to-end tests
 scripts/gates.sh                      # Local mirror of the CI quality gates
 ```
 
@@ -75,7 +73,6 @@ The CLI command list below is implemented by `modules/cli/src/surface_cli_contro
 |---|---|---|
 | `analyze` | `--image`, optional `--prompt` | Analyze an image with the configured VLM and fallback behavior |
 | `ocr` | `--image`, optional `--lang` | Extract text using Tesseract OCR |
-| `elements` | `--image` | Detect visual or UI elements |
 | `compare` | `--image1`, `--image2` | Compare two screenshots and report differences |
 
 ### Video commands
@@ -84,26 +81,16 @@ The CLI command list below is implemented by `modules/cli/src/surface_cli_contro
 |---|---|---|
 | `video-info` | `--video` | Read video metadata |
 | `extract-frames` | `--video`, optional `--interval` | Extract frames at an interval |
-| `convert` | `--input`, `--output` | Convert a video to another format |
 | `check-corruption` | `--video` | Check whether a video can be decoded successfully |
-| `create-gif` | `--video`, `--output`, optional `--start`, `--duration` | Create a GIF from a video segment |
 | `detect-scenes` | `--video`, optional `--threshold` | Detect scene changes |
 | `detect-motion` | `--video`, optional `--min-area` | Detect motion events |
 | `track` | `--video`, `--bbox`, optional `--max-frames` | Track an object through a video |
-| `timeline` | `--video`, optional `--interval` | Generate an agent-readable video timeline |
 | `analyze-video` | `--video`, optional `--prompt`, `--interval`, `--scene-threshold`, `--min-area` | Analyze bounded key frames with a VLM and synthesize a summary |
 
-Smart-video analysis selects scene-change, motion, and uniform samples. The implementation caps selected frames at 120, bounds the summary prompt, and removes generated frame files after the command completes.
-
-### Test command
-
-```bash
-uv run vision-arwaky-cli test [--image PATH] [--verbose]
-```
-
-The command runs pytest in-process and, when fixtures are available, performs optional image and video analysis demonstrations. It requires the test dependency to be installed in the active environment.
+Smart-video analysis selects scene-change, motion, and uniform samples. The implementation caps selected frames at 12, bounds the summary prompt, and removes generated frame files after the command completes.
 
 > The old `memory` CLI has been removed. Visual-memory commands should not be added to new integrations unless the feature is reintroduced as a complete AES slice.
+
 
 ## MCP Tools
 

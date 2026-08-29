@@ -1,23 +1,22 @@
 from modules.shared.src.contract_ffmpeg_video_protocol import FFmpegVideoProtocol
-from modules.shared.src.contract_opencv_image_protocol import OpenCVImageProtocol
 from modules.shared.src.contract_video_processing_protocol import (
     VideoProcessingProtocol,
 )
 from modules.shared.src.taxonomy_vision_models_vo import (
     FilePath,
     IntervalSeconds,
-    TimeSegment,
     VideoInfo,
+)
+from modules.shared.src.utility_opencv_ops import (
+    check_video_corruption,
+    get_video_metadata,
 )
 
 
 class VideoProcessingProcessor(VideoProcessingProtocol):
-    """Capability for extracting frames, converting video formats, and generating GIFs."""
+    """Capability for extracting frames, checking corruption, and inspecting video metadata."""
 
-    def __init__(
-        self, opencv_port: OpenCVImageProtocol, ffmpeg_port: FFmpegVideoProtocol
-    ):
-        self._opencv = opencv_port
+    def __init__(self, ffmpeg_port: FFmpegVideoProtocol):
         self._ffmpeg = ffmpeg_port
 
     async def extract_frames(
@@ -46,45 +45,11 @@ class VideoProcessingProcessor(VideoProcessingProtocol):
         extracted = sorted(glob.glob(output_pattern.replace("%04d", "*")))
         return [FilePath(value=path) for path in extracted]
 
-    async def convert_format(self, input_path: FilePath, output_path: FilePath) -> bool:
-        """Convert video format using FFmpeg."""
-        return await self._ffmpeg.convert_video(input_path, output_path)
-
-    async def create_gif(
-        self,
-        video_path: FilePath,
-        output_path: FilePath,
-        segment: TimeSegment,
-    ) -> bool:
-        """Create high-quality GIF from video segment."""
-        return await self._ffmpeg.create_gif(video_path, output_path, segment)
-
     def get_info(self, video_path: FilePath) -> VideoInfo:
-        """Get video metadata using OpenCV."""
-        cap = self._opencv.get_video_capture(video_path.value)
-        if not cap.isOpened():
-            raise ValueError(f"Failed to open video file: {video_path.value}")
-
-        fps = float(cap.get(self._opencv.cv2.CAP_PROP_FPS))
-        frame_count = int(cap.get(self._opencv.cv2.CAP_PROP_FRAME_COUNT))
-        width = int(cap.get(self._opencv.cv2.CAP_PROP_FRAME_WIDTH))
-        height = int(cap.get(self._opencv.cv2.CAP_PROP_FRAME_HEIGHT))
-        cap.release()
-
-        return VideoInfo(
-            fps=fps,
-            frame_count=frame_count,
-            width=width,
-            height=height,
-        )
+        """Get video metadata using OpenCV utility."""
+        return get_video_metadata(video_path)
 
     def check_corruption(self, video_path: FilePath) -> bool:
-        """Check if video file is corrupted."""
-        cap = self._opencv.get_video_capture(video_path.value)
-        ret = cap.isOpened()
-        if ret:
-            # Check if first frame can be read
-            success, _ = cap.read()
-            ret = success
-        cap.release()
-        return not ret
+        """Check if video file is corrupted using OpenCV utility."""
+        return check_video_corruption(video_path)
+

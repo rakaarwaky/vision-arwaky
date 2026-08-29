@@ -2,7 +2,7 @@
 
 ## System Overview
 
-The video feature provides deterministic media processing and optional VLM-backed smart video understanding. `VideoOrchestrator` delegates commands to injected processing, analysis, timeline, tracking, OpenCV, FFmpeg, and video-understanding ports. `root_video_container.py` composes the graph and the global root connects the image VLM adapter to the video-understanding capability.
+The video feature provides deterministic media processing and optional VLM-backed smart video understanding. `VideoOrchestrator` delegates commands to injected processing, analysis, tracking, FFmpeg, and video-understanding ports. `root_video_container.py` composes the graph and the global root connects the image VLM adapter to the video-understanding capability. OpenCV operations are utilized directly via pure utility functions.
 
 ```text
 CLI / MCP surface
@@ -12,11 +12,12 @@ RootDispatcher
         │
         ▼
 VideoOrchestrator
- ┌──────┼────────┬──────────┬──────────────┐
- ▼      ▼        ▼          ▼              ▼
-Process Analysis Timeline Tracking  Understanding
- │      │        │          │              │
-FFmpeg OpenCV   OpenCV    OpenCV      OpenCV + VLM
+ ┌──────┼────────┬────────────────┐
+ ▼      ▼        ▼                ▼
+Process Analysis Tracking   Understanding
+ │      │        │                │
+FFmpeg  OpenCV   OpenCV      OpenCV + VLM
+        Utils    Utils           Utils
 ```
 
 Primary implementation modules are under `modules/video/src/`:
@@ -24,10 +25,9 @@ Primary implementation modules are under `modules/video/src/`:
 | Module | Responsibility |
 |---|---|
 | `agent_video_orchestrator.py` | Routes video commands through injected ports |
-| `capabilities_video_processor.py` | Metadata, extraction, conversion, GIF, and corruption operations |
+| `capabilities_video_processor.py` | Metadata, extraction, and corruption operations |
 | `capabilities_video_analyzer.py` | Scene and motion analysis |
 | `capabilities_object_tracker.py` | Object tracking from an initial bounding box |
-| `capabilities_timeline_generator.py` | Generates structured video timelines |
 | `capabilities_video_understanding.py` | Selects bounded key frames, calls the VLM, and synthesizes a summary |
 | `capabilities_ffmpeg_adapter.py` | Adapts FFmpeg operations |
 | `root_video_container.py` | Builds the video dependency graph |
@@ -52,16 +52,7 @@ Primary implementation modules are under `modules/video/src/`:
 - **Edge cases:** Interval larger than video duration, invalid media, no readable frames.
 - **Error handling:** Release the capture resource and report extraction failures without leaving an open handle.
 
-### FR-VID-003: Convert and create GIF
-
-- **Description:** Convert a video to another format or create a GIF for an optional time segment.
-- **Input:** Input video, output path, and optional start/duration for GIF creation.
-- **Output:** JSON success result.
-- **Business rules:** Output paths are passed to the adapter as validated file-path values.
-- **Edge cases:** Existing output, invalid segment, missing FFmpeg, unsupported codec.
-- **Error handling:** Return a controlled adapter error and preserve the source video.
-
-### FR-VID-004: Check corruption
+### FR-VID-003: Check corruption
 
 - **Description:** Determine whether a video can be opened and decoded reliably.
 - **Input:** `video` path.
@@ -70,7 +61,7 @@ Primary implementation modules are under `modules/video/src/`:
 - **Edge cases:** Empty file, partial file, unsupported codec, missing FFmpeg.
 - **Error handling:** Normalize adapter failures into a controlled result or explicit runtime error.
 
-### FR-VID-005: Detect scenes and motion
+### FR-VID-004: Detect scenes and motion
 
 - **Description:** Detect scene transitions and motion events for downstream analysis.
 - **Input:** `video` path, scene threshold or minimum motion area.
@@ -79,7 +70,7 @@ Primary implementation modules are under `modules/video/src/`:
 - **Edge cases:** Static video, noisy video, very short video, no events.
 - **Error handling:** Return an empty list for a valid video with no events and controlled errors for invalid media.
 
-### FR-VID-006: Track an object
+### FR-VID-005: Track an object
 
 - **Description:** Track an object through video frames starting from an initial bounding box.
 - **Input:** `video`, `bbox` as `X,Y,W,H`, and optional maximum frame count.
@@ -88,16 +79,8 @@ Primary implementation modules are under `modules/video/src/`:
 - **Edge cases:** Bounding box outside the frame, object disappears, empty video, unsupported tracker.
 - **Error handling:** Stop tracking cleanly and return the frames successfully tracked.
 
-### FR-VID-007: Generate a timeline
+### FR-VID-006: Analyze video with a VLM
 
-- **Description:** Produce a structured timeline from sampled video content.
-- **Input:** `video` and interval.
-- **Output:** Timeline model serialized as JSON.
-- **Business rules:** Timeline generation uses injected processing and analysis capabilities rather than direct surface-level implementation.
-- **Edge cases:** No scenes, no motion, long videos, media with variable FPS.
-- **Error handling:** Return a controlled result with available events or a diagnostic error.
-
-### FR-VID-008: Analyze video with a VLM
 
 - **Description:** Select representative key frames, analyze each frame, and synthesize a short summary.
 - **Input:** `video`, optional prompt, interval, scene threshold, and minimum motion area.
@@ -112,25 +95,21 @@ Primary implementation modules are under `modules/video/src/`:
 |---|---|---|---|
 | `video-info` | `video` | Video metadata JSON | Read video properties |
 | `extract-frames` | `video`, `interval` | JSON path list | Extract sampled frames |
-| `convert` | `input_path`, `output_path` | Success JSON | Convert video format |
 | `check-corruption` | `video` | Corruption JSON | Validate decodability |
-| `create-gif` | `video`, `output_path`, optional `start`, `duration` | Success JSON | Create GIF segment |
 | `detect-scenes` | `video`, `threshold` | Scene event list | Detect transitions |
 | `detect-motion` | `video`, `min_area` | Motion event list | Detect motion |
 | `track` | `video`, `bbox`, `max_frames` | Bounding-box list | Track an object |
-| `timeline` | `video`, `interval` | Timeline JSON | Generate timeline |
 | `analyze-video` | `video`, optional `prompt`, `interval`, `scene_threshold`, `min_area` | `VideoUnderstanding` JSON | Smart video understanding |
 
 The feature uses these shared contracts:
 
 - `contract_video_processing_protocol.py`
 - `contract_video_analysis_protocol.py`
-- `contract_video_timeline_protocol.py`
 - `contract_object_tracking_protocol.py`
 - `contract_video_understanding_protocol.py`
 - `contract_ffmpeg_video_protocol.py`
-- `contract_opencv_image_protocol.py`
 - `contract_llm_vision_protocol.py`
+
 
 ## Integration Points
 

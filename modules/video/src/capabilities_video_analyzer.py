@@ -1,11 +1,6 @@
+import cv2
 import numpy
 
-"""Video analysis: scene change detection and motion detection."""
-
-
-import cv2
-
-from modules.shared.src.contract_opencv_image_protocol import OpenCVImageProtocol
 from modules.shared.src.contract_video_analysis_protocol import (
     VideoAnalysisProtocol,
 )
@@ -17,19 +12,20 @@ from modules.shared.src.taxonomy_vision_models_vo import (
     SceneChange,
     SceneThreshold,
 )
+from modules.shared.src.utility_opencv_ops import open_video_capture
 
 
 class VideoAnalysisAnalyzer(VideoAnalysisProtocol):
     """Analyze video for scene changes and motion events."""
 
-    def __init__(self, opencv_port: OpenCVImageProtocol):
-        self._opencv = opencv_port
+    def __init__(self):
+        pass
 
     def detect_scenes(
         self, video_path: FilePath, threshold: SceneThreshold
     ) -> list[SceneChange]:
         """Detect scene changes by comparing consecutive frame histograms."""
-        cap = self._opencv.get_video_capture(video_path.value)
+        cap = open_video_capture(video_path)
         if not cap.isOpened():
             return []
 
@@ -71,7 +67,7 @@ class VideoAnalysisAnalyzer(VideoAnalysisProtocol):
         self, video_path: FilePath, min_area: MinArea
     ) -> list[MotionEvent]:
         """Detect significant motion events using frame differencing."""
-        cap = self._opencv.get_video_capture(video_path.value)
+        cap = open_video_capture(video_path)
         if not cap.isOpened():
             return []
 

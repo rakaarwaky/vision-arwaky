@@ -2,7 +2,6 @@ from abc import ABC, abstractmethod
 
 from modules.shared.src.taxonomy_vision_models_vo import (
     AnalysisPrompt,
-    Detection,
     FilePath,
     LanguageCode,
     OcrText,
@@ -18,15 +17,11 @@ class ImageProcessingProtocol(ABC):
     def analyze_screenshot(
         self, image_path: FilePath, prompt: AnalysisPrompt
     ) -> VisionAnalysis:
-        """Analyze screenshot for UI elements and text descriptions."""
+        """Analyze screenshot for text descriptions and visual content."""
 
     @abstractmethod
     def extract_text(self, image_path: FilePath, lang: LanguageCode) -> OcrText:
         """Extract text using OCR capabilities."""
-
-    @abstractmethod
-    def find_elements(self, image_path: FilePath) -> list[Detection]:
-        """Locate raw interactive UI elements on the screenshot."""
 
     @abstractmethod
     def compare_screenshots(

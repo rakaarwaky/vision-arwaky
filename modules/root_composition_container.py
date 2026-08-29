@@ -6,24 +6,20 @@ Wires all feature modules together by composing per-feature containers.
 from typing import Any
 
 from modules.image.src.root_image_container import build_image_feature
-from modules.opencv.src.root_opencv_container import build_opencv
 from modules.shared.src.contract_registry_service_aggregate import (
     RegistryServiceAggregate,
 )
 from modules.shared.src.taxonomy_vision_models_vo import CommandName, CommandOutput
 from modules.video.src.root_video_container import build_video_feature
 
-IMAGE_COMMANDS = {"analyze", "ocr", "elements", "compare"}
+IMAGE_COMMANDS = {"analyze", "ocr", "compare"}
 VIDEO_COMMANDS = {
     "video-info",
     "extract-frames",
-    "convert",
     "check-corruption",
-    "create-gif",
     "detect-scenes",
     "detect-motion",
     "track",
-    "timeline",
     "analyze-video",
 }
 
@@ -46,15 +42,10 @@ class RootDispatcher(RegistryServiceAggregate):
 
 def build() -> dict[str, Any]:
     """Compose all feature containers into unified application graph."""
-    opencv = build_opencv()
-
-    image_feature = build_image_feature(opencv_port=opencv)
-    video_feature = build_video_feature(
-        opencv_port=opencv, llm_port=image_feature["llm"]
-    )
+    image_feature = build_image_feature()
+    video_feature = build_video_feature(llm_port=image_feature["llm"])
 
     graph = {
-        "opencv": opencv,
         "tesseract": image_feature["tesseract"],
         "llm": image_feature["llm"],
         "image_processing": image_feature["image_processing"],
@@ -62,9 +53,10 @@ def build() -> dict[str, Any]:
         "ffmpeg": video_feature["ffmpeg"],
         "video_processing": video_feature["video_processing"],
         "video_analysis": video_feature["video_analysis"],
-        "video_timeline": video_feature["video_timeline"],
         "object_tracking": video_feature["object_tracking"],
         "video_orchestrator": video_feature["video_orchestrator"],
     }
     graph["dispatcher"] = RootDispatcher(graph)
     return graph
+
+

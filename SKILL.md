@@ -67,16 +67,12 @@ The repository does not bundle a model. External mode requires a reachable endpo
 analyze
   --image PATH
   --prompt TEXT (optional)
-  Analyze an image or the middle frame of a supported video.
+  Analyze an image with VLM or deterministic fallback.
 
 ocr
   --image PATH
   --lang CODE (optional, default: eng)
   Extract text with Tesseract OCR.
-
-elements
-  --image PATH
-  Detect visual or UI elements.
 
 compare
   --image1 PATH
@@ -93,64 +89,33 @@ video-info
 
 extract-frames
   --video PATH
-  --interval VALUE (optional)
-  Extract frames through the video processing port.
-
-convert
-  --input PATH
-  --output PATH
-  Convert a video from an input path to an output path.
+  Extract frames at a locked interval.
 
 check-corruption
   --video PATH
   Check whether a video is decodable.
 
-create-gif
-  --video PATH
-  --output PATH
-  --start SECONDS (optional)
-  --duration SECONDS (optional)
-  Create a GIF from a video segment.
-
 detect-scenes
   --video PATH
-  --threshold VALUE (optional)
   Detect scene changes.
 
 detect-motion
   --video PATH
-  --min-area PIXELS (optional)
   Detect motion events.
 
 track
   --video PATH
   --bbox X,Y,W,H
-  --max-frames COUNT (optional)
-  Track an object using the configured OpenCV tracker.
-
-timeline
-  --video PATH
-  --interval VALUE (optional)
-  Generate a video timeline for agent consumption.
+  Track an object using OpenCV tracker.
 
 analyze-video
   --video PATH
   --prompt TEXT (optional)
-  --interval FRAMES (optional, default: 30)
-  --scene-threshold VALUE (optional, default: 20)
-  --min-area PIXELS (optional, default: 500)
   Analyze bounded key frames with a VLM and synthesize a short summary.
 ```
 
-Smart-video analysis combines scene-change, motion, and uniform sampling. It caps selected frames at 120, bounds the summary prompt, handles per-frame VLM failure with fallback descriptions, and removes temporary frame files after execution.
+Smart-video analysis combines scene-change, motion, and uniform sampling. It caps selected frames at 12, bounds the summary prompt, handles per-frame VLM failure with fallback descriptions, and removes temporary frame files after execution.
 
-## Test command
-
-```bash
-vision-arwaky-cli test [--image PATH] [--verbose]
-```
-
-The command runs pytest in-process and can optionally run the image and video demonstration pipeline against generated fixtures. Install the development test dependency before invoking it.
 
 ## Configuration and system dependencies
 

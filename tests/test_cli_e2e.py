@@ -12,19 +12,14 @@ import numpy as np
 CLI_COMMANDS = [
     "analyze",
     "ocr",
-    "elements",
     "compare",
     "video-info",
     "extract-frames",
-    "convert",
     "check-corruption",
-    "create-gif",
     "detect-scenes",
     "detect-motion",
     "track",
-    "timeline",
     "analyze-video",
-    "test",
 ]
 
 
@@ -99,13 +94,10 @@ def test_deterministic_cli_workflows_run_end_to_end(tmp_path: Path) -> None:
     image_path, video_path = _make_fixture(tmp_path)
     image2_path = tmp_path / "sample-copy.png"
     image2_path.write_bytes(image_path.read_bytes())
-    converted_path = tmp_path / "converted.mp4"
-    gif_path = tmp_path / "sample.gif"
     env = _test_environment()
 
     commands = [
         ("ocr", "--image", str(image_path)),
-        ("elements", "--image", str(image_path)),
         (
             "compare",
             "--image1",
@@ -114,38 +106,17 @@ def test_deterministic_cli_workflows_run_end_to_end(tmp_path: Path) -> None:
             str(image2_path),
         ),
         ("video-info", "--video", str(video_path)),
-        ("extract-frames", "--video", str(video_path), "--interval", "0.5"),
-        (
-            "convert",
-            "--input",
-            str(video_path),
-            "--output",
-            str(converted_path),
-        ),
+        ("extract-frames", "--video", str(video_path)),
         ("check-corruption", "--video", str(video_path)),
-        (
-            "create-gif",
-            "--video",
-            str(video_path),
-            "--output",
-            str(gif_path),
-            "--start",
-            "0",
-            "--duration",
-            "1",
-        ),
-        ("detect-scenes", "--video", str(video_path), "--threshold", "20"),
-        ("detect-motion", "--video", str(video_path), "--min-area", "20"),
+        ("detect-scenes", "--video", str(video_path)),
+        ("detect-motion", "--video", str(video_path)),
         (
             "track",
             "--video",
             str(video_path),
             "--bbox",
             "10,35,30,30",
-            "--max-frames",
-            "10",
         ),
-        ("timeline", "--video", str(video_path), "--interval", "1"),
     ]
 
     for command in commands:
@@ -153,11 +124,9 @@ def test_deterministic_cli_workflows_run_end_to_end(tmp_path: Path) -> None:
         assert result.returncode == 0, f"{command[0]}: {result.stderr}"
         assert result.stdout.strip(), command[0]
 
-    assert converted_path.exists()
-    assert gif_path.exists()
-
     corruption = _run_cli("check-corruption", "--video", str(video_path), env=env)
     assert json.loads(corruption.stdout)["corrupted"] is False
+
 
 
 def test_vlm_cli_workflows_fail_soft_when_endpoint_unavailable(tmp_path: Path) -> None:
@@ -180,14 +149,10 @@ def test_vlm_cli_workflows_fail_soft_when_endpoint_unavailable(tmp_path: Path) -
         "analyze-video",
         "--video",
         str(video_path),
-        "--interval",
-        "10",
-        "--min-area",
-        "20",
         env=env,
     )
     assert video_result.returncode == 0, video_result.stderr
     payload = json.loads(video_result.stdout)
     assert payload["summary"]
     sampling = payload["sampling"]
-    assert sampling["key_frames_extracted"] <= sampling["max_key_frames"] == 120
+    assert sampling["key_frames_extracted"] <= sampling["max_key_frames"] == 12
