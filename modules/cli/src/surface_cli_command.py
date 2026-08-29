@@ -117,7 +117,7 @@ def cmd_extract_frames(
     """Extract sampled frames from a video file."""
     result = _execute(
         "extract-frames",
-        {"video": args.video, "interval": args.interval},
+        {"video": args.video},
         orchestrator=orchestrator,
     )
     print(result)
@@ -141,7 +141,7 @@ def cmd_detect_scenes(
     """Detect scene transitions in a video file."""
     result = _execute(
         "detect-scenes",
-        {"video": args.video, "threshold": args.threshold},
+        {"video": args.video},
         orchestrator=orchestrator,
     )
     print(result)
@@ -154,7 +154,7 @@ def cmd_detect_motion(
     """Detect significant motion events in a video file."""
     result = _execute(
         "detect-motion",
-        {"video": args.video, "min_area": args.min_area},
+        {"video": args.video},
         orchestrator=orchestrator,
     )
     print(result)
@@ -175,7 +175,6 @@ def cmd_track(args, orchestrator: RegistryServiceAggregate | None = None) -> int
         {
             "video": args.video,
             "bbox": f"{bbox_vo.x},{bbox_vo.y},{bbox_vo.width},{bbox_vo.height}",
-            "max_frames": args.max_frames,
         },
         orchestrator=orchestrator,
     )

@@ -70,7 +70,9 @@ class VideoOrchestrator(RegistryServiceAggregate):
                 )
             )
         elif command.value == "extract-frames":
-            interval = IntervalSeconds(value=FRAME_EXTRACTION_INTERVAL_S)
+            interval = IntervalSeconds(
+                value=kwargs.get("interval", FRAME_EXTRACTION_INTERVAL_S)
+            )
             res = run_async(
                 self._video_processing.extract_frames(
                     FilePath(value=kwargs["video"]), interval
@@ -84,7 +86,7 @@ class VideoOrchestrator(RegistryServiceAggregate):
             return CommandOutput(value=json.dumps({"corrupted": res}))
         elif command.value == "detect-scenes":
             vid = FilePath(value=kwargs["video"])
-            threshold = SceneThreshold(value=SCENE_THRESHOLD)
+            threshold = SceneThreshold(value=kwargs.get("threshold", SCENE_THRESHOLD))
             return CommandOutput(
                 value=json.dumps(
                     [
@@ -96,7 +98,7 @@ class VideoOrchestrator(RegistryServiceAggregate):
             )
         elif command.value == "detect-motion":
             vid = FilePath(value=kwargs["video"])
-            min_area = MinArea(value=MIN_MOTION_AREA)
+            min_area = MinArea(value=kwargs.get("min_area", MIN_MOTION_AREA))
             return CommandOutput(
                 value=json.dumps(
                     [
@@ -110,7 +112,7 @@ class VideoOrchestrator(RegistryServiceAggregate):
             vid = FilePath(value=kwargs["video"])
             x, y, w, h = [int(v) for v in kwargs["bbox"].split(",")]
             bbox = BoundingBox(x=x, y=y, width=w, height=h)
-            max_frames = MaxFrames(value=MAX_TRACK_FRAMES)
+            max_frames = MaxFrames(value=kwargs.get("max_frames", MAX_TRACK_FRAMES))
             return CommandOutput(
                 value=json.dumps(
                     [

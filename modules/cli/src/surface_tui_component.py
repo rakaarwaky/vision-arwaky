@@ -26,6 +26,7 @@ _dispatcher: RegistryServiceAggregate | None = None
 
 
 _UI_EXCEPTIONS = (OSError, ValueError, ImportError, KeyError, TypeError, TextualError)
+_BACK_LABEL = "⬅ Back"
 
 
 def set_tui_dispatcher(dispatcher: RegistryServiceAggregate | None) -> None:
@@ -118,7 +119,7 @@ class ConfigScreen(Screen):
             Input(str(ext.get("model", "")), id="ext_model"),
             Horizontal(
                 Button("💾 Save", id="save", variant="primary"),
-                Button("⬅ Back", id="back", variant="default"),
+                Button(_BACK_LABEL, id="back", variant="default"),
             ),
         )
         yield Footer()
@@ -159,7 +160,7 @@ class ModelScreen(Screen):
             ),
             Horizontal(
                 Button("🔍 Scan", id="scan", variant="primary"),
-                Button("⬅ Back", id="back"),
+                Button(_BACK_LABEL, id="back"),
             ),
         )
         yield Footer()
@@ -222,7 +223,7 @@ class StatusScreen(Screen):
             Static("[bold yellow]System Status[/]\n", id="title"),
             Static("Loading...", id="status_content"),
             Button("🔄 Refresh (R)", id="refresh", variant="default"),
-            Button("⬅ Back", id="back"),
+            Button(_BACK_LABEL, id="back"),
         )
         yield Footer()
 
@@ -267,7 +268,12 @@ class StatusScreen(Screen):
             lines.append("\n[bold underline]Dependencies[/]")
             for dep, status in deps_status.items():
                 st = str(status)
-                icon = "✅" if st == "OK" else ("⚠️" if "MISSING" in st else "❓")
+                if st == "OK":
+                    icon = "✅"
+                elif "MISSING" in st:
+                    icon = "⚠️"
+                else:
+                    icon = "❓"
                 lines.append(f"  {icon} {dep}: {st}")
 
             self.query_one("#status_content", Static).update("\n".join(lines))
@@ -299,7 +305,7 @@ class TestScreen(Screen):
             ),
             Horizontal(
                 Button("▶ Run Test (R)", id="run", variant="primary"),
-                Button("⬅ Back", id="back"),
+                Button(_BACK_LABEL, id="back"),
             ),
         )
         yield Footer()
@@ -338,7 +344,7 @@ class TestScreen(Screen):
                 )
                 results.append(("OCR", bool(ocr_result.value)))
             else:
-                results.append(("OCR (no dispatcher)", True))
+                results.append(("OCR (no dispatcher — skipped)", False))
         except _UI_EXCEPTIONS:
             results.append(("OCR (fallback)", True))
 
@@ -354,17 +360,24 @@ class TestScreen(Screen):
                 )
                 results.append(("Video Module", result is not None))
             else:
-                results.append(("Video Module (no dispatcher)", True))
+                results.append(("Video Module (no dispatcher — skipped)", False))
         except _UI_EXCEPTIONS:
             results.append(("Video Module", False))
 
         # Format output
         lines = []
         for name, ok in results:
-            icon = "✅" if ok else "❌"
+            if "skipped" in name.lower():
+                icon = "⏭️"
+            else:
+                icon = "✅" if ok else "❌"
             lines.append(f"  {icon} {name}")
+
+        # All OK only considers non-skipped checks
+        non_skipped = [(n, ok) for n, ok in results if "skipped" not in n.lower()]
+        all_ok = all(ok for _, ok in non_skipped)
         lines.append(
-            f"\n[bold]{'All OK!' if all(r[1] for r in results) else 'Some checks failed'}[/]"
+            f"\n[bold]{'All OK!' if all_ok else 'Some checks failed'}[/]"
         )
 
         output.update("\n".join(lines))

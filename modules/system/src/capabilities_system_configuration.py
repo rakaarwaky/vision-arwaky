@@ -66,6 +66,11 @@ class CapabilitiesSystemConfiguration(SystemConfigurationProtocol):
 
         # Apply mutation using dot-separated path
         keys = key.split(".")
+        if not key or any(k == "" for k in keys):
+            raise ValueError(
+                f"Invalid config key '{key}': key must be non-empty and "
+                "dot-separated segments must not be empty."
+            )
         target = user_data
         for k in keys[:-1]:
             if k not in target or not isinstance(target[k], dict):
