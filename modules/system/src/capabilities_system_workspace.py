@@ -1,0 +1,148 @@
+"""Capabilities: system workspace provisioner (AES403).
+
+Implements WorkspaceProtocol — workspace initialization with XDG directories,
+SKILL.md provisioning, .vision-arwaky symlinks, and .git/info/exclude management.
+All file system I/O for workspace setup lives here.
+"""
+
+from __future__ import annotations
+
+import os
+import shutil
+from pathlib import Path
+
+from modules.shared.src.contract_workspace_protocol import WorkspaceProtocol
+from modules.shared.src.taxonomy_vision_constant import EMBEDDED_SKILL_MD
+from modules.shared.src.taxonomy_vision_vo import FilePath
+from modules.shared.src.taxonomy_xdg_paths_vo import XDGPaths
+
+
+# ─── Block 1: Class Definition & Constructor ──────────────
+class CapabilitiesSystemWorkspace(WorkspaceProtocol):
+    """Workspace directory provisioning with symlinks and git exclude management."""
+
+    def __init__(self) -> None:
+        """Initialize CapabilitiesSystemWorkspace."""
+
+    # ─── Block 2: Public Contract (WorkspaceProtocol ONLY) ───
+    def init_workspace(self, target_dir: FilePath) -> dict[str, str]:
+        """Initialize workspace in sequential steps:
+
+        Step 1: Ensure XDG directories exist
+        Step 2: Provision .agents/skills/vision-arwaky/SKILL.md from embedded constant
+        Step 3: Provision .vision-arwaky directory with symlinks to XDG paths
+        Step 4: Update .git/info/exclude (or fallback to .gitignore) with .vision-arwaky and .venv
+        """
+        target_path = Path(target_dir.value).expanduser().resolve()
+        created_items: dict[str, str] = {}
+
+        # Step 1: Ensure XDG directories exist
+        XDGPaths.ensure_dirs()
+        created_items["xdg_config"] = str(XDGPaths.config_dir())
+        created_items["xdg_data"] = str(XDGPaths.data_dir())
+        created_items["xdg_cache"] = str(XDGPaths.cache_dir())
+        created_items["xdg_state"] = str(XDGPaths.state_dir())
+
+        # Step 2: Create .agents/skills/vision-arwaky/SKILL.md from embedded constant
+        skills_dir = target_path / ".agents" / "skills" / "vision-arwaky"
+        skills_dir.mkdir(parents=True, exist_ok=True)
+        skill_md_dest = skills_dir / "SKILL.md"
+        skill_md_dest.write_text(EMBEDDED_SKILL_MD, encoding="utf-8")
+        created_items["skill_md"] = str(skill_md_dest)
+
+        # Step 3: Create .vision-arwaky directory with symlinks to XDG paths
+        dot_vision = target_path / ".vision-arwaky"
+        dot_vision.mkdir(parents=True, exist_ok=True)
+
+        links: dict[str, Path] = {
+            "log": XDGPaths.state_dir(),
+            "data": XDGPaths.data_dir(),
+            "cache": XDGPaths.cache_dir(),
+        }
+
+        for link_name, xdg_target in links.items():
+            link_path = dot_vision / link_name
+            self._ensure_symlink(link_path, xdg_target)
+            created_items[f"link_{link_name}"] = f"{link_path} -> {xdg_target}"
+
+        # Link .venv if XDG venv exists
+        venv_xdg = XDGPaths.venv_dir()
+        if venv_xdg.exists():
+            dot_venv = target_path / ".venv"
+            self._ensure_symlink(dot_venv, venv_xdg)
+            created_items["link_venv"] = f"{dot_venv} -> {venv_xdg}"
+
+        # Step 4: Ensure git ignores .vision-arwaky and .venv via .git/info/exclude
+        exclude_result = self._ensure_git_exclude(target_path)
+        created_items["git_exclude"] = exclude_result
+
+        return created_items
+
+    # ─── Block 3: Dunder Methods, Factories & Helpers ─────────
+    def __repr__(self) -> str:
+        """Return string representation of CapabilitiesSystemWorkspace."""
+        return "CapabilitiesSystemWorkspace()"
+
+    @staticmethod
+    def _ensure_symlink(link_path: Path, target_path: Path) -> None:
+        """Create a symlink pointing to target_path, falling back to directory."""
+        if link_path.is_symlink() or link_path.exists():
+            if link_path.is_dir() and not link_path.is_symlink():
+                shutil.rmtree(link_path, ignore_errors=True)
+            else:
+                link_path.unlink(missing_ok=True)
+
+        try:
+            os.symlink(target_path, link_path, target_is_directory=True)
+        except OSError:
+            link_path.mkdir(parents=True, exist_ok=True)
+
+    @staticmethod
+    def _find_git_exclude_file(target_path: Path) -> Path | None:
+        """Find .git/info/exclude in target_path or parent directory."""
+        current: Path | None = target_path
+        while current is not None:
+            git_entry = current / ".git"
+            if git_entry.is_dir():
+                return git_entry / "info" / "exclude"
+            if git_entry.is_file():
+                try:
+                    line = git_entry.read_text(encoding="utf-8").strip()
+                    if line.startswith("gitdir:"):
+                        git_dir_raw = line.split("gitdir:", 1)[1].strip()
+                        git_dir = Path(git_dir_raw)
+                        if not git_dir.is_absolute():
+                            git_dir = (current / git_dir).resolve()
+                        return git_dir / "info" / "exclude"
+                except OSError:
+                    pass
+            if current == current.parent:
+                break
+            current = current.parent
+        return None
+
+    @classmethod
+    def _ensure_git_exclude(cls, target_path: Path) -> str:
+        """Ignore workspace files in .git/info/exclude (preferred) or .gitignore."""
+        entries = [".vision-arwaky", ".venv"]
+        exclude_file = cls._find_git_exclude_file(target_path)
+        target_file = (
+            exclude_file if exclude_file is not None else (target_path / ".gitignore")
+        )
+        target_file.parent.mkdir(parents=True, exist_ok=True)
+
+        if target_file.exists():
+            content = target_file.read_text(encoding="utf-8")
+            missing = [e for e in entries if e not in content]
+            if missing:
+                with target_file.open("a", encoding="utf-8") as f:
+                    for m in missing:
+                        f.write(f"\n{m}\n")
+                return f"{target_file.name} updated with {', '.join(missing)}"
+            return f"{target_file.name} already contains required entries"
+
+        target_file.write_text("\n".join(entries) + "\n", encoding="utf-8")
+        return f"{target_file.name} created with {', '.join(entries)}"
+
+
+__all__ = ["CapabilitiesSystemWorkspace"]
