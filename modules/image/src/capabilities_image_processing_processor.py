@@ -7,6 +7,12 @@ from modules.shared.src.contract_llm_vision_protocol import LLMVisionProtocol
 from modules.shared.src.contract_tesseract_ocr_protocol import (
     TesseractOCRProtocol,
 )
+from modules.shared.src.taxonomy_vision_constant import (
+    DEFAULT_OCR_LANGUAGE,
+    IMAGE_DIFF_THRESHOLD,
+    IMAGE_MAX_PIXEL_VALUE,
+    MIN_DIFF_CONTOUR_AREA,
+)
 from modules.shared.src.taxonomy_vision_vo import (
     AnalysisPrompt,
     BoundingBox,
@@ -67,12 +73,16 @@ class ImageProcessingProcessor(ImageProcessingProtocol):
                 # Fallback to OCR if LLM fails
                 return VisionAnalysis(
                     source="opencv",
-                    text=self.extract_text(image_path, LanguageCode(value="eng")).value,
+                    text=self.extract_text(
+                        image_path, LanguageCode(value=DEFAULT_OCR_LANGUAGE)
+                    ).value,
                     error=str(e),
                 )
 
         # Default: OCR text extraction
-        text = self.extract_text(image_path, LanguageCode(value="eng")).value
+        text = self.extract_text(
+            image_path, LanguageCode(value=DEFAULT_OCR_LANGUAGE)
+        ).value
         return VisionAnalysis(
             source="opencv",
             text=text,
@@ -115,13 +125,15 @@ class ImageProcessingProcessor(ImageProcessingProtocol):
         diff = compute_abs_diff(img1, img2)
         gray_diff = to_grayscale(diff)
 
-        _, thresh = cv2.threshold(gray_diff, 30, 255, cv2.THRESH_BINARY)
+        _, thresh = cv2.threshold(
+            gray_diff, IMAGE_DIFF_THRESHOLD, IMAGE_MAX_PIXEL_VALUE, cv2.THRESH_BINARY
+        )
         contours = find_contours(thresh)
 
         differences: list[BoundingBox] = []
         for cnt in contours:
             area = get_contour_area(cnt)
-            if area > 50:
+            if area > MIN_DIFF_CONTOUR_AREA:
                 differences.append(get_bounding_box(cnt))
 
         hash1 = compute_phash(img1)
@@ -132,4 +144,3 @@ class ImageProcessingProcessor(ImageProcessingProtocol):
             phash_diff=hash1 != hash2,
             differences=differences,
         )
-

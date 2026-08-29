@@ -35,7 +35,6 @@ class ImageOrchestrator(RegistryServiceAggregate):
         self._tesseract = tesseract
         self._llm = llm
 
-
     def execute_in_process(
         self,
         command: CommandName,
@@ -67,4 +66,3 @@ class ImageOrchestrator(RegistryServiceAggregate):
                 )
             )
         raise ValueError(f"Unknown image command: {command.value}")
-

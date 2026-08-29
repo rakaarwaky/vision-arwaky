@@ -52,4 +52,3 @@ class VideoProcessingProcessor(VideoProcessingProtocol):
     def check_corruption(self, video_path: FilePath) -> bool:
         """Check if video file is corrupted using OpenCV utility."""
         return check_video_corruption(video_path)
-

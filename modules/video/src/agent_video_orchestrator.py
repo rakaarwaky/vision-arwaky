@@ -56,7 +56,6 @@ class VideoOrchestrator(RegistryServiceAggregate):
         self._ffmpeg = ffmpeg
         self._video_understanding = video_understanding
 
-
     def execute_in_process(
         self,
         command: CommandName,
@@ -136,4 +135,3 @@ class VideoOrchestrator(RegistryServiceAggregate):
             )
             return CommandOutput(value=json.dumps(result.model_dump(), indent=2))
         raise ValueError(f"Unknown video command: {command.value}")
-

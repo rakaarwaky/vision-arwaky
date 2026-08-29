@@ -4,6 +4,17 @@ import numpy
 from modules.shared.src.contract_video_analysis_protocol import (
     VideoAnalysisProtocol,
 )
+from modules.shared.src.taxonomy_vision_constant import (
+    DILATION_ITERATIONS,
+    DILATION_KERNEL_SIZE,
+    GAUSSIAN_BLUR_KERNEL,
+    HIST_HUE_BINS,
+    HIST_SAT_BINS,
+    MIN_MOTION_AREA,
+    MOTION_DIFF_THRESHOLD,
+    MOTION_MAX_PIXEL_VALUE,
+    SCENE_THRESHOLD,
+)
 from modules.shared.src.taxonomy_vision_event import (
     MotionEvent,
     SceneChange,
@@ -12,9 +23,12 @@ from modules.shared.src.taxonomy_vision_vo import (
     BoundingBox,
     FilePath,
     MinArea,
+    MotionDirection,
+    MotionMagnitude,
     SceneThreshold,
+    SimilarityScore,
+    Timestamp,
 )
-
 from modules.shared.src.utility_opencv_ops import open_video_capture
 
 
@@ -36,7 +50,7 @@ class VideoAnalysisAnalyzer(VideoAnalysisProtocol):
         scenes: list[SceneChange] = []
         prev_hist = None
         frame_idx = 0
-        thresh_val = threshold.value if threshold else 30.0
+        thresh_val = threshold.value if threshold else SCENE_THRESHOLD
 
         while True:
             ret, frame = cap.read()
@@ -45,7 +59,13 @@ class VideoAnalysisAnalyzer(VideoAnalysisProtocol):
 
             # Compute color histogram
             hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-            hist = cv2.calcHist([hsv], [0, 1], None, [50, 60], [0, 180, 0, 256])
+            hist = cv2.calcHist(
+                [hsv],
+                [0, 1],
+                None,
+                [HIST_HUE_BINS, HIST_SAT_BINS],
+                [0, 180, 0, 256],
+            )
             cv2.normalize(hist, hist)
 
             if prev_hist is not None:
@@ -55,8 +75,8 @@ class VideoAnalysisAnalyzer(VideoAnalysisProtocol):
                     timestamp = frame_idx / fps if fps > 0 else frame_idx
                     scenes.append(
                         SceneChange(
-                            timestamp=round(timestamp, 2),
-                            score=round(1.0 - score, 4),
+                            timestamp=Timestamp(value=round(timestamp, 2)),
+                            score=SimilarityScore(value=round(1.0 - score, 4)),
                         )
                     )
 
@@ -78,7 +98,7 @@ class VideoAnalysisAnalyzer(VideoAnalysisProtocol):
         events: list[MotionEvent] = []
         prev_gray = None
         frame_idx = 0
-        min_area_val = min_area.value if min_area else 500
+        min_area_val = min_area.value if min_area else MIN_MOTION_AREA
 
         while True:
             ret, frame = cap.read()
@@ -86,15 +106,20 @@ class VideoAnalysisAnalyzer(VideoAnalysisProtocol):
                 break
 
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            gray = cv2.GaussianBlur(gray, (21, 21), 0)
+            gray = cv2.GaussianBlur(gray, GAUSSIAN_BLUR_KERNEL, 0)
 
             if prev_gray is not None:
                 delta = cv2.absdiff(prev_gray, gray)
-                thresh = cv2.threshold(delta, 25, 255, cv2.THRESH_BINARY)[1]
+                thresh = cv2.threshold(
+                    delta,
+                    MOTION_DIFF_THRESHOLD,
+                    MOTION_MAX_PIXEL_VALUE,
+                    cv2.THRESH_BINARY,
+                )[1]
 
-                # Use standard 3x3 structuring element kernel instead of None
-                kernel = numpy.ones((3, 3), dtype=numpy.uint8)
-                thresh = cv2.dilate(thresh, kernel, iterations=2)
+                # Use standard structuring element kernel
+                kernel = numpy.ones(DILATION_KERNEL_SIZE, dtype=numpy.uint8)
+                thresh = cv2.dilate(thresh, kernel, iterations=DILATION_ITERATIONS)
                 contours, _ = cv2.findContours(
                     thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
                 )
@@ -118,9 +143,13 @@ class VideoAnalysisAnalyzer(VideoAnalysisProtocol):
 
                     events.append(
                         MotionEvent(
-                            timestamp=round(timestamp, 2),
-                            magnitude=round(magnitude, 6),
-                            direction=direction,
+                            timestamp=Timestamp(value=round(timestamp, 2)),
+                            magnitude=MotionMagnitude(value=round(magnitude, 6)),
+                            direction=(
+                                MotionDirection(value=direction)
+                                if direction is not None
+                                else None
+                            ),
                             region=BoundingBox(x=x, y=y, width=w, height=h),
                         )
                     )
@@ -130,6 +159,3 @@ class VideoAnalysisAnalyzer(VideoAnalysisProtocol):
 
         cap.release()
         return events
-
-
-# Mark numpy usage for static AST scanners

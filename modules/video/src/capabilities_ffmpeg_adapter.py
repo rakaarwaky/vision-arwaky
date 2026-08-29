@@ -51,4 +51,3 @@ class FFmpegVideoAdapter(FFmpegVideoProtocol):
             raise RuntimeError(f"FFmpeg error: {err_msg}")
 
         return stdout.decode() if stdout else ""
-

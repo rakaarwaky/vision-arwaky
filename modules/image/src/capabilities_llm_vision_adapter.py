@@ -13,6 +13,12 @@ import requests
 import yaml
 
 from modules.shared.src.contract_llm_vision_protocol import LLMVisionProtocol
+from modules.shared.src.taxonomy_vision_constant import (
+    DEFAULT_MODELS_TIMEOUT_S,
+    DEFAULT_VLM_MAX_TOKENS,
+    DEFAULT_VLM_TEMPERATURE,
+    DEFAULT_VLM_TIMEOUT_S,
+)
 from modules.shared.src.taxonomy_vision_vo import (
     AnalysisPrompt,
     BackendType,
@@ -105,7 +111,9 @@ class LLMVisionAdapter(LLMVisionProtocol):
                     "Content-Type": "application/json",
                 }
             )
-            resp = session.get(f"{self.base_url}/models", timeout=10)
+            resp = session.get(
+                f"{self.base_url}/models", timeout=DEFAULT_MODELS_TIMEOUT_S
+            )
             session.close()
             resp.raise_for_status()
             data = resp.json()
@@ -129,7 +137,10 @@ class LLMVisionAdapter(LLMVisionProtocol):
         return f"data:{mime};base64,{b64}"
 
     def _analyze_via_http(
-        self, image_path: str, prompt: str, timeout: int = 120
+        self,
+        image_path: str,
+        prompt: str,
+        timeout: int = DEFAULT_VLM_TIMEOUT_S,
     ) -> str:
         """Send image + prompt via HTTP to an OpenAI-compatible server."""
         model = self.model.value
@@ -146,8 +157,8 @@ class LLMVisionAdapter(LLMVisionProtocol):
                     ],
                 }
             ],
-            "temperature": 0.4,
-            "max_tokens": 2048,
+            "temperature": DEFAULT_VLM_TEMPERATURE,
+            "max_tokens": DEFAULT_VLM_MAX_TOKENS,
         }
 
         try:
@@ -194,7 +205,7 @@ class LLMVisionAdapter(LLMVisionProtocol):
         self,
         image_path: FilePath,
         prompt: AnalysisPrompt,
-        timeout: int = 120,
+        timeout: int = DEFAULT_VLM_TIMEOUT_S,
     ) -> str:
         """Send image + prompt to the VLM and return the text response."""
         path_str = image_path.value

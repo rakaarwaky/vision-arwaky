@@ -17,6 +17,15 @@ from modules.shared.src.contract_video_processing_protocol import (
 from modules.shared.src.contract_video_understanding_protocol import (
     VideoUnderstandingProtocol,
 )
+from modules.shared.src.taxonomy_vision_constant import (
+    ANALYZE_VIDEO_INTERVAL_S,
+    DEFAULT_VIDEO_FPS,
+    MAX_SMART_VIDEO_FRAMES,
+    MAX_SUMMARY_PROMPT_CHARS,
+    MIN_MOTION_AREA,
+    SCENE_THRESHOLD,
+    TOP_MOTION_EVENTS_LIMIT,
+)
 from modules.shared.src.taxonomy_vision_vo import (
     AnalysisPrompt,
     FilePath,
@@ -26,13 +35,6 @@ from modules.shared.src.taxonomy_vision_vo import (
 from modules.shared.src.utility_opencv_ops import open_video_capture
 
 logger = logging.getLogger("mcp_server.infrastructure.video_understanding")
-
-MAX_KEY_FRAMES = 12
-MAX_SUMMARY_CHARS = 12_000
-
-# Locked sampling interval for analyze-video. Kept high so local CPU-only
-# VLM backends never attempt to infer hundreds of frames per call.
-ANALYZE_VIDEO_INTERVAL = 30.0
 
 
 class VideoUnderstandingAnalyzer(VideoUnderstandingProtocol):
@@ -58,51 +60,50 @@ class VideoUnderstandingAnalyzer(VideoUnderstandingProtocol):
     def analyze(
         self,
         video_path: FilePath,
-
         prompt: AnalysisPrompt,
-        interval: float = 30.0,
-        scene_threshold: float = 20.0,
-        min_area: int = 500,
-        top_motion: int = 5,
+        interval: float = ANALYZE_VIDEO_INTERVAL_S,
+        scene_threshold: float = SCENE_THRESHOLD,
+        min_area: int = MIN_MOTION_AREA,
+        top_motion: int = TOP_MOTION_EVENTS_LIMIT,
     ) -> VideoUnderstanding:
         """Select, analyze, and summarize bounded key-frame samples.
 
-        Sampling interval is locked to ``ANALYZE_VIDEO_INTERVAL`` (30s) so a
-        single call never exceeds ``MAX_KEY_FRAMES`` VLM inferences.
+        Sampling interval is locked to ``ANALYZE_VIDEO_INTERVAL_S`` so a
+        single call never exceeds ``MAX_SMART_VIDEO_FRAMES`` VLM inferences.
         """
-        cv2 = self._opencv.cv2
         path = video_path.value
 
         info = self._video_processing.get_info(video_path)
-        fps = info.fps or 30.0
+        fps = info.fps or DEFAULT_VIDEO_FPS
         frame_count = info.frame_count
         target_idx: set[int] = set()
 
         scenes = self._video_analysis.detect_scenes(
-            video_path, SceneThreshold(value=20.0)
+            video_path, SceneThreshold(value=scene_threshold)
         )
         for scene in scenes:
-            idx = int(scene.timestamp * fps)
+            idx = int(scene.timestamp.value * fps)
             if 0 <= idx < frame_count:
                 target_idx.add(idx)
 
-        events = self._video_analysis.detect_motion(video_path, MinArea(value=500))
-        events.sort(key=lambda event: event.magnitude, reverse=True)
-        for event in events[:5]:
-            idx = int(event.timestamp * fps)
+        events = self._video_analysis.detect_motion(video_path, MinArea(value=min_area))
+        events.sort(key=lambda event: event.magnitude.value, reverse=True)
+        for event in events[:top_motion]:
+            idx = int(event.timestamp.value * fps)
             if 0 <= idx < frame_count:
                 target_idx.add(idx)
 
-        interval = ANALYZE_VIDEO_INTERVAL
         step = max(1, int(interval))
         for idx in range(0, frame_count, step):
             target_idx.add(idx)
 
         selected_indices = sorted(target_idx)
-        if len(selected_indices) > MAX_KEY_FRAMES:
+        if len(selected_indices) > MAX_SMART_VIDEO_FRAMES:
             positions = {
-                round(index * (len(selected_indices) - 1) / (MAX_KEY_FRAMES - 1))
-                for index in range(MAX_KEY_FRAMES)
+                round(
+                    index * (len(selected_indices) - 1) / (MAX_SMART_VIDEO_FRAMES - 1)
+                )
+                for index in range(MAX_SMART_VIDEO_FRAMES)
             }
             selected_indices = [
                 selected_indices[position] for position in sorted(positions)
@@ -175,7 +176,7 @@ class VideoUnderstandingAnalyzer(VideoUnderstandingProtocol):
                 "motion_events": len(events),
                 "uniform_interval": step,
                 "key_frames_extracted": extracted_count,
-                "max_key_frames": MAX_KEY_FRAMES,
+                "max_key_frames": MAX_SMART_VIDEO_FRAMES,
             },
             frames=frame_analyses,
             summary=summary,
@@ -189,9 +190,9 @@ class VideoUnderstandingAnalyzer(VideoUnderstandingProtocol):
             return "No frames could be extracted for analysis."
 
         summary_text = "\n".join(descriptions)
-        if len(summary_text) > MAX_SUMMARY_CHARS:
+        if len(summary_text) > MAX_SUMMARY_PROMPT_CHARS:
             summary_text = (
-                summary_text[:MAX_SUMMARY_CHARS]
+                summary_text[:MAX_SUMMARY_PROMPT_CHARS]
                 + "\n[Additional frame descriptions omitted from summary prompt.]"
             )
         summary_prompt = (

@@ -3,6 +3,7 @@ import cv2
 from modules.shared.src.contract_object_tracking_protocol import (
     ObjectTrackingProtocol,
 )
+from modules.shared.src.taxonomy_vision_constant import MAX_TRACK_FRAMES
 from modules.shared.src.taxonomy_vision_vo import (
     BoundingBox,
     FilePath,
@@ -86,7 +87,7 @@ class ObjectTrackingTracker(ObjectTrackingProtocol):
 
         boxes: list[BoundingBox] = [initial_box]
         frame_count = 0
-        max_frames_val = max_frames.value if max_frames else 300
+        max_frames_val = max_frames.value if max_frames else MAX_TRACK_FRAMES
 
         while frame_count < max_frames_val:
             ret, frame = cap.read()
