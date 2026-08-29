@@ -11,6 +11,7 @@ from modules.shared.src.taxonomy_vision_vo import (
     BoundingBox,
     CommandName,
 )
+from modules.shared.src.utility_frame_extractor import extract_middle_frame
 
 _dispatcher: RegistryServiceAggregate | None = None
 
@@ -40,30 +41,6 @@ def _execute(
     return orch.execute_in_process(CommandName(value=command), kwargs).value
 
 
-def _extract_middle_frame(file_path: str) -> str | None:
-    """Extract the middle frame of a video file to a temp JPG (returns temp path)."""
-    import importlib
-    import tempfile
-
-    cv2: Any = importlib.import_module("cv2")
-    cap = cv2.VideoCapture(file_path)
-    try:
-        total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-        if total <= 0:
-            return None
-        mid = total // 2
-        cap.set(cv2.CAP_PROP_POS_FRAMES, mid)
-        ret, frame = cap.read()
-        if not ret:
-            return None
-        fd, thumb = tempfile.mkstemp(suffix=".jpg")
-        os.close(fd)
-        cv2.imwrite(thumb, frame)
-        return thumb
-    finally:
-        cap.release()
-
-
 def cmd_init(args, orchestrator: RegistryServiceAggregate | None = None) -> int:
     """Initialize workspace directory, symlinks to XDG, and SKILL.md."""
     target_dir = getattr(args, "target_dir", ".") or "."
@@ -79,7 +56,7 @@ def cmd_analyze(args, orchestrator: RegistryServiceAggregate | None = None) -> i
     ext = os.path.splitext(file_path)[1].lower()
 
     if ext in (".mp4", ".avi", ".mov", ".mkv", ".webm"):
-        thumb_path = _extract_middle_frame(file_path)
+        thumb_path = extract_middle_frame(file_path)
         if not thumb_path:
             print("Error: Could not extract frame from video for analysis.")
             return 1

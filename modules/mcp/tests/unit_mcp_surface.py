@@ -2,7 +2,6 @@
 
 import json
 
-from modules.mcp.src import surface_mcp_action
 from modules.mcp.src.surface_mcp_action import (
     vision_execute,
     vision_help,
@@ -46,9 +45,9 @@ class TestMCPSurface:
 
         monkeypatch.setenv("LLAMA_API_URL", "https://status.example/v1")
         monkeypatch.setenv("LLAMA_API_KEY", "test-key")
-        monkeypatch.setattr(
-            surface_mcp_action.requests, "get", lambda *a, **kw: FakeResponse()
-        )
+        import requests
+
+        monkeypatch.setattr(requests, "get", lambda *a, **kw: FakeResponse())
 
         status = json.loads(vision_status())
         assert status["configuration"]["llm_endpoint"] == "https://status.example/v1"

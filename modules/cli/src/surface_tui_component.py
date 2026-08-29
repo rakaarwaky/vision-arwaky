@@ -237,26 +237,14 @@ class StatusScreen(Screen):
 
     def refresh_status(self) -> None:
         try:
-            import shutil
+            from modules.shared.src.utility_config_handler import load_config
+            from modules.shared.src.utility_dependency_checker import (
+                check_all_dependencies,
+            )
 
             cfg = load_config()
             selected_backend = str(cfg.get("backend", "external"))
-
-            deps_status = {}
-            for name, module in [
-                ("opencv", "cv2"),
-                ("pillow", "PIL"),
-                ("numpy", "numpy"),
-                ("pytesseract", "pytesseract"),
-                ("requests", "requests"),
-                ("pyyaml", "yaml"),
-            ]:
-                try:
-                    __import__(module)
-                    deps_status[name] = "OK"
-                except ImportError:
-                    deps_status[name] = "MISSING"
-            deps_status["ffmpeg"] = "OK" if shutil.which("ffmpeg") else "MISSING"
+            deps_status = check_all_dependencies()
 
             caps = {
                 "image_analysis": deps_status.get("opencv") == "OK",
@@ -268,7 +256,7 @@ class StatusScreen(Screen):
 
             lines = [
                 f"[bold]Backend:[/] {selected_backend}",
-                f"[bold]Config:[/] {'✅' if load_config() else '❌'}",
+                f"[bold]Config:[/] {'✅' if cfg else '❌'}",
                 "",
                 "[bold underline]Capabilities[/]",
             ]
