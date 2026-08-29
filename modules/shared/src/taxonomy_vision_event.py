@@ -4,15 +4,21 @@ from __future__ import annotations
 
 from pydantic import BaseModel, Field
 
-from modules.shared.src.taxonomy_vision_vo import BoundingBox
+from modules.shared.src.taxonomy_vision_vo import (
+    BoundingBox,
+    MotionDirection,
+    MotionMagnitude,
+    SimilarityScore,
+    Timestamp,
+)
 
 
 class MotionEvent(BaseModel):
     """Visual motion event occurrence."""
 
-    timestamp: float = Field(..., description="Timestamp in seconds")
-    magnitude: float = Field(..., description="Weighted magnitude of motion")
-    direction: float | None = Field(
+    timestamp: Timestamp = Field(..., description="Timestamp in seconds")
+    magnitude: MotionMagnitude = Field(..., description="Weighted magnitude of motion")
+    direction: MotionDirection | None = Field(
         None, description="Primary direction of motion in degrees (0-360)"
     )
     region: BoundingBox | None = Field(
@@ -23,5 +29,5 @@ class MotionEvent(BaseModel):
 class SceneChange(BaseModel):
     """Scene transition event occurrence."""
 
-    timestamp: float = Field(..., description="Timestamp in seconds")
-    score: float = Field(..., description="Similarity score change")
+    timestamp: Timestamp = Field(..., description="Timestamp in seconds")
+    score: SimilarityScore = Field(..., description="Similarity score change")

@@ -6,10 +6,6 @@ from __future__ import annotations
 class VisionDomainError(Exception):
     """Base exception for all vision domain and operation errors."""
 
-    def __init__(self, message: str) -> None:
-        self.message = message
-        super().__init__(message)
-
 
 class ImageProcessingError(VisionDomainError):
     """Raised when an image operation fails or inputs are unreadable."""

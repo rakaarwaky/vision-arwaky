@@ -11,6 +11,10 @@ from modules.shared.src.contract_object_tracking_protocol import (
 from modules.shared.src.contract_registry_service_aggregate import (
     RegistryServiceAggregate,
 )
+from modules.shared.src.contract_system_configuration_protocol import (
+    SystemConfigurationProtocol,
+)
+from modules.shared.src.contract_system_job_protocol import SystemJobProtocol
 from modules.shared.src.contract_tesseract_ocr_protocol import TesseractOCRProtocol
 from modules.shared.src.contract_video_analysis_protocol import (
     VideoAnalysisProtocol,
@@ -21,7 +25,9 @@ from modules.shared.src.contract_video_processing_protocol import (
 from modules.shared.src.contract_video_understanding_protocol import (
     VideoUnderstandingProtocol,
 )
+from modules.shared.src.contract_workspace_protocol import WorkspaceProtocol
 from modules.shared.src.taxonomy_vision_constant import (
+    EMBEDDED_SKILL_MD,
     FRAME_EXTRACTION_INTERVAL_S,
     MAX_EXTRACT_FRAMES,
     MAX_SMART_VIDEO_FRAMES,
@@ -54,12 +60,20 @@ from modules.shared.src.taxonomy_vision_vo import (
     MaxFrames,
     MinArea,
     ModelName,
+    MotionDirection,
+    MotionMagnitude,
     OcrText,
     SceneThreshold,
     ScreenshotComparison,
+    SimilarityScore,
+    Timestamp,
     VideoInfo,
     VideoUnderstanding,
     VisionAnalysis,
+)
+from modules.shared.src.taxonomy_xdg_paths_vo import (
+    APP_NAME,
+    XDGPaths,
 )
 from modules.shared.src.utility_async_runner import run_async
 from modules.shared.src.utility_config_handler import (
@@ -93,6 +107,15 @@ from modules.shared.src.utility_system_utils import (
 )
 
 __all__ = [
+    "APP_NAME",
+    "EMBEDDED_SKILL_MD",
+    "FRAME_EXTRACTION_INTERVAL_S",
+    "MAX_EXTRACT_FRAMES",
+    "MAX_SMART_VIDEO_FRAMES",
+    "MAX_SUMMARY_PROMPT_CHARS",
+    "MAX_TRACK_FRAMES",
+    "MIN_MOTION_AREA",
+    "SCENE_THRESHOLD",
     "AnalysisPrompt",
     "BackendType",
     "BoundingBox",
@@ -101,7 +124,6 @@ __all__ = [
     "DependencyExecutionError",
     "FFmpegVideoProtocol",
     "FilePath",
-    "FRAME_EXTRACTION_INTERVAL_S",
     "FrameAnalysis",
     "ImageProcessingError",
     "ImageProcessingProtocol",
@@ -109,22 +131,23 @@ __all__ = [
     "InvalidParameterError",
     "LLMVisionProtocol",
     "LanguageCode",
-    "MAX_EXTRACT_FRAMES",
-    "MAX_SMART_VIDEO_FRAMES",
-    "MAX_SUMMARY_PROMPT_CHARS",
-    "MAX_TRACK_FRAMES",
-    "MIN_MOTION_AREA",
+    "MaxFrames",
     "MinArea",
     "ModelName",
+    "MotionDirection",
     "MotionEvent",
-    "OcrText",
+    "MotionMagnitude",
     "ObjectTrackingProtocol",
+    "OcrText",
     "RegistryServiceAggregate",
-    "SCENE_THRESHOLD",
     "SceneChange",
     "SceneThreshold",
     "ScreenshotComparison",
+    "SimilarityScore",
+    "SystemConfigurationProtocol",
+    "SystemJobProtocol",
     "TesseractOCRProtocol",
+    "Timestamp",
     "VideoAnalysisProtocol",
     "VideoInfo",
     "VideoProcessingError",
@@ -133,6 +156,8 @@ __all__ = [
     "VideoUnderstandingProtocol",
     "VisionAnalysis",
     "VisionDomainError",
+    "WorkspaceProtocol",
+    "XDGPaths",
     "calc_optical_flow",
     "check_video_corruption",
     "compare_histograms",

@@ -134,3 +134,27 @@ class VideoUnderstanding(BaseModel):
         default_factory=list, description="Per key-frame VLM analyses"
     )
     summary: str = Field(..., description="Synthesized analytical summary")
+
+
+class Timestamp(BaseModel):
+    """Value object representing a video timestamp in seconds."""
+
+    value: float
+
+
+class MotionMagnitude(BaseModel):
+    """Value object representing motion magnitude."""
+
+    value: float
+
+
+class MotionDirection(BaseModel):
+    """Value object representing motion direction in degrees."""
+
+    value: float
+
+
+class SimilarityScore(BaseModel):
+    """Value object representing similarity score change."""
+
+    value: float

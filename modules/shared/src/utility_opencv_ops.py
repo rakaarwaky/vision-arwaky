@@ -72,9 +72,7 @@ def compute_abs_diff(img1: numpy.ndarray, img2: numpy.ndarray) -> numpy.ndarray:
     return cv2.absdiff(img1, img2)
 
 
-def detect_edges(
-    image: numpy.ndarray, t1: int = 50, t2: int = 150
-) -> numpy.ndarray:
+def detect_edges(image: numpy.ndarray, t1: int = 50, t2: int = 150) -> numpy.ndarray:
     """Detect edges in an image using the Canny algorithm.
 
     Args:
@@ -229,9 +227,7 @@ def check_video_corruption(video_path: FilePath) -> bool:
     return not is_open
 
 
-def calc_optical_flow(
-    prev: numpy.ndarray, next_img: numpy.ndarray
-) -> numpy.ndarray:
+def calc_optical_flow(prev: numpy.ndarray, next_img: numpy.ndarray) -> numpy.ndarray:
     """Calculate dense optical flow using the Farneback algorithm.
 
     Args:
@@ -242,6 +238,4 @@ def calc_optical_flow(
         Computed optical flow map array (2-channel float32).
     """
     flow: Any = None
-    return cv2.calcOpticalFlowFarneback(
-        prev, next_img, flow, 0.5, 3, 15, 3, 5, 1.2, 0
-    )
+    return cv2.calcOpticalFlowFarneback(prev, next_img, flow, 0.5, 3, 15, 3, 5, 1.2, 0)
