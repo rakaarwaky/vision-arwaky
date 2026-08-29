@@ -62,3 +62,6 @@ testpaths = [
 ]
 pythonpath = ["."]
 python_files = ["unit_*.py", "test_*.py"]
+
+[tool.pydocstyle]
+ignore = ["D203"]

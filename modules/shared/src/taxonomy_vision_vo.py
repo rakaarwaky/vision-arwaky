@@ -4,6 +4,13 @@ from __future__ import annotations
 
 from pydantic import BaseModel, Field
 
+from modules.shared.src.taxonomy_vision_constant import (
+    ANALYZE_VIDEO_INTERVAL_S,
+    MIN_MOTION_AREA,
+    SCENE_THRESHOLD,
+    TOP_MOTION_EVENTS_LIMIT,
+)
+
 # pylint: disable=too-few-public-methods
 
 
@@ -136,6 +143,20 @@ class VideoUnderstanding(BaseModel):
         default_factory=list, description="Per key-frame VLM analyses"
     )
     summary: str = Field(..., description="Synthesized analytical summary")
+
+
+class VideoUnderstandingConfig(BaseModel):
+    """Tuning parameters for key-frame selection and VLM analysis.
+
+    Bundles the optional sampling thresholds so the understanding capability
+    exposes a small, stable ``analyze`` signature instead of many positional
+    arguments.
+    """
+
+    interval: float = ANALYZE_VIDEO_INTERVAL_S
+    scene_threshold: float = SCENE_THRESHOLD
+    min_area: int = MIN_MOTION_AREA
+    top_motion: int = TOP_MOTION_EVENTS_LIMIT
 
 
 class Timestamp(BaseModel):
