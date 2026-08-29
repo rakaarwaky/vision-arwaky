@@ -68,7 +68,6 @@ class ImageProcessingProcessor(ImageProcessingProtocol):
                 ValueError,
                 OSError,
                 ImportError,
-                FileNotFoundError,
             ) as e:
                 # Fallback to OCR if LLM fails
                 return VisionAnalysis(

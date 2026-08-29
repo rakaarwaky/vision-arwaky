@@ -158,16 +158,16 @@ class LLMVisionAdapter(LLMVisionProtocol):
                 )
             return str(content or "")
         except requests.exceptions.ConnectionError as e:
-            logger.error(f"Cannot connect to LLM at {self.base_url}: {e}")
+            logger.exception("Cannot connect to LLM at %s", self.base_url)
             raise RuntimeError(
                 f"LLM server not reachable at {self.base_url}. "
                 "Ensure the server is running and a vision model is loaded."
             ) from e
         except requests.exceptions.Timeout as e:
-            logger.error(f"LLM request timed out after {timeout}s: {e}")
+            logger.exception("LLM request timed out after %ss", timeout)
             raise RuntimeError(f"LLM request timed out after {timeout}s") from e
         except Exception as e:
-            logger.error(f"LLM request failed: {e}")
+            logger.exception("LLM request failed")
             raise RuntimeError(f"LLM request failed: {e}") from e
 
     def analyze_image(

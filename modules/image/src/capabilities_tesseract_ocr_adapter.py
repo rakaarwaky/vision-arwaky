@@ -31,5 +31,5 @@ class TesseractOCRAdapter(TesseractOCRProtocol):
             )
             return text.strip()
         except Exception as e:
-            logger.error(f"Tesseract OCR failed: {e}")
+            logger.exception("Tesseract OCR failed")
             raise RuntimeError(f"OCR failed: {e}") from e
