@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 
+from modules.shared.src.taxonomy_vision_constant import DEFAULT_VLM_TIMEOUT_S
 from modules.shared.src.taxonomy_vision_vo import (
     AnalysisPrompt,
     BackendType,
@@ -26,6 +27,6 @@ class LLMVisionProtocol(ABC):
         self,
         image_path: FilePath,
         prompt: AnalysisPrompt,
-        timeout: int = 120,
+        timeout: int = DEFAULT_VLM_TIMEOUT_S,
     ) -> str:
         """Analyze image with custom prompt using the VLM."""

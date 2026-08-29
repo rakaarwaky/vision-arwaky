@@ -7,5 +7,5 @@ class TesseractOCRProtocol(ABC):
     """Abstract port for OCR text extraction services."""
 
     @abstractmethod
-    def extract_text(self, image_path: FilePath, language: LanguageCode):
+    def extract_text(self, image_path: FilePath, language: LanguageCode) -> str:
         """Extract text from image at image_path using OCR."""

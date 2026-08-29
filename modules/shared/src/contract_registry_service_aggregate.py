@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Any
 
 from modules.shared.src.taxonomy_vision_vo import (
     CommandName,
@@ -18,6 +19,6 @@ class RegistryServiceAggregate(ABC):
     def execute_in_process(
         self,
         command: CommandName,
-        kwargs: dict,
+        kwargs: dict[str, Any],
     ) -> CommandOutput:
         """Route and execute a command in-process across the domain."""
