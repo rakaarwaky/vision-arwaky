@@ -3,7 +3,7 @@ import logging
 from modules.shared.src.contract_tesseract_ocr_protocol import (
     TesseractOCRProtocol,
 )
-from modules.shared.src.taxonomy_vision_models_vo import (
+from modules.shared.src.taxonomy_vision_vo import (
     FilePath,
     LanguageCode,
     VisionAnalysis,

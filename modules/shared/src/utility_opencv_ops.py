@@ -11,7 +11,7 @@ from typing import Any
 import cv2
 import numpy
 
-from modules.shared.src.taxonomy_vision_models_vo import (
+from modules.shared.src.taxonomy_vision_vo import (
     BoundingBox,
     FilePath,
     VideoInfo,

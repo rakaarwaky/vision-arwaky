@@ -1,4 +1,4 @@
-"""Shared layer barrel — re-exports all shared types (VO, contract, utility)."""
+"""Shared layer barrel — re-exports all shared types (VO, event, error, constant, contract, utility)."""
 
 from modules.shared.src.contract_ffmpeg_video_protocol import FFmpegVideoProtocol
 from modules.shared.src.contract_image_processing_protocol import (
@@ -21,14 +21,27 @@ from modules.shared.src.contract_video_processing_protocol import (
 from modules.shared.src.contract_video_understanding_protocol import (
     VideoUnderstandingProtocol,
 )
-from modules.shared.src.taxonomy_video_constant import (
+from modules.shared.src.taxonomy_vision_constant import (
     FRAME_EXTRACTION_INTERVAL_S,
     MAX_EXTRACT_FRAMES,
+    MAX_SMART_VIDEO_FRAMES,
+    MAX_SUMMARY_PROMPT_CHARS,
     MAX_TRACK_FRAMES,
     MIN_MOTION_AREA,
     SCENE_THRESHOLD,
 )
-from modules.shared.src.taxonomy_vision_models_vo import (
+from modules.shared.src.taxonomy_vision_error import (
+    DependencyExecutionError,
+    ImageProcessingError,
+    InvalidParameterError,
+    VideoProcessingError,
+    VisionDomainError,
+)
+from modules.shared.src.taxonomy_vision_event import (
+    MotionEvent,
+    SceneChange,
+)
+from modules.shared.src.taxonomy_vision_vo import (
     AnalysisPrompt,
     BackendType,
     BoundingBox,
@@ -41,9 +54,7 @@ from modules.shared.src.taxonomy_vision_models_vo import (
     MaxFrames,
     MinArea,
     ModelName,
-    MotionEvent,
     OcrText,
-    SceneChange,
     SceneThreshold,
     ScreenshotComparison,
     VideoInfo,
@@ -87,23 +98,27 @@ __all__ = [
     "BoundingBox",
     "CommandName",
     "CommandOutput",
+    "DependencyExecutionError",
     "FFmpegVideoProtocol",
     "FilePath",
     "FRAME_EXTRACTION_INTERVAL_S",
     "FrameAnalysis",
+    "ImageProcessingError",
     "ImageProcessingProtocol",
     "IntervalSeconds",
+    "InvalidParameterError",
     "LLMVisionProtocol",
     "LanguageCode",
     "MAX_EXTRACT_FRAMES",
+    "MAX_SMART_VIDEO_FRAMES",
+    "MAX_SUMMARY_PROMPT_CHARS",
     "MAX_TRACK_FRAMES",
     "MIN_MOTION_AREA",
-    "MaxFrames",
     "MinArea",
     "ModelName",
     "MotionEvent",
-    "ObjectTrackingProtocol",
     "OcrText",
+    "ObjectTrackingProtocol",
     "RegistryServiceAggregate",
     "SCENE_THRESHOLD",
     "SceneChange",
@@ -112,10 +127,12 @@ __all__ = [
     "TesseractOCRProtocol",
     "VideoAnalysisProtocol",
     "VideoInfo",
+    "VideoProcessingError",
     "VideoProcessingProtocol",
     "VideoUnderstanding",
     "VideoUnderstandingProtocol",
     "VisionAnalysis",
+    "VisionDomainError",
     "calc_optical_flow",
     "check_video_corruption",
     "compare_histograms",
@@ -141,5 +158,3 @@ __all__ = [
     "validate_path",
     "write_image",
 ]
-
-

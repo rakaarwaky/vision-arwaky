@@ -7,7 +7,7 @@ from modules.shared.src.contract_llm_vision_protocol import LLMVisionProtocol
 from modules.shared.src.contract_tesseract_ocr_protocol import (
     TesseractOCRProtocol,
 )
-from modules.shared.src.taxonomy_vision_models_vo import (
+from modules.shared.src.taxonomy_vision_vo import (
     AnalysisPrompt,
     BoundingBox,
     FilePath,

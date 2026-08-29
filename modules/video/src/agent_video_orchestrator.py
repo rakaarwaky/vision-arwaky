@@ -19,13 +19,13 @@ from modules.shared.src.contract_video_processing_protocol import (
 from modules.shared.src.contract_video_understanding_protocol import (
     VideoUnderstandingProtocol,
 )
-from modules.shared.src.taxonomy_video_constant import (
+from modules.shared.src.taxonomy_vision_constant import (
     FRAME_EXTRACTION_INTERVAL_S,
     MAX_TRACK_FRAMES,
     MIN_MOTION_AREA,
     SCENE_THRESHOLD,
 )
-from modules.shared.src.taxonomy_vision_models_vo import (
+from modules.shared.src.taxonomy_vision_vo import (
     AnalysisPrompt,
     BoundingBox,
     CommandName,

@@ -2,7 +2,7 @@ from modules.shared.src.contract_ffmpeg_video_protocol import FFmpegVideoProtoco
 from modules.shared.src.contract_video_processing_protocol import (
     VideoProcessingProtocol,
 )
-from modules.shared.src.taxonomy_vision_models_vo import (
+from modules.shared.src.taxonomy_vision_vo import (
     FilePath,
     IntervalSeconds,
     VideoInfo,

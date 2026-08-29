@@ -13,7 +13,7 @@ from modules.image.src.capabilities_llm_vision_adapter import LLMVisionAdapter
 from modules.image.src.capabilities_tesseract_ocr_adapter import (
     TesseractOCRAdapter,
 )
-from modules.shared.src.taxonomy_vision_models_vo import (
+from modules.shared.src.taxonomy_vision_vo import (
     FilePath,
     MinArea,
     SceneThreshold,

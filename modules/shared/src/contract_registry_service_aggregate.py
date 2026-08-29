@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from modules.shared.src.taxonomy_vision_models_vo import (
+from modules.shared.src.taxonomy_vision_vo import (
     CommandName,
     CommandOutput,
 )

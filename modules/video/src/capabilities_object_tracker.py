@@ -3,7 +3,7 @@ import cv2
 from modules.shared.src.contract_object_tracking_protocol import (
     ObjectTrackingProtocol,
 )
-from modules.shared.src.taxonomy_vision_models_vo import (
+from modules.shared.src.taxonomy_vision_vo import (
     BoundingBox,
     FilePath,
     MaxFrames,

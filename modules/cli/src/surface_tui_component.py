@@ -16,7 +16,7 @@ from textual.widgets import Button, Footer, Header, Input, Label, Static
 from modules.shared.src.contract_registry_service_aggregate import (
     RegistryServiceAggregate,
 )
-from modules.shared.src.taxonomy_vision_models_vo import CommandName
+from modules.shared.src.taxonomy_vision_vo import CommandName
 from modules.shared.src.utility_config_handler import (
     load_config,
     save_config,

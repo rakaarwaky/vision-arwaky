@@ -17,7 +17,7 @@ from modules.shared.src.contract_video_processing_protocol import (
 from modules.shared.src.contract_video_understanding_protocol import (
     VideoUnderstandingProtocol,
 )
-from modules.shared.src.taxonomy_vision_models_vo import (
+from modules.shared.src.taxonomy_vision_vo import (
     AnalysisPrompt,
     FilePath,
     FrameAnalysis,

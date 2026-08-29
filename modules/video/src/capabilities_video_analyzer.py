@@ -4,14 +4,17 @@ import numpy
 from modules.shared.src.contract_video_analysis_protocol import (
     VideoAnalysisProtocol,
 )
-from modules.shared.src.taxonomy_vision_models_vo import (
+from modules.shared.src.taxonomy_vision_event import (
+    MotionEvent,
+    SceneChange,
+)
+from modules.shared.src.taxonomy_vision_vo import (
     BoundingBox,
     FilePath,
     MinArea,
-    MotionEvent,
-    SceneChange,
     SceneThreshold,
 )
+
 from modules.shared.src.utility_opencv_ops import open_video_capture
 
 

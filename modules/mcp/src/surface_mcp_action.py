@@ -14,7 +14,7 @@ from mcp.server.fastmcp import FastMCP
 from modules.shared.src.contract_registry_service_aggregate import (
     RegistryServiceAggregate,
 )
-from modules.shared.src.taxonomy_vision_models_vo import CommandName
+from modules.shared.src.taxonomy_vision_vo import CommandName
 
 from .surface_mcp_controller import _check_dependencies
 

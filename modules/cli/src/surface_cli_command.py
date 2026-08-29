@@ -6,7 +6,7 @@ from typing import Any
 from modules.shared.src.contract_registry_service_aggregate import (
     RegistryServiceAggregate,
 )
-from modules.shared.src.taxonomy_vision_models_vo import (
+from modules.shared.src.taxonomy_vision_vo import (
     AnalysisPrompt,
     BoundingBox,
     CommandName,

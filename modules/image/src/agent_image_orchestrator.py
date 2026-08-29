@@ -13,7 +13,7 @@ from modules.shared.src.contract_registry_service_aggregate import (
 from modules.shared.src.contract_tesseract_ocr_protocol import (
     TesseractOCRProtocol,
 )
-from modules.shared.src.taxonomy_vision_models_vo import (
+from modules.shared.src.taxonomy_vision_vo import (
     AnalysisPrompt,
     CommandName,
     CommandOutput,

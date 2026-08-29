@@ -9,7 +9,7 @@ from modules.image.src.root_image_container import build_image_feature
 from modules.shared.src.contract_registry_service_aggregate import (
     RegistryServiceAggregate,
 )
-from modules.shared.src.taxonomy_vision_models_vo import CommandName, CommandOutput
+from modules.shared.src.taxonomy_vision_vo import CommandName, CommandOutput
 from modules.video.src.root_video_container import build_video_feature
 
 IMAGE_COMMANDS = {"analyze", "ocr", "compare"}
