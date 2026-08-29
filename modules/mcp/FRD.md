@@ -81,12 +81,11 @@ Primary implementation files are `surface_mcp_action.py`, `surface_mcp_controlle
 | `vision_status` | None | Status JSON or text | Check configuration and dependencies |
 | `vision_cancel` | Optional `job_id` | Cancellation JSON | Inspect jobs or report current cancellation support |
 
-Supported command groups are:
-
 | Domain | Commands |
 |---|---|
-| Image | `analyze`, `ocr`, `elements`, `compare` |
-| Video | `video-info`, `extract-frames`, `convert`, `check-corruption`, `create-gif`, `detect-scenes`, `detect-motion`, `track`, `timeline`, `analyze-video` |
+| Image | `analyze`, `ocr`, `compare` |
+| Video | `video-info`, `extract-frames`, `check-corruption`, `detect-scenes`, `detect-motion`, `track`, `analyze-video` |
+
 
 ## Integration Points
 

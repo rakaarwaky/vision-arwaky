@@ -26,7 +26,7 @@ Primary implementation files are `surface_cli_controller.py`, `surface_cli_comma
 
 ### FR-CLI-001: Parse commands
 
-- **Description:** Expose a stable parser for image, video, smart-video, and test commands.
+- **Description:** Expose a stable parser for image, video, and smart-video commands.
 - **Input:** Command-line arguments.
 - **Output:** Parsed command namespace.
 - **Business rules:** Required paths must be declared as required arguments; optional values must have documented defaults.
@@ -35,7 +35,7 @@ Primary implementation files are `surface_cli_controller.py`, `surface_cli_comma
 
 ### FR-CLI-002: Execute image commands
 
-- **Description:** Route `analyze`, `ocr`, `elements`, and `compare` to the root dispatcher.
+- **Description:** Route `analyze`, `ocr`, and `compare` to the root dispatcher.
 - **Input:** Image paths, optional prompt, and OCR language.
 - **Output:** Printed command result.
 - **Business rules:** The handler passes validated values and does not instantiate image capabilities.
@@ -44,30 +44,12 @@ Primary implementation files are `surface_cli_controller.py`, `surface_cli_comma
 
 ### FR-CLI-003: Execute video commands
 
-- **Description:** Route deterministic video operations and `analyze-video` to the video orchestrator through the root dispatcher.
-- **Input:** Video path and command-specific parameters such as interval, threshold, bounding box, or output path.
+- **Description:** Route deterministic video operations (`video-info`, `extract-frames`, `check-corruption`, `detect-scenes`, `detect-motion`, `track`) and `analyze-video` to the video orchestrator through the root dispatcher.
+- **Input:** Video path and command-specific parameters such as bounding box.
 - **Output:** Printed JSON or structured command output.
-- **Business rules:** `analyze-video` accepts a prompt, frame interval, scene threshold, and minimum motion area. Its interval is interpreted as a frame sampling step.
+- **Business rules:** `analyze-video` accepts a prompt and video path. Frame sampling bounds and parameters are managed predictably.
 - **Edge cases:** Missing media, invalid numeric values, unavailable FFmpeg/OpenCV, unreachable VLM, invalid bounding boxes.
 - **Error handling:** Return a controlled command error and preserve the process status contract.
-
-### FR-CLI-004: Run the test command
-
-- **Description:** Run the repository test suite in-process and optionally execute image and video smoke analysis when fixtures are available.
-- **Input:** Optional test image and verbose flag.
-- **Output:** Test output, optional analysis output, and pytest exit code.
-- **Business rules:** The command dynamically imports pytest so it remains an optional development dependency rather than a runtime import requirement.
-- **Edge cases:** pytest unavailable, fixture missing, VLM unavailable, test failure.
-- **Error handling:** Report test failures without spawning an untrusted shell command and return the pytest result code.
-
-### FR-CLI-005: Extract a middle frame for legacy image analysis
-
-- **Description:** When the generic `analyze` command receives a known video extension, extract a temporary middle frame before routing to image analysis.
-- **Input:** Video path supplied to the image command.
-- **Output:** Image analysis result with temporary file cleanup.
-- **Business rules:** The temporary file must be removed after dispatcher execution.
-- **Edge cases:** Empty video, frame read failure, unsupported codec, write failure.
-- **Error handling:** Fall back to the normal image path behavior or return a controlled error.
 
 ## API Contract
 
@@ -75,11 +57,15 @@ Primary implementation files are `surface_cli_controller.py`, `surface_cli_comma
 |---|---|---|
 | `vision-arwaky-cli analyze` | `--image`, optional `--prompt` | Image analysis output |
 | `vision-arwaky-cli ocr` | `--image`, optional `--lang` | OCR output |
-| `vision-arwaky-cli elements` | `--image` | Element output |
 | `vision-arwaky-cli compare` | `--image1`, `--image2` | Comparison output |
 | `vision-arwaky-cli video-info` | `--video` | Video metadata |
-| `vision-arwaky-cli analyze-video` | `--video`, optional prompt and sampling values | Smart-video JSON |
-| `vision-arwaky-cli test` | optional `--image`, `--verbose` | Test exit status and output |
+| `vision-arwaky-cli extract-frames` | `--video` | Extracted frame paths |
+| `vision-arwaky-cli check-corruption` | `--video` | Video decodability result |
+| `vision-arwaky-cli detect-scenes` | `--video` | Scene transitions |
+| `vision-arwaky-cli detect-motion` | `--video` | Motion events |
+| `vision-arwaky-cli track` | `--video`, `--bbox` | Tracked bounding boxes |
+| `vision-arwaky-cli analyze-video` | `--video`, optional `--prompt` | Smart-video JSON summary |
+
 
 The complete command table is maintained in the root [README.md](../../README.md).
 
