@@ -4,7 +4,7 @@ backend: "external"  # OpenAI-compatible vision API
 # Public, non-secret defaults for an OpenAI-compatible vision endpoint.
 # Keep credentials out of this tracked file.
 external:
-  url: "https://api.modelbest.cn/v1"
-  model: "MiniCPM-V-4.6-1B"
-  # Set LLAMA_API_KEY in the environment or add api_key to:
-  # ~/.config/vision-arwaky/config.yaml
+  url: "http://127.0.0.1:1234/v1"
+  model: "minicpm-v-4_6"
+  # Set the API key in the environment as LLAMA_API_KEY, or add it to:
+  # ~/.config/vision-arwaky/config.yaml (user-level, not tracked)

@@ -82,9 +82,47 @@ for ep in vision-arwaky-cli vision-arwaky-mcp vision-arwaky-tui; do
     fi
 done
 
+# ── Install missing system binaries ───────────────────────
+echo ""
+echo -e "${YELLOW}[5/7]${NC} Installing system binaries (tesseract, ffmpeg)..."
+install_pkg() {
+    # $1 = binary name; installs the distro-appropriate packages via sudo.
+    local bin="$1"
+    if command -v "$bin" >/dev/null 2>&1; then
+        echo -e "${GREEN}✓ ${bin} already installed${NC}"
+        return 0
+    fi
+    if command -v dnf >/dev/null 2>&1; then
+        local pkgs="tesseract tesseract-data-eng"
+        [ "$bin" = "ffmpeg" ] && pkgs="ffmpeg"
+        sudo dnf install -y $pkgs
+    elif command -v apt-get >/dev/null 2>&1; then
+        local pkgs="tesseract-ocr tesseract-ocr-eng"
+        [ "$bin" = "ffmpeg" ] && pkgs="ffmpeg"
+        sudo apt-get install -y $pkgs
+    elif command -v pacman >/dev/null 2>&1; then
+        local pkgs="tesseract tesseract-data-eng"
+        [ "$bin" = "ffmpeg" ] && pkgs="ffmpeg"
+        sudo pacman -S --noconfirm $pkgs
+    elif command -v brew >/dev/null 2>&1; then
+        brew install "$bin"
+    else
+        echo -e "${RED}✗ No supported package manager found to install ${bin}${NC}"
+        return 1
+    fi
+    if command -v "$bin" >/dev/null 2>&1; then
+        echo -e "${GREEN}✓ ${bin} installed${NC}"
+    else
+        echo -e "${RED}✗ ${bin} still missing after install${NC}"
+        return 1
+    fi
+}
+install_pkg tesseract
+install_pkg ffmpeg
+
 # ── Verify CLI ─────────────────────────────────────────────
 echo ""
-echo -e "${YELLOW}[5/5]${NC} Verifying CLI entry points..."
+echo -e "${YELLOW}[6/7]${NC} Verifying CLI entry points..."
 if [ -x "$BIN_DIR/vision-arwaky-cli" ]; then
     echo -e "${GREEN}✓ vision-arwaky-cli — $("$BIN_DIR/vision-arwaky-cli" --help 2>&1 | head -1)${NC}"
 else
@@ -105,7 +143,7 @@ fi
 
 # ── Check deps ─────────────────────────────────────────────
 echo ""
-echo -e "${YELLOW}[6/6]${NC} Dependency check (against venv)..."
+echo -e "${YELLOW}[7/7]${NC} Dependency check (against venv)..."
 DEPS_MISSING=()
 
 "$VENV_PY" -c "import cv2" 2>/dev/null || DEPS_MISSING+=("opencv-python")

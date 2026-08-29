@@ -25,33 +25,13 @@ def main() -> None:
     logger = logging.getLogger("vision-mcp")
     logger.info("Starting Vision MCP Server (AES architecture)")
 
-    @mcp_server.tool(name="vision_execute")
-    def execute(**kwargs):
-        """Execute one supported image or video command."""
-        return vision_execute(**kwargs)
+    mcp_server.tool(name="vision_execute")(vision_execute)
+    mcp_server.tool(name="vision_list_commands")(vision_list_commands)
+    mcp_server.tool(name="vision_help")(vision_help)
+    mcp_server.tool(name="vision_status")(vision_status)
 
-    @mcp_server.tool(name="vision_list_commands")
-    def list_commands(domain: str = ""):
-        """Return the supported command catalog, optionally filtered by domain."""
-        return vision_list_commands(domain)
-
-    @mcp_server.tool(name="vision_help")
-    def help_command(section: str = "all"):
-        """Return all or part of the agent-facing project documentation."""
-        return vision_help(section)
-
-    @mcp_server.tool(name="vision_status")
-    def status():
-        """Return runtime dependency and configuration readiness."""
-        return vision_status()
-
-    @mcp_server.tool(name="vision_cancel")
-    def cancel(job_id: str = ""):
-        """Inspect or cancel a tracked job when asynchronous execution is enabled."""
-        return vision_cancel(job_id)
-
+    # Serve the MCP protocol over stdio. Without this the daemon exits
+    # immediately after registering tools and clients see "connection closed".
     mcp_server.run(transport="stdio")
-
-
 if __name__ == "__main__":
     main()
