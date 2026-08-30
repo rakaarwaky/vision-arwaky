@@ -167,7 +167,7 @@ def compute_phash(image: numpy.ndarray) -> str:
         return hash_val.tobytes().hex()
     except (AttributeError, RuntimeError, TypeError, ValueError, cv2.error) as e:
         logger.warning(f"pHash computation fallback used: {e}")
-        return hashlib.sha1(image.tobytes()).hexdigest()
+        return hashlib.sha256(image.tobytes()).hexdigest()
 
 
 def open_video_capture(path: str | FilePath) -> cv2.VideoCapture:
