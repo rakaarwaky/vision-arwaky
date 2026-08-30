@@ -13,12 +13,12 @@ class SystemConfigurationProtocol(ABC):
     """Protocol for reading and mutating configuration with XDG precedence."""
 
     @abstractmethod
-    def get_config(self, key: Any = "") -> Any:
+    def get_config(self, key: str = "") -> Any:
         """Get the full configuration dictionary or a specific resolved key."""
         ...
 
     @abstractmethod
-    def set_config(self, key: Any, value: Any) -> dict[str, Any]:
+    def set_config(self, key: str, value: Any) -> dict[str, Any]:
         """Mutate and persist a configuration key into the user XDG config file."""
         ...
 

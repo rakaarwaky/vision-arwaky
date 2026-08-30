@@ -143,7 +143,7 @@ from modules.shared.src.utility_system_utils import (
     get_file_size_mb,
     validate_path,
 )
-from modules.shared.src.utility_version import get_package_version
+from modules.shared.src.utility_version_resolver import get_package_version
 from modules.shared.src.utility_xdg_paths import ensure_xdg_dirs
 
 __all__ = [

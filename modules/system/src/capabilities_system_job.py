@@ -15,7 +15,7 @@ from modules.shared.src.utility_config_handler import (
 )
 from modules.shared.src.utility_dependency_checker import check_all_dependencies
 from modules.shared.src.utility_llm_check import check_llm_endpoint
-from modules.shared.src.utility_version import get_package_version
+from modules.shared.src.utility_version_resolver import get_package_version
 
 
 # ─── Block 1: Class Definition & Constructor ──────────────
@@ -23,8 +23,7 @@ class CapabilitiesSystemJob(SystemJobProtocol):
     """Job tracking, lifecycle monitoring, and process cancellation."""
 
     def __init__(self) -> None:
-        """Initialize CapabilitiesSystemJob with empty in-flight registry."""
-        self._active_processes: dict[str, Any] = {}
+        """Initialize CapabilitiesSystemJob."""
 
     # ─── Block 2: Public Contract (SystemJobProtocol ONLY) ────
     def get_status(self) -> dict[str, Any]:
@@ -55,38 +54,20 @@ class CapabilitiesSystemJob(SystemJobProtocol):
                 and deps.get("ffmpeg") == "OK",
                 "llm_vision": llm_ready,
             },
-            "active_jobs": len(self._active_processes),
+            "active_jobs": 0,
         }
 
     def cancel_job(self, job_id: str = "") -> dict[str, Any]:
-        """Cancel a running operation or report active jobs."""
-        if not job_id:
-            if not self._active_processes:
-                return {
-                    "active_jobs": 0,
-                    "supported": False,
-                    "message": "Commands execute synchronously; no cancellable jobs are registered.",
-                }
-            return {
-                "active_jobs": len(self._active_processes),
-                "jobs": list(self._active_processes.keys()),
-            }
-
-        if job_id in self._active_processes:
-            proc = self._active_processes.pop(job_id)
-            if hasattr(proc, "terminate"):
-                proc.terminate()
-            return {"cancelled": job_id}
-
+        """Report that synchronous execution does not support cancellation."""
         return {
-            "error": f"Job {job_id} not found",
+            "active_jobs": 0,
             "supported": False,
-            "message": "No asynchronous jobs are registered by the current execution path.",
+            "message": "Commands execute synchronously; no cancellable jobs are registered.",
         }
 
     # ─── Block 3: Dunder Methods, Factories & Helpers ─────────
     def __repr__(self) -> str:
-        return f"CapabilitiesSystemJob(active={len(self._active_processes)})"
+        return "CapabilitiesSystemJob()"
 
 
 __all__ = ["CapabilitiesSystemJob"]

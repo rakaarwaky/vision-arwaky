@@ -21,7 +21,7 @@ from modules.shared.src.utility_config_handler import (
 )
 from modules.shared.src.utility_dependency_checker import check_all_dependencies
 from modules.shared.src.utility_llm_check import check_llm_endpoint
-from modules.shared.src.utility_version import get_package_version
+from modules.shared.src.utility_version_resolver import get_package_version
 
 mcp = FastMCP("Vision")
 

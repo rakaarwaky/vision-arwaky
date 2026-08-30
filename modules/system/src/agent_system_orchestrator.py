@@ -1,6 +1,9 @@
 """System Agent Orchestrator — coordinates system lifecycle, workspace, and config capabilities."""
 
+from __future__ import annotations
+
 import json
+from collections.abc import Callable
 from typing import Any
 
 from modules.shared.src.contract_registry_service_aggregate import (
@@ -26,10 +29,20 @@ class SystemOrchestrator(RegistryServiceAggregate):
         workspace: WorkspaceProtocol,
         config: SystemConfigurationProtocol,
         job: SystemJobProtocol,
-    ):
+    ) -> None:
         self._workspace = workspace
         self._config = config
         self._job = job
+
+        # Dispatch map: command name -> handler(kwargs) -> CommandOutput
+        self._handlers: dict[str, Callable[[dict[str, Any]], CommandOutput]] = {
+            "init": self._handle_init,
+            "get-config": self._handle_get_config,
+            "config": self._handle_get_config,
+            "set-config": self._handle_set_config,
+            "status": self._handle_status,
+            "cancel": self._handle_cancel,
+        }
 
     def execute_in_process(
         self,
@@ -37,28 +50,40 @@ class SystemOrchestrator(RegistryServiceAggregate):
         kwargs: dict[str, Any],
     ) -> CommandOutput:
         """Execute system commands by delegating to injected capabilities."""
-        if command.value == "init":
-            target_val = kwargs.get("target_dir", ".") or "."
-            target = FilePath(value=str(target_val))
-            result = self._workspace.init_workspace(target)
-            return CommandOutput(value=json.dumps(result, indent=2))
-        if command.value in ("get-config", "config"):
-            key_val = str(kwargs.get("key", "") or "")
-            result = self._config.get_config(key=key_val)
-            return CommandOutput(value=json.dumps(result, indent=2))
-        if command.value == "set-config":
-            key_val = str(kwargs.get("key", ""))
-            val = kwargs.get("value")
-            result = self._config.set_config(key_val, val)
-            return CommandOutput(value=json.dumps(result, indent=2))
-        if command.value == "status":
-            result = self._job.get_status()
-            return CommandOutput(value=json.dumps(result, indent=2))
-        if command.value == "cancel":
-            job_id = str(kwargs.get("job_id", "") or "")
-            result = self._job.cancel_job(job_id)
-            return CommandOutput(value=json.dumps(result, indent=2))
-        raise ValueError(f"Unknown system command: {command.value}")
+        handler = self._handlers.get(command.value)
+        if handler is None:
+            raise ValueError(f"Unknown system command: {command.value}")
+        return handler(kwargs)
+
+    # ─── Private command handlers ─────────────────────────────
+
+    def _handle_init(self, kwargs: dict[str, Any]) -> CommandOutput:
+        target_val = kwargs.get("target_dir", ".") or "."
+        target = FilePath(value=str(target_val))
+        result = self._workspace.init_workspace(target)
+        return CommandOutput(value=json.dumps(result, indent=2))
+
+    def _handle_get_config(self, kwargs: dict[str, Any]) -> CommandOutput:
+        key_val = str(kwargs.get("key", "") or "")
+        result = self._config.get_config(key=key_val)
+        return CommandOutput(value=json.dumps(result, indent=2))
+
+    def _handle_set_config(self, kwargs: dict[str, Any]) -> CommandOutput:
+        key_val = str(kwargs.get("key", ""))
+        val = kwargs.get("value")
+        result = self._config.set_config(key_val, val)
+        return CommandOutput(value=json.dumps(result, indent=2))
+
+    def _handle_status(self, kwargs: dict[str, Any]) -> CommandOutput:
+        _ = kwargs
+        result = self._job.get_status()
+        return CommandOutput(value=json.dumps(result, indent=2))
+
+    def _handle_cancel(self, kwargs: dict[str, Any]) -> CommandOutput:
+        job_id = str(kwargs.get("job_id", "") or "")
+        result = self._job.cancel_job(job_id)
+        return CommandOutput(value=json.dumps(result, indent=2))
 
 
 __all__ = ["SystemOrchestrator"]
+
