@@ -1,4 +1,5 @@
 """Frame extraction utility — stateless video frame extraction."""
+
 from __future__ import annotations
 
 import os
@@ -49,4 +50,3 @@ def extract_frames_at_indices(
     finally:
         cap.release()
     return extracted
-

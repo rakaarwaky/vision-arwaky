@@ -122,9 +122,7 @@ class ImageProcessingProcessor(ImageProcessingProtocol):
         diff = compute_abs_diff(img1, img2)
         gray_diff = to_grayscale(diff)
 
-        thresh = apply_threshold(
-            gray_diff, IMAGE_DIFF_THRESHOLD, IMAGE_MAX_PIXEL_VALUE
-        )
+        thresh = apply_threshold(gray_diff, IMAGE_DIFF_THRESHOLD, IMAGE_MAX_PIXEL_VALUE)
         contours = find_contours(thresh)
 
         differences: list[BoundingBox] = []

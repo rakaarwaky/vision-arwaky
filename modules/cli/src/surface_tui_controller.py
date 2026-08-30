@@ -55,11 +55,24 @@ class MainMenu(Screen):
     ]
 
     def compose(self) -> ComposeResult:
+        from modules.shared.src.utility_dependency_checker import (
+            check_all_dependencies,
+        )
+
+        deps = check_all_dependencies()
+        all_ok = all(v == "OK" for k, v in deps.items() if k != "llm_endpoint")
+        status_line = (
+            "[green]● System Dependencies: OK[/]"
+            if all_ok
+            else "[yellow]▲ System Dependencies: Incomplete[/]"
+        )
+
         yield Header()
         yield Vertical(
             Static(
                 "\n[bold yellow]VISION ARWAKY[/] — Configuration Manager\n", id="title"
             ),
+            Static(f"{status_line}\n", id="summary"),
             Button("⚙  Configuration", id="btn_config", variant="primary"),
             Button("📦 Model Manager", id="btn_models", variant="default"),
             Button("📊 System Status", id="btn_status", variant="default"),
@@ -354,13 +367,13 @@ class TestScreen(Screen):
 
         # 3. Video module
         try:
-            if _dispatcher is not None:
-                result = _dispatcher.execute_in_process(
-                    CommandName(value="video-info"), {"video": "/nonexistent.mp4"}
-                )
-                results.append(("Video Module", result is not None))
-            else:
-                results.append(("Video Module (no dispatcher — skipped)", False))
+            from modules.shared.src.utility_dependency_checker import (
+                check_all_dependencies,
+            )
+
+            deps = check_all_dependencies()
+            video_ok = deps.get("opencv") == "OK" and deps.get("ffmpeg") == "OK"
+            results.append(("Video Module (OpenCV & FFmpeg)", video_ok))
         except _UI_EXCEPTIONS:
             results.append(("Video Module", False))
 
@@ -376,9 +389,7 @@ class TestScreen(Screen):
         # All OK only considers non-skipped checks
         non_skipped = [(n, ok) for n, ok in results if "skipped" not in n.lower()]
         all_ok = all(ok for _, ok in non_skipped)
-        lines.append(
-            f"\n[bold]{'All OK!' if all_ok else 'Some checks failed'}[/]"
-        )
+        lines.append(f"\n[bold]{'All OK!' if all_ok else 'Some checks failed'}[/]")
 
         output.update("\n".join(lines))
 

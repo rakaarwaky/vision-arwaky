@@ -60,8 +60,12 @@ def cli() -> None:
         parser.print_help()
         sys.exit(1)
 
-    orch = _resolve_orchestrator(args.command)
-    sys.exit(COMMANDS[args.command](args, orchestrator=orch) or 0)
+    try:
+        orch = _resolve_orchestrator(args.command)
+        sys.exit(COMMANDS[args.command](args, orchestrator=orch) or 0)
+    except (ValueError, RuntimeError, OSError, KeyError, TypeError) as e:
+        sys.stderr.write(f"Error: {e}\n")
+        sys.exit(1)
 
 
 if __name__ == "__main__":

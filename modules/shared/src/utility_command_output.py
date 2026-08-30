@@ -1,4 +1,5 @@
 """Command output serialization helper."""
+
 from __future__ import annotations
 
 import json
@@ -24,4 +25,3 @@ def to_command_output_list(models: list[BaseModel], indent: int = 2) -> CommandO
 def dict_to_command_output(data: dict[str, Any], indent: int = 2) -> CommandOutput:
     """Serialize dictionary into a CommandOutput VO."""
     return CommandOutput(value=json.dumps(data, indent=indent))
-

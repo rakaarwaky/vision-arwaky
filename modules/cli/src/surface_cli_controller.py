@@ -1,15 +1,23 @@
 import argparse
 
+from modules.shared.src.utility_version_resolver import get_package_version
+
 _HELP_IMAGE_PATH = "Image path"
 _HELP_VIDEO_PATH = "Video path"
 
 
 def create_parser() -> argparse.ArgumentParser:
     """Create the argparse parser for all public CLI commands."""
-
+    pkg_version = get_package_version()
     parser = argparse.ArgumentParser(
         prog="vision-arwaky-cli",
         description="Vision Arwaky — Unified Image & Video Intelligence CLI",
+    )
+    parser.add_argument(
+        "-V",
+        "--version",
+        action="version",
+        version=f"%(prog)s {pkg_version}",
     )
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 

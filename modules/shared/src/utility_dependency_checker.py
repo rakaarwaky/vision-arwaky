@@ -1,4 +1,5 @@
 """Dependency checking utility — stateless single source of truth."""
+
 from __future__ import annotations
 
 import shutil
@@ -29,10 +30,7 @@ def check_python_dependencies() -> dict[str, str]:
 
 def check_binary_dependencies() -> dict[str, str]:
     """Check availability of CLI binary dependencies."""
-    return {
-        name: "OK" if shutil.which(name) else "MISSING"
-        for name in BINARY_DEPS
-    }
+    return {name: "OK" if shutil.which(name) else "MISSING" for name in BINARY_DEPS}
 
 
 def check_all_dependencies() -> dict[str, str]:
@@ -40,4 +38,3 @@ def check_all_dependencies() -> dict[str, str]:
     deps = check_python_dependencies()
     deps.update(check_binary_dependencies())
     return deps
-

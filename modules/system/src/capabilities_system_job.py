@@ -26,15 +26,13 @@ class CapabilitiesSystemJob(SystemJobProtocol):
         """Initialize CapabilitiesSystemJob."""
 
     # ─── Block 2: Public Contract (SystemJobProtocol ONLY) ────
-    def get_status(
-        self, timeout_s: float = DEFAULT_MODELS_TIMEOUT_S
-    ) -> dict[str, Any]:
+    def get_status(self) -> dict[str, Any]:
         """Inspect dependencies, endpoint connectivity, and server capability status."""
         deps = check_all_dependencies()
         base_url, api_key, model = resolve_external_settings()
 
         llm_ready, llm_status = check_llm_endpoint(
-            base_url, api_key, timeout=timeout_s
+            base_url, api_key, timeout=DEFAULT_MODELS_TIMEOUT_S
         )
         deps["llm_endpoint"] = llm_status
 

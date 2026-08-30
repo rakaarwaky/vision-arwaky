@@ -138,7 +138,9 @@ class CapabilitiesSystemWorkspace(WorkspaceProtocol):
         return None
 
     @classmethod
-    def _append_missing_entries(cls, target_file: Path, missing: list[str], entries: list[str]) -> str:
+    def _append_missing_entries(
+        cls, target_file: Path, missing: list[str], entries: list[str]
+    ) -> str:
         """Append missing entries to an existing exclude file."""
         with target_file.open("a", encoding="utf-8") as f:
             for m in missing:

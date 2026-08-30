@@ -51,7 +51,15 @@ def _execute_in_process(command: str, kwargs: dict) -> str:
         cmd_vo = CommandName(value=command)
         return _dispatcher.execute_in_process(cmd_vo, kwargs).value
     except (KeyError, TypeError, ValueError, RuntimeError, OSError) as e:
-        return json.dumps({"error": str(e)})
+        return json.dumps(
+            {
+                "ok": False,
+                "error": {
+                    "code": type(e).__name__,
+                    "message": str(e),
+                },
+            }
+        )
 
 
 @mcp.tool()
@@ -67,8 +75,6 @@ def vision_execute(
     image: str = "",
     image1: str = "",
     image2: str = "",
-    input_path: str = "",
-    output_path: str = "",
     prompt: str = "",
     lang: str = "eng",
     target_dir: str = ".",
@@ -80,8 +86,6 @@ def vision_execute(
         "image1": image1,
         "image2": image2,
         "video": video,
-        "input_path": input_path,
-        "output_path": output_path,
         "lang": lang,
         "prompt": prompt,
         "target_dir": target_dir,

@@ -5,7 +5,7 @@ version: 2.0.7
 ---
 # Vision Arwaky
 
-Vision Arwaky is a Python computer-vision toolkit exposed through a CLI and an MCP server. It provides image analysis, OCR, screenshot comparison, video processing, scene and motion detection, object tracking, agent-readable timelines, and bounded smart-video understanding.
+Vision Arwaky is a Python computer-vision toolkit exposed through a CLI and an MCP server. It provides workspace initialization, image analysis, OCR, screenshot comparison, video processing, scene and motion detection, object tracking, agent-readable timelines, and bounded smart-video understanding.
 
 ## Documentation map
 
@@ -15,17 +15,17 @@ The repository uses three documentation levels with different audiences:
 | Document                 | Audience                       | Focus                                                                            |
 | -------------------------- | -------------------------------- | ---------------------------------------------------------------------------------- |
 | [`PRD.md`](PRD.md)       | Stakeholders and product teams | Product problem, goals, scope, metrics, and risks                                |
-| Feature`FRD.md` files    | Engineers and QA               | Functional requirements, contracts, edge cases, integrations, and test scenarios |
+| Feature `FRD.md` files   | Engineers and QA               | Functional requirements, contracts, edge cases, integrations, and test scenarios |
 | [`README.md`](README.md) | Developers                     | Installation, commands, configuration, testing, and contribution workflow        |
 
-Feature FRDs are available for [system](modules/system/FRD.md), [image](modules/image/FRD.md), [video](modules/video/FRD.md), [CLI](modules/cli/FRD.md), and [MCP](modules/mcp/FRD.md).
+Feature FRDs are available for [shared](modules/shared/FRD.md), [system](modules/system/FRD.md), [image](modules/image/FRD.md), [video](modules/video/FRD.md), [CLI](modules/cli/FRD.md), and [MCP](modules/mcp/FRD.md).
 
 ## Entry points
 
 
 | Command             | Purpose                                          |
 | --------------------- | -------------------------------------------------- |
-| `vision-arwaky-cli` | Run image, video, smart-video, and test commands |
+| `va` / `vision-arwaky-cli` | Run workspace, image, video, and smart-video commands |
 | `vision-arwaky-mcp` | Start the MCP server over stdio                  |
 | `vision-arwaky-tui` | Start the Textual configuration interface        |
 
@@ -38,11 +38,11 @@ The MCP server exposes six tools:
 
 | Tool                   | Purpose                                         |
 | ------------------------ | ------------------------------------------------- |
-| `vision_execute`       | Execute a supported image or video command      |
+| `vision_init`          | Initialize workspace and provision skill guide  |
+| `vision_execute`       | Execute a supported workspace, image, or video command |
 | `vision_list_commands` | List supported command groups and commands      |
 | `vision_help`          | Return this documentation or a selected section |
 | `vision_status`        | Report dependency and model availability        |
-| `vision_init`          | Initialize workspace and provision skill guide  |
 | `vision_cancel`        | Cancel a running operation when supported       |
 
 The MCP entry point is `modules/root_mcp_entry.py`, and the action surface is `modules/mcp/src/surface_mcp_action.py`. Command details are specified in [`modules/mcp/FRD.md`](modules/mcp/FRD.md).
@@ -61,6 +61,14 @@ external:
 ```
 
 The repository does not bundle a model. External mode requires a reachable endpoint and an appropriate vision-capable model. Set credentials through `LLAMA_API_KEY` or `~/.config/vision-arwaky/config.yaml`; never commit an API key to the repository.
+
+## CLI reference: workspace
+
+```text
+init
+  [target_dir] (optional, default: .)
+  Initialize workspace directory structure (.vision-arwaky symlinks to XDG and .agents/skills/vision-arwaky/SKILL.md).
+```
 
 ## CLI reference: image
 
@@ -117,14 +125,6 @@ analyze-video
 
 Smart-video analysis combines scene-change, motion, and uniform sampling. It caps selected frames at 12, bounds the summary prompt, handles per-frame VLM failure with fallback descriptions, and removes temporary frame files after execution.
 
-## CLI reference: workspace
-
-```text
-init
-  [target_dir] (optional, default: .)
-  Initialize workspace directory structure (.vision-arwaky symlinks to XDG and .agents/skills/vision-arwaky/SKILL.md).
-```
-
 ## Configuration and system dependencies
 
 The project reads configuration through `utility_config_handler` and adheres to the Linux XDG Base Directory specification. Keep machine-specific paths and credentials outside version control. Use `LLAMA_API_URL`, `LLAMA_API_KEY`, and `LLAMA_MODEL` for environment overrides. The standard runtime paths are:
@@ -166,4 +166,3 @@ The gates run Ruff formatting, Ruff lint, Mypy, pytest, and `lint-arwaky-cli sca
 ## Current limitations
 
 VLM analysis requires a reachable external vision endpoint and a vision-capable model. OCR requires the Tesseract binary. Video processing requires FFmpeg. Object tracking uses OpenCV trackers rather than a deep-learning detector. Smart-video analysis uses a bounded representative sample rather than exhaustively sending every video frame to the VLM.
-

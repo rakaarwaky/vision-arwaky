@@ -1,4 +1,5 @@
 """Package version resolver utility — stateless standalone function."""
+
 from __future__ import annotations
 
 from importlib.metadata import PackageNotFoundError, version
@@ -12,4 +13,3 @@ def get_package_version() -> str:
         return version(PACKAGE_NAME)
     except PackageNotFoundError:
         return "unknown"
-

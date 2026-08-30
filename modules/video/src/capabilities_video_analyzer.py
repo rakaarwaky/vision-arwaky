@@ -131,7 +131,9 @@ class VideoAnalysisAnalyzer(VideoAnalysisProtocol):
                     timestamp=Timestamp(value=round(timestamp, 2)),
                     magnitude=MotionMagnitude(value=round(magnitude, 6)),
                     direction=(
-                        MotionDirection(value=direction) if direction is not None else None
+                        MotionDirection(value=direction)
+                        if direction is not None
+                        else None
                     ),
                     region=box,
                 )
@@ -173,7 +175,9 @@ class VideoAnalysisAnalyzer(VideoAnalysisProtocol):
                     DILATION_ITERATIONS,
                 )
                 events.extend(
-                    self._find_motion_events(thresh, frame, frame_idx, fps, min_area_val)
+                    self._find_motion_events(
+                        thresh, frame, frame_idx, fps, min_area_val
+                    )
                 )
 
             prev_gray = gray
@@ -181,5 +185,3 @@ class VideoAnalysisAnalyzer(VideoAnalysisProtocol):
 
         cap.release()
         return events
-
-

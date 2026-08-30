@@ -1,4 +1,5 @@
 """LLM endpoint health check utility."""
+
 from __future__ import annotations
 
 import requests
@@ -21,4 +22,3 @@ def check_llm_endpoint(
         return is_ready, "OK" if is_ready else f"HTTP_{resp.status_code}"
     except (OSError, requests.RequestException):
         return False, "UNREACHABLE"
-

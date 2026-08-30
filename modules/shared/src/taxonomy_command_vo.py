@@ -1,4 +1,5 @@
 """Command domain value objects and classification."""
+
 from __future__ import annotations
 
 from enum import Enum
@@ -48,4 +49,3 @@ class CommandDomain(str, Enum):
         if command in SYSTEM_COMMANDS:
             return cls.SYSTEM
         raise ValueError(f"Unknown command: {command}")
-
