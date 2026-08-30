@@ -7,7 +7,7 @@ from typing import Any
 from mcp.server.fastmcp import FastMCP
 
 from modules.image.src.root_image_container import ImageContainer, build_image_feature
-from modules.mcp.src.surface_mcp_action import (
+from modules.mcp.src.surface_mcp_command import (
     set_mcp_dispatcher,
     vision_cancel,
     vision_execute,

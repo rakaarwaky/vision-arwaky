@@ -2,7 +2,7 @@
 
 import json
 
-from modules.mcp.src.surface_mcp_action import (
+from modules.mcp.src.surface_mcp_command import (
     vision_execute,
     vision_help,
     vision_list_commands,

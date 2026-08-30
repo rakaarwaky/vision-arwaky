@@ -1,4 +1,4 @@
-"""MCP surface — pure delegation to dispatcher and shared utilities."""
+"""MCP smart-surface command tools — pure delegation to dispatcher and shared utilities."""
 
 import json
 from pathlib import Path

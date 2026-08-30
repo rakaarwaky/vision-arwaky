@@ -3,7 +3,7 @@
 import json
 from pathlib import Path
 
-from modules.mcp.src.surface_mcp_action import (
+from modules.mcp.src.surface_mcp_command import (
     set_mcp_dispatcher,
     vision_execute,
     vision_init,

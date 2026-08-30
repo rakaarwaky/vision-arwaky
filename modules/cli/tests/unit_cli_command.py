@@ -5,7 +5,7 @@ from pathlib import Path
 
 from modules.cli.src.surface_cli_command import cmd_init, set_cli_dispatcher
 from modules.cli.src.surface_cli_controller import create_parser
-from modules.mcp.src.surface_mcp_action import (
+from modules.mcp.src.surface_mcp_command import (
     set_mcp_dispatcher,
     vision_execute,
     vision_init,
