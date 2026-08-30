@@ -90,15 +90,17 @@ Primary implementation modules are under `modules/video/src/`:
 
 ## API Contract
 
-| Operation | Input | Output | Description |
-|---|---|---|---|
-| `video-info` | `video` | Video metadata JSON | Read video properties |
-| `extract-frames` | `video`, `interval` | JSON path list | Extract sampled frames |
-| `check-corruption` | `video` | Corruption JSON | Validate decodability |
-| `detect-scenes` | `video`, `threshold` | Scene event list | Detect transitions |
-| `detect-motion` | `video`, `min_area` | Motion event list | Detect motion |
-| `track` | `video`, `bbox`, `max_frames` | Bounding-box list | Track an object |
-| `analyze-video` | `video`, optional `prompt` | `VideoUnderstanding` JSON | Smart video understanding |
+| Operation | Public Input | Internal Tuning (Locked) | Output | Description |
+|---|---|---|---|---|
+| `video-info` | `video` | — | Video metadata JSON | Read video properties |
+| `extract-frames` | `video` | `FRAME_EXTRACTION_INTERVAL_S` | JSON path list | Extract sampled frames |
+| `check-corruption` | `video` | — | Corruption JSON | Validate decodability |
+| `detect-scenes` | `video` | `SCENE_THRESHOLD` | Scene event list | Detect transitions |
+| `detect-motion` | `video` | `MIN_MOTION_AREA` | Motion event list | Detect motion |
+| `track` | `video`, `bbox` | `MAX_TRACK_FRAMES` | Bounding-box list | Track an object |
+| `analyze-video` | `video`, optional `prompt` | Bounded sampling (max 12) | `VideoUnderstanding` JSON | Smart video understanding |
+
+> **Note on Parameter Exposure:** The public surfaces (CLI and MCP) intentionally hide parameter tuning values (interval, threshold, min_area, max_frames) to ensure deterministic, bounded execution. Internal orchestrators and capabilities use shared constants from `taxonomy_vision_constant.py`.
 
 The feature uses these shared contracts:
 

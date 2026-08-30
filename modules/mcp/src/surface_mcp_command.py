@@ -72,6 +72,7 @@ def vision_execute(
     prompt: str = "",
     lang: str = "eng",
     target_dir: str = ".",
+    bbox: str = "",
 ) -> str:
     """Execute safe vision commands."""
     kwargs = {
@@ -84,6 +85,7 @@ def vision_execute(
         "lang": lang,
         "prompt": prompt,
         "target_dir": target_dir,
+        "bbox": bbox,
     }
     return _execute_in_process(command, kwargs)
 

@@ -60,18 +60,28 @@ Primary implementation files are `modules/cli/src/surface_cli_controller.py`, `m
 - **Edge cases:** Missing media, invalid numeric values, unavailable FFmpeg/OpenCV, unreachable VLM, invalid bounding boxes.
 - **Error handling:** Return a controlled command error and preserve the process status contract.
 
+### FR-CLI-005: Locked tuning parameters policy
+
+- **Description:** Public CLI surface intentionally does not expose tuning parameters such as frame interval, scene threshold, motion minimum area, and tracking max frames.
+- **Rationale:** Prevent agents and users from guessing tuning values, and keep command behavior bounded, deterministic, and predictable.
+- **Business rules:**
+  - Tuning values are controlled by shared constants (`FRAME_EXTRACTION_INTERVAL_S`, `SCENE_THRESHOLD`, `MIN_MOTION_AREA`, `MAX_TRACK_FRAMES`).
+  - CLI only exposes stable user-facing inputs such as paths, prompt, language, and bbox where required.
+  - Internal orchestrators may still accept tuning kwargs for internal use, but they are not part of the public CLI contract.
+
 ## API Contract
 
-| Entry point | Arguments | Output |
-|---|---|---|
-| `vision-arwaky-cli init` / `va init` | `[target_dir]` (optional, default: `.`) | JSON report of created workspace files and symlinks |
-| `vision-arwaky-cli analyze` / `va analyze` | `--image`, optional `--prompt` | Image analysis output |
-| `vision-arwaky-cli ocr` / `va ocr` | `--image`, optional `--lang` | OCR output |
-| `vision-arwaky-cli compare` / `va compare` | `--image1`, `--image2` | Comparison output |
-| `vision-arwaky-cli video-info` / `va video-info` | `--video` | Video metadata output |
-| `vision-arwaky-cli extract-frames` / `va extract-frames` | `--video`, optional `--interval` | Frame extraction output |
-| `vision-arwaky-cli check-corruption` / `va check-corruption` | `--video` | Decodability check output |
-| `vision-arwaky-cli detect-scenes` / `va detect-scenes` | `--video`, optional `--threshold` | Scene boundary list |
-| `vision-arwaky-cli detect-motion` / `va detect-motion` | `--video`, optional `--min_area` | Motion event list |
-| `vision-arwaky-cli track` / `va track` | `--video`, `--bbox`, optional `--max_frames` | Bounding-box trajectory list |
-| `vision-arwaky-cli analyze-video` / `va analyze-video` | `--video`, optional `--prompt` | Smart-video summary |
+| Entry point | Arguments | Output | Notes |
+|---|---|---|---|
+| `vision-arwaky-cli init` / `va init` | `[target_dir]` (optional, default: `.`) | JSON report of created workspace files and symlinks | Workspace setup |
+| `vision-arwaky-cli analyze` / `va analyze` | `--image`, optional `--prompt` | Image analysis output | VLM with deterministic fallback |
+| `vision-arwaky-cli ocr` / `va ocr` | `--image`, optional `--lang` | OCR output | Default language: `eng` |
+| `vision-arwaky-cli compare` / `va compare` | `--image1`, `--image2` | Comparison output | Structural difference report |
+| `vision-arwaky-cli video-info` / `va video-info` | `--video` | Video metadata output | Basic stream info |
+| `vision-arwaky-cli extract-frames` / `va extract-frames` | `--video` | Frame extraction output | Interval locked by internal constant |
+| `vision-arwaky-cli check-corruption` / `va check-corruption` | `--video` | Decodability check output | Decodability check |
+| `vision-arwaky-cli detect-scenes` / `va detect-scenes` | `--video` | Scene boundary list | Threshold locked by internal constant |
+| `vision-arwaky-cli detect-motion` / `va detect-motion` | `--video` | Motion event list | Minimum area locked by internal constant |
+| `vision-arwaky-cli track` / `va track` | `--video`, `--bbox` | Bounding-box trajectory list | Max frames locked by internal constant |
+| `vision-arwaky-cli analyze-video` / `va analyze-video` | `--video`, optional `--prompt` | Smart-video summary | Bounded key frame VLM analysis |
+
