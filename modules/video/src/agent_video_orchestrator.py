@@ -3,7 +3,6 @@
 import json
 from typing import Any
 
-from modules.shared.src.contract_ffmpeg_video_protocol import FFmpegVideoProtocol
 from modules.shared.src.contract_object_tracking_protocol import (
     ObjectTrackingProtocol,
 )
@@ -47,13 +46,11 @@ class VideoOrchestrator(RegistryServiceAggregate):
         video_processing: VideoProcessingProtocol,
         video_analysis: VideoAnalysisProtocol,
         object_tracking: ObjectTrackingProtocol,
-        ffmpeg: FFmpegVideoProtocol,
         video_understanding: VideoUnderstandingProtocol | None = None,
     ):
         self._video_processing = video_processing
         self._video_analysis = video_analysis
         self._object_tracking = object_tracking
-        self._ffmpeg = ffmpeg
         self._video_understanding = video_understanding
 
     def execute_in_process(
@@ -110,8 +107,13 @@ class VideoOrchestrator(RegistryServiceAggregate):
             )
         elif command.value == "track":
             vid = FilePath(value=kwargs["video"])
-            x, y, w, h = [int(v) for v in kwargs["bbox"].split(",")]
+            parts = kwargs["bbox"].split(",")
+            if len(parts) != 4:
+                raise ValueError("bbox must be exactly 'X,Y,W,H'")
+            x, y, w, h = (int(v) for v in parts)
             bbox = BoundingBox(x=x, y=y, width=w, height=h)
+            if bbox.width <= 0 or bbox.height <= 0:
+                raise ValueError("bbox width and height must be positive")
             max_frames = MaxFrames(value=kwargs.get("max_frames", MAX_TRACK_FRAMES))
             return CommandOutput(
                 value=json.dumps(

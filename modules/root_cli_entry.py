@@ -47,7 +47,7 @@ def _resolve_orchestrator(
     if domain == CommandDomain.IMAGE:
         return ImageContainer().orchestrator
     if domain == CommandDomain.VIDEO:
-        return VideoContainer().orchestrator
+        return VideoContainer(llm_port=ImageContainer().llm).orchestrator
     return SystemContainer().orchestrator
 
 

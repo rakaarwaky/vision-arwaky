@@ -82,3 +82,50 @@ class TestVideoCVOperations:
         flow = calc_optical_flow(prev, nxt)
         assert flow is not None
         assert flow.shape == (80, 80, 2)
+
+    def test_vo_positivity_validation(self):
+        import pytest
+        from pydantic import ValidationError
+
+        from modules.shared.src.taxonomy_vision_vo import (
+            IntervalSeconds,
+            MaxFrames,
+            MinArea,
+            SceneThreshold,
+        )
+
+        with pytest.raises(ValidationError):
+            IntervalSeconds(value=0.0)
+        with pytest.raises(ValidationError):
+            IntervalSeconds(value=-1.5)
+        with pytest.raises(ValidationError):
+            SceneThreshold(value=0.0)
+        with pytest.raises(ValidationError):
+            MinArea(value=0)
+        with pytest.raises(ValidationError):
+            MaxFrames(value=-10)
+
+    def test_video_container_standalone_isolation(self):
+        from modules.video.src.root_video_container import VideoContainer
+
+        container = VideoContainer()
+        assert container.video_understanding is None
+        assert container.orchestrator is not None
+
+    def test_video_orchestrator_bbox_validation(self):
+        import pytest
+
+        from modules.shared.src.taxonomy_vision_vo import CommandName
+        from modules.video.src.root_video_container import VideoContainer
+
+        orch = VideoContainer().orchestrator
+        with pytest.raises(ValueError, match="bbox must be exactly 'X,Y,W,H'"):
+            orch.execute_in_process(
+                CommandName(value="track"),
+                {"video": "dummy.mp4", "bbox": "10,20,30"},
+            )
+        with pytest.raises(ValueError, match="positive"):
+            orch.execute_in_process(
+                CommandName(value="track"),
+                {"video": "dummy.mp4", "bbox": "10,20,-5,100"},
+            )

@@ -47,18 +47,16 @@ def build_video_understanding(
 
 
 def build_video_orchestrator(
-    ffmpeg_port: FFmpegVideoAdapter,
     video_proc: VideoProcessingProcessor,
     video_analysis: VideoAnalysisAnalyzer,
     object_tracking: ObjectTrackingTracker,
-    video_understanding: VideoUnderstandingAnalyzer,
+    video_understanding: VideoUnderstandingAnalyzer | None = None,
 ) -> VideoOrchestrator:
     """Instantiate Video Agent Orchestrator with injected ports."""
     return VideoOrchestrator(
         video_processing=video_proc,
         video_analysis=video_analysis,
         object_tracking=object_tracking,
-        ffmpeg=ffmpeg_port,
         video_understanding=video_understanding,
     )
 
@@ -85,17 +83,16 @@ class VideoContainer:
 
         if video_understanding_port is not None:
             self._video_understanding = video_understanding_port
-        else:
-            if llm_port is None:
-                from modules.image.src.root_image_container import ImageContainer
-
-                llm_port = ImageContainer().llm
+        elif llm_port is not None:
             self._video_understanding = build_video_understanding(
                 self._video_analysis, self._video_processing, llm_port
             )
+        else:
+            # Standalone video container without LLM port: analyze-video raises
+            # a controlled error unless injected via the global root.
+            self._video_understanding = None
 
         self._orchestrator = orchestrator or build_video_orchestrator(
-            self._ffmpeg,
             self._video_processing,
             self._video_analysis,
             self._object_tracking,
@@ -128,7 +125,7 @@ class VideoContainer:
         return self._object_tracking
 
     @property
-    def video_understanding(self) -> VideoUnderstandingAnalyzer:
+    def video_understanding(self) -> VideoUnderstandingAnalyzer | None:
         """Return the VideoUnderstandingAnalyzer capability."""
         return self._video_understanding
 

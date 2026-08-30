@@ -20,7 +20,6 @@ from modules.shared.src.taxonomy_vision_event import (
     SceneChange,
 )
 from modules.shared.src.taxonomy_vision_vo import (
-    BoundingBox,
     FilePath,
     MinArea,
     MotionDirection,
@@ -29,7 +28,20 @@ from modules.shared.src.taxonomy_vision_vo import (
     SimilarityScore,
     Timestamp,
 )
-from modules.shared.src.utility_opencv_ops import open_video_capture
+from modules.shared.src.utility_opencv_ops import (
+    apply_dilate,
+    apply_gaussian_blur,
+    apply_threshold,
+    compare_histograms,
+    compute_abs_diff,
+    compute_histogram_hsv,
+    compute_moments,
+    find_contours,
+    get_bounding_box,
+    get_contour_area,
+    open_video_capture,
+    to_grayscale,
+)
 
 
 class VideoAnalysisAnalyzer(VideoAnalysisProtocol):
@@ -58,19 +70,10 @@ class VideoAnalysisAnalyzer(VideoAnalysisProtocol):
             if not ret:
                 break
 
-            # Compute color histogram
-            hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-            hist = cv2.calcHist(
-                [hsv],
-                [0, 1],
-                None,
-                [HIST_HUE_BINS, HIST_SAT_BINS],
-                [0, 180, 0, 256],
-            )
-            cv2.normalize(hist, hist)
+            hist = compute_histogram_hsv(frame, HIST_HUE_BINS, HIST_SAT_BINS)
 
             if prev_hist is not None:
-                score = cv2.compareHist(prev_hist, hist, cv2.HISTCMP_CORREL)
+                score = compare_histograms(prev_hist, hist)
                 # Low correlation = scene change
                 if score < (1.0 - thresh_val / 100.0):
                     timestamp = frame_idx / fps if fps > 0 else frame_idx
@@ -91,7 +94,7 @@ class VideoAnalysisAnalyzer(VideoAnalysisProtocol):
         self, cnt, x: int, y: int, w: int, h: int
     ) -> float | None:
         """Compute motion direction in degrees from contour moments, or None if indeterminate."""
-        moments = cv2.moments(cnt)
+        moments = compute_moments(cnt)
         if moments["m00"] <= 0:
             return None
         cx = int(moments["m10"] / moments["m00"]) - x - w // 2
@@ -107,19 +110,21 @@ class VideoAnalysisAnalyzer(VideoAnalysisProtocol):
         min_area_val: float,
     ) -> list[MotionEvent]:
         """Extract motion events from a threshold image for a single frame pair."""
-        contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        contours = find_contours(thresh)
         frame_area = frame.shape[0] * frame.shape[1]
         timestamp = frame_idx / fps if fps > 0 else frame_idx
         events: list[MotionEvent] = []
 
         for cnt in contours:
-            area = cv2.contourArea(cnt)
+            area = get_contour_area(cnt)
             if area < min_area_val:
                 continue
 
-            x, y, w, h = cv2.boundingRect(cnt)
+            box = get_bounding_box(cnt)
             magnitude = area / frame_area
-            direction = self._compute_motion_direction(cnt, x, y, w, h)
+            direction = self._compute_motion_direction(
+                cnt, box.x, box.y, box.width, box.height
+            )
 
             events.append(
                 MotionEvent(
@@ -128,7 +133,7 @@ class VideoAnalysisAnalyzer(VideoAnalysisProtocol):
                     direction=(
                         MotionDirection(value=direction) if direction is not None else None
                     ),
-                    region=BoundingBox(x=x, y=y, width=w, height=h),
+                    region=box,
                 )
             )
 
@@ -153,19 +158,20 @@ class VideoAnalysisAnalyzer(VideoAnalysisProtocol):
             if not ret:
                 break
 
-            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            gray = cv2.GaussianBlur(gray, GAUSSIAN_BLUR_KERNEL, 0)
+            gray = apply_gaussian_blur(to_grayscale(frame), GAUSSIAN_BLUR_KERNEL)
 
             if prev_gray is not None:
-                delta = cv2.absdiff(prev_gray, gray)
-                thresh = cv2.threshold(
+                delta = compute_abs_diff(prev_gray, gray)
+                thresh = apply_threshold(
                     delta,
                     MOTION_DIFF_THRESHOLD,
                     MOTION_MAX_PIXEL_VALUE,
-                    cv2.THRESH_BINARY,
-                )[1]
-                kernel = numpy.ones(DILATION_KERNEL_SIZE, dtype=numpy.uint8)
-                thresh = cv2.dilate(thresh, kernel, iterations=DILATION_ITERATIONS)
+                )
+                thresh = apply_dilate(
+                    thresh,
+                    DILATION_KERNEL_SIZE,
+                    DILATION_ITERATIONS,
+                )
                 events.extend(
                     self._find_motion_events(thresh, frame, frame_idx, fps, min_area_val)
                 )
@@ -175,4 +181,5 @@ class VideoAnalysisAnalyzer(VideoAnalysisProtocol):
 
         cap.release()
         return events
+
 

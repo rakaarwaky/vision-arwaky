@@ -2,6 +2,7 @@ from modules.shared.src.contract_ffmpeg_video_protocol import FFmpegVideoProtoco
 from modules.shared.src.contract_video_processing_protocol import (
     VideoProcessingProtocol,
 )
+from modules.shared.src.taxonomy_vision_constant import MAX_EXTRACT_FRAMES
 from modules.shared.src.taxonomy_vision_vo import (
     FilePath,
     IntervalSeconds,
@@ -22,7 +23,7 @@ class VideoProcessingProcessor(VideoProcessingProtocol):
     async def extract_frames(
         self, video_path: FilePath, interval: IntervalSeconds
     ) -> list[FilePath]:
-        """Extract frames from video at specific interval."""
+        """Extract frames from video at specific interval (bounded)."""
         import glob
         import os
 
@@ -31,12 +32,14 @@ class VideoProcessingProcessor(VideoProcessingProtocol):
         for stale in glob.glob(output_pattern.replace("%04d", "*")):
             os.remove(stale)
 
-        # ffmpeg -i input -vf fps=1/interval output_%04d.jpg
+        # ffmpeg -i input -vf fps=1/interval -frames:v MAX_EXTRACT_FRAMES output_%04d.jpg
         args = [
             "-i",
             video_path.value,
             "-vf",
             f"fps=1/{interval.value}",
+            "-frames:v",
+            str(MAX_EXTRACT_FRAMES),
             "-y",
             output_pattern,
         ]

@@ -13,8 +13,6 @@ import cv2
 
 from modules.shared.src.contract_llm_vision_protocol import LLMVisionProtocol
 from modules.shared.src.contract_video_analysis_protocol import (
-    MinArea,
-    SceneThreshold,
     VideoAnalysisProtocol,
 )
 from modules.shared.src.contract_video_processing_protocol import (
@@ -32,12 +30,14 @@ from modules.shared.src.taxonomy_vision_vo import (
     AnalysisPrompt,
     FilePath,
     FrameAnalysis,
+    MinArea,
+    SceneThreshold,
     VideoUnderstanding,
     VideoUnderstandingConfig,
 )
-from modules.shared.src.utility_opencv_ops import open_video_capture
+from modules.shared.src.utility_opencv_ops import open_video_capture, write_image
 
-logger = logging.getLogger("mcp_server.infrastructure.video_understanding")
+logger = logging.getLogger("modules.video.capabilities.video_understanding")
 
 
 class VideoUnderstandingAnalyzer(VideoUnderstandingProtocol):
@@ -85,7 +85,7 @@ class VideoUnderstandingAnalyzer(VideoUnderstandingProtocol):
 
         corrupted = self._video_processing.check_corruption(video_path)
         with tempfile.TemporaryDirectory(prefix="vu_") as out_dir:
-            extracted = self._extract_frames(path, fps, indices, out_dir)
+            extracted = self._extract_frames(path, indices, out_dir)
             frame_analyses, descriptions = self._analyze_frames(
                 extracted, fps, per_frame_prompt
             )
@@ -165,7 +165,6 @@ class VideoUnderstandingAnalyzer(VideoUnderstandingProtocol):
     def _extract_frames(
         self,
         path: str,
-        fps: float,
         indices: list[int],
         out_dir: str,
     ) -> list[tuple[int, str]]:
@@ -179,7 +178,7 @@ class VideoUnderstandingAnalyzer(VideoUnderstandingProtocol):
                 if not ret:
                     continue
                 out_path = os.path.join(out_dir, f"frame_{idx:06d}.jpg")
-                if not cv2.imwrite(out_path, frame):
+                if not write_image(out_path, frame):
                     logger.warning("Failed to write sampled frame %s", out_path)
                     continue
                 extracted.append((idx, out_path))
