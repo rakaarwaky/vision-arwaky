@@ -1,7 +1,7 @@
 ---
 name: vision-arwaky
 description: Unified image and video intelligence for computer vision, OCR, video analysis, object tracking, and MCP integrations.
-version: 2.0.7
+version: 3.0.0
 ---
 # Vision Arwaky
 

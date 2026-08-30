@@ -66,7 +66,9 @@ class SystemOrchestrator(RegistryServiceAggregate):
 
     def _handle_get_config(self, kwargs: dict[str, Any]) -> CommandOutput:
         key_val = str(kwargs.get("key", "") or "")
-        result = self._config.get_config(key=ConfigKey(value=key_val) if key_val else None)
+        result = self._config.get_config(
+            key=ConfigKey(value=key_val) if key_val else None
+        )
         return CommandOutput(value=json.dumps(result, indent=2))
 
     def _handle_set_config(self, kwargs: dict[str, Any]) -> CommandOutput:

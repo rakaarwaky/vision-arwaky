@@ -4,7 +4,9 @@ import subprocess
 import sys
 
 
-def bump_version(current_version):
+def bump_version(current_version, target_version=None):
+    if target_version:
+        return target_version
     parts = current_version.split(".")
     if len(parts) == 3:
         try:
@@ -38,7 +40,8 @@ def main():
         sys.exit(1)
 
     old_version = match.group(1)
-    new_version = bump_version(old_version)
+    target_version = sys.argv[1] if len(sys.argv) > 1 else None
+    new_version = bump_version(old_version, target_version)
 
     new_content = re.sub(
         r'version\s*=\s*"[^"]*"', f'version = "{new_version}"', content, count=1
