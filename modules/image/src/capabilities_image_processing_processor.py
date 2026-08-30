@@ -90,8 +90,7 @@ class ImageProcessingProcessor(ImageProcessingProtocol):
 
     def extract_text(self, image_path: FilePath, lang: LanguageCode) -> OcrText:
         """Extract text from image using OCR."""
-        text_str = self._tesseract.extract_text(image_path, lang)
-        return OcrText(value=text_str)
+        return self._tesseract.extract_text(image_path, lang)
 
     def compare_screenshots(
         self, image_path1: FilePath, image_path2: FilePath

@@ -58,7 +58,7 @@ class CapabilitiesSystemJob(SystemJobProtocol):
             "active_jobs": 0,
         }
 
-    def cancel_job(self, job_id: str = "") -> dict[str, Any]:
+    def cancel_job(self, job_id: CommandOutput | str = "") -> dict[str, Any]:
         """Report that synchronous execution does not support cancellation."""
         return {
             "active_jobs": 0,

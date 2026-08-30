@@ -81,6 +81,7 @@ class VideoContainer:
         self._video_analysis = video_analysis_port or build_video_analysis()
         self._object_tracking = object_tracking_port or build_object_tracking()
 
+        self._video_understanding: VideoUnderstandingAnalyzer | None
         if video_understanding_port is not None:
             self._video_understanding = video_understanding_port
         elif llm_port is not None:
