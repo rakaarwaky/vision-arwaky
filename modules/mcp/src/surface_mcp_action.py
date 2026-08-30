@@ -216,8 +216,9 @@ def vision_status() -> str:
         "llm_vision": llm_ready,
     }
 
+    server_version = get_package_version()
     status: dict[str, Any] = {
-        "server": f"vision-mcp v{get_package_version()}",
+        "server": f"vision-mcp v{server_version}",
         "pattern": "hybrid (6 MCP tools + unlimited CLI)",
         "configuration": status_cfg,
         "dependencies": deps,

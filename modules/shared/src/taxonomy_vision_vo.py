@@ -63,6 +63,12 @@ class CommandName(BaseModel):
     value: str
 
 
+class ConfigKey(BaseModel):
+    """Value object representing a configuration key."""
+
+    value: str = ""
+
+
 class CommandOutput(BaseModel):
     """Value object representing JSON command output."""
 

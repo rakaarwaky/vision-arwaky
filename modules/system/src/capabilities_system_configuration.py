@@ -12,6 +12,7 @@ from typing import Any
 from modules.shared.src.contract_system_configuration_protocol import (
     SystemConfigurationProtocol,
 )
+from modules.shared.src.taxonomy_vision_vo import ConfigKey
 from modules.shared.src.utility_config_handler import (
     get_local_config_path,
     get_user_config_path,
@@ -39,19 +40,20 @@ class CapabilitiesSystemConfiguration(SystemConfigurationProtocol):
         )
 
     # ─── Block 2: Public Contract (SystemConfigurationProtocol ONLY)
-    def get_config(self, key: str = "") -> Any:
+    def get_config(self, key: ConfigKey | str | None = None) -> Any:
         """Resolve full configuration dictionary or a specific key path.
 
         Precedence: Environment variables > User XDG config > Local config.
         """
+        key_str = key.value if isinstance(key, ConfigKey) else (key or "")
         data = load_merged_config(
             user_path=self._user_config_path,
             local_path=self._local_config_path,
         )
-        if not key:
+        if not key_str:
             return data
 
-        keys = key.split(".")
+        keys = key_str.split(".")
         current: Any = data
         for k in keys:
             if isinstance(current, dict) and k in current:
@@ -60,15 +62,16 @@ class CapabilitiesSystemConfiguration(SystemConfigurationProtocol):
                 return None
         return current
 
-    def set_config(self, key: str, value: Any) -> dict[str, Any]:
+    def set_config(self, key: ConfigKey | str, value: Any) -> dict[str, Any]:
         """Mutate and persist key-value pair into the user XDG config file."""
+        key_str = key.value if isinstance(key, ConfigKey) else (key or "")
         user_data = read_yaml_config(self._user_config_path)
 
         # Apply mutation using dot-separated path
-        keys = key.split(".")
-        if not key or any(k == "" for k in keys):
+        keys = key_str.split(".")
+        if not key_str or any(k == "" for k in keys):
             raise ValueError(
-                f"Invalid config key '{key}': key must be non-empty and "
+                f"Invalid config key '{key_str}': key must be non-empty and "
                 "dot-separated segments must not be empty."
             )
         target = user_data

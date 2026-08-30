@@ -26,19 +26,22 @@ class CapabilitiesSystemJob(SystemJobProtocol):
         """Initialize CapabilitiesSystemJob."""
 
     # ─── Block 2: Public Contract (SystemJobProtocol ONLY) ────
-    def get_status(self) -> dict[str, Any]:
+    def get_status(
+        self, timeout_s: float = DEFAULT_MODELS_TIMEOUT_S
+    ) -> dict[str, Any]:
         """Inspect dependencies, endpoint connectivity, and server capability status."""
         deps = check_all_dependencies()
         base_url, api_key, model = resolve_external_settings()
 
         llm_ready, llm_status = check_llm_endpoint(
-            base_url, api_key, timeout=DEFAULT_MODELS_TIMEOUT_S
+            base_url, api_key, timeout=timeout_s
         )
         deps["llm_endpoint"] = llm_status
 
         config_path = find_active_config()
+        pkg_version = get_package_version()
         return {
-            "server": f"vision-mcp v{get_package_version()}",
+            "server": f"vision-mcp v{pkg_version}",
             "configuration": {
                 "config_yaml_detected": config_path is not None,
                 "config_source": str(config_path) if config_path else "none",
