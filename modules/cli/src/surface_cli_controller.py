@@ -5,8 +5,8 @@ def create_parser() -> argparse.ArgumentParser:
     """Create the argparse parser for all public CLI commands."""
 
     parser = argparse.ArgumentParser(
-        prog="vision",
-        description="Vision — Unified Image & Video Intelligence CLI",
+        prog="vision-arwaky-cli",
+        description="Vision Arwaky — Unified Image & Video Intelligence CLI",
     )
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 

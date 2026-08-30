@@ -6,12 +6,10 @@ import tempfile
 
 import cv2
 
-from modules.shared.src.utility_opencv_ops import open_video_capture
-
 
 def extract_middle_frame(video_path: str) -> str | None:
     """Extract middle frame from video to a temporary image file."""
-    cap = open_video_capture(video_path)
+    cap = cv2.VideoCapture(video_path)
     try:
         total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         if total <= 0:
@@ -37,7 +35,7 @@ def extract_frames_at_indices(
 ) -> list[tuple[int, str]]:
     """Extract frames at specified indices to a target directory."""
     extracted: list[tuple[int, str]] = []
-    cap = open_video_capture(video_path)
+    cap = cv2.VideoCapture(video_path)
     try:
         for idx in indices:
             cap.set(cv2.CAP_PROP_POS_FRAMES, idx)

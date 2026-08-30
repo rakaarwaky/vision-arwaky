@@ -1,4 +1,4 @@
-"""Advanced TUI for vision-arwaky configuration using Textual."""
+"""TUI smart-surface controller and screens for vision-arwaky configuration using Textual."""
 
 import os
 from pathlib import Path

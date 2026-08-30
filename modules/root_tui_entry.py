@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from modules.cli.src.surface_tui_component import set_tui_dispatcher, tui_main
+from modules.cli.src.surface_tui_controller import set_tui_dispatcher, tui_main
 from modules.image.src.root_image_container import ImageContainer, build_image_feature
 from modules.shared.src.contract_registry_service_aggregate import (
     RegistryServiceAggregate,
