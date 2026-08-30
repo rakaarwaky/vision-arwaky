@@ -72,13 +72,13 @@ class CommandOutput(BaseModel):
 class SceneThreshold(BaseModel):
     """Value object for video scene transition detection threshold."""
 
-    value: float = 30.0
+    value: float = Field(default=30.0, gt=0)
 
 
 class MinArea(BaseModel):
     """Value object representing minimum pixel area for motion detection."""
 
-    value: int = 500
+    value: int = Field(default=500, gt=0)
 
 
 class AnalysisPrompt(BaseModel):
@@ -96,13 +96,13 @@ class OcrText(BaseModel):
 class IntervalSeconds(BaseModel):
     """Value object for periodic frame extraction interval."""
 
-    value: float = 1.0
+    value: float = Field(default=1.0, gt=0)
 
 
 class MaxFrames(BaseModel):
     """Value object for maximum object tracking frame limit."""
 
-    value: int = 300
+    value: int = Field(default=300, gt=0)
 
 
 class BackendType(BaseModel):

@@ -38,11 +38,12 @@ IMAGE_MAX_PIXEL_VALUE: int = 255
 MIN_DIFF_CONTOUR_AREA: int = 50
 DEFAULT_OCR_LANGUAGE: str = "eng"
 
-# --- VLM HTTP endpoint defaults ---------------------------------------------
+# --- VLM & FFmpeg timeout defaults ------------------------------------------
 DEFAULT_VLM_TIMEOUT_S: int = 120
 DEFAULT_MODELS_TIMEOUT_S: int = 10
 DEFAULT_VLM_TEMPERATURE: float = 0.4
 DEFAULT_VLM_MAX_TOKENS: int = 2048
+FFMPEG_TIMEOUT_S: float = 120.0
 
 # --- Embedded SKILL.md for workspace provisioning ---------------------------
 EMBEDDED_SKILL_MD: str = """---
@@ -226,6 +227,7 @@ __all__ = [
     "DILATION_ITERATIONS",
     "DILATION_KERNEL_SIZE",
     "EMBEDDED_SKILL_MD",
+    "FFMPEG_TIMEOUT_S",
     "FRAME_EXTRACTION_INTERVAL_S",
     "GAUSSIAN_BLUR_KERNEL",
     "HIST_HUE_BINS",

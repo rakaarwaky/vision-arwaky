@@ -35,6 +35,7 @@ from modules.shared.src.taxonomy_command_vo import (
 )
 from modules.shared.src.taxonomy_vision_constant import (
     EMBEDDED_SKILL_MD,
+    FFMPEG_TIMEOUT_S,
     FRAME_EXTRACTION_INTERVAL_S,
     MAX_EXTRACT_FRAMES,
     MAX_SMART_VIDEO_FRAMES,
@@ -149,6 +150,7 @@ __all__ = [
     "ALL_COMMANDS",
     "APP_NAME",
     "EMBEDDED_SKILL_MD",
+    "FFMPEG_TIMEOUT_S",
     "FRAME_EXTRACTION_INTERVAL_S",
     "IMAGE_COMMANDS",
     "MAX_EXTRACT_FRAMES",
