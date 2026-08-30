@@ -17,6 +17,7 @@ from modules.shared.src.contract_workspace_protocol import WorkspaceProtocol
 from modules.shared.src.taxonomy_vision_vo import (
     CommandName,
     CommandOutput,
+    ConfigKey,
     FilePath,
 )
 
@@ -65,13 +66,13 @@ class SystemOrchestrator(RegistryServiceAggregate):
 
     def _handle_get_config(self, kwargs: dict[str, Any]) -> CommandOutput:
         key_val = str(kwargs.get("key", "") or "")
-        result = self._config.get_config(key=key_val)
+        result = self._config.get_config(key=ConfigKey(value=key_val) if key_val else None)
         return CommandOutput(value=json.dumps(result, indent=2))
 
     def _handle_set_config(self, kwargs: dict[str, Any]) -> CommandOutput:
         key_val = str(kwargs.get("key", ""))
         val = kwargs.get("value")
-        result = self._config.set_config(key_val, val)
+        result = self._config.set_config(ConfigKey(value=key_val), val)
         return CommandOutput(value=json.dumps(result, indent=2))
 
     def _handle_status(self, kwargs: dict[str, Any]) -> CommandOutput:

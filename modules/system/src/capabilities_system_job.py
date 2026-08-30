@@ -9,6 +9,7 @@ from typing import Any
 
 from modules.shared.src.contract_system_job_protocol import SystemJobProtocol
 from modules.shared.src.taxonomy_vision_constant import DEFAULT_MODELS_TIMEOUT_S
+from modules.shared.src.taxonomy_vision_vo import CommandOutput
 from modules.shared.src.utility_config_handler import (
     find_active_config,
     resolve_external_settings,
