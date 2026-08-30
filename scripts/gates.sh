@@ -9,16 +9,17 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 echo "==> [1/5] ruff format --check"
-uv run ruff format --check modules/ tests/
+uv run ruff format --check modules/
 
 echo "==> [2/5] ruff check"
-uv run ruff check modules/ tests/
+uv run ruff check modules/
 
 echo "==> [3/5] mypy"
 uv run mypy modules/
 
 echo "==> [4/5] pytest"
-uv run python3 -m pytest tests/ -q
+uv run python3 -m pytest modules/ -q
+
 
 echo "==> [5/5] lint-arwaky-cli scan . (must be 0 violations)"
 output=$(lint-arwaky-cli scan . 2>&1) || true

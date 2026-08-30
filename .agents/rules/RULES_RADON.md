@@ -1,6 +1,6 @@
 # Radon Code Complexity Rules
 
-See [README.md](../../README.md) for Python adapter usage and [RULES_RUFF.md](RULES_RUFF.md) for related Python linting.
+See [README.md](../README.md) for Python adapter usage and [RULES_RUFF.md](RULES_RUFF.md) for related Python linting.
 
 Radon is a Python tool that computes code metrics, available at https://radon.readthedocs.io/. It measures cyclomatic complexity and maintainability index.
 

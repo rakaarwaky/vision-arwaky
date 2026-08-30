@@ -1,23 +1,23 @@
-"""Object tracking using OpenCV tracking algorithms."""
-
 import cv2
 
 from modules.shared.src.contract_object_tracking_protocol import (
     ObjectTrackingProtocol,
 )
-from modules.shared.src.contract_opencv_image_protocol import OpenCVImageProtocol
-from modules.shared.src.taxonomy_vision_models_vo import (
+from modules.shared.src.taxonomy_vision_constant import MAX_TRACK_FRAMES
+from modules.shared.src.taxonomy_vision_vo import (
     BoundingBox,
     FilePath,
     MaxFrames,
 )
+from modules.shared.src.utility_opencv_ops import open_video_capture
 
 
 class ObjectTrackingTracker(ObjectTrackingProtocol):
     """Track objects through video frames using OpenCV trackers."""
 
-    def __init__(self, opencv_port: OpenCVImageProtocol):
-        self._opencv = opencv_port
+    def __init__(self):
+        # No instance state required; tracker instances are created on demand per call.
+        pass
 
     def _create_tracker(self):
         """Helper to dynamically construct the OpenCV tracker to avoid complexity and mypy issues."""
@@ -56,7 +56,7 @@ class ObjectTrackingTracker(ObjectTrackingProtocol):
         max_frames: MaxFrames,
     ) -> list[BoundingBox]:
         """Track an object starting from an initial bounding box."""
-        cap = self._opencv.get_video_capture(video_path.value)
+        cap = open_video_capture(video_path)
         if not cap.isOpened():
             return []
 
@@ -88,7 +88,7 @@ class ObjectTrackingTracker(ObjectTrackingProtocol):
 
         boxes: list[BoundingBox] = [initial_box]
         frame_count = 0
-        max_frames_val = max_frames.value if max_frames else 300
+        max_frames_val = max_frames.value if max_frames else MAX_TRACK_FRAMES
 
         while frame_count < max_frames_val:
             ret, frame = cap.read()

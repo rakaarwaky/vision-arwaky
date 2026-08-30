@@ -2,19 +2,35 @@ from modules.shared.src.contract_image_processing_protocol import (
     ImageProcessingProtocol,
 )
 from modules.shared.src.contract_llm_vision_protocol import LLMVisionProtocol
-from modules.shared.src.contract_opencv_image_protocol import OpenCVImageProtocol
 from modules.shared.src.contract_tesseract_ocr_protocol import (
     TesseractOCRProtocol,
 )
-from modules.shared.src.taxonomy_vision_models_vo import (
+from modules.shared.src.taxonomy_vision_constant import (
+    DEFAULT_OCR_LANGUAGE,
+    IMAGE_DIFF_THRESHOLD,
+    IMAGE_MAX_PIXEL_VALUE,
+    MIN_DIFF_CONTOUR_AREA,
+)
+from modules.shared.src.taxonomy_vision_vo import (
     AnalysisPrompt,
     BoundingBox,
-    Detection,
     FilePath,
     LanguageCode,
     OcrText,
     ScreenshotComparison,
     VisionAnalysis,
+)
+from modules.shared.src.utility_opencv_ops import (
+    apply_threshold,
+    compute_abs_diff,
+    compute_phash,
+    find_contours,
+    get_bounding_box,
+    get_contour_area,
+    pad_image_border,
+    read_image,
+    resize_image,
+    to_grayscale,
 )
 
 
@@ -23,21 +39,19 @@ class ImageProcessingProcessor(ImageProcessingProtocol):
 
     def __init__(
         self,
-        opencv_port: OpenCVImageProtocol,
         tesseract_port: TesseractOCRProtocol,
         llm_port: LLMVisionProtocol,
     ):
-        self._opencv = opencv_port
         self._tesseract = tesseract_port
         self._llm = llm_port
 
     def analyze_screenshot(
         self, image_path: FilePath, prompt: AnalysisPrompt
     ) -> VisionAnalysis:
-        """Analyze screenshot for UI elements and text.
+        """Analyze screenshot for text and visual content.
 
         If prompt is provided and a local VLM is available, use LLM for
-        open-ended visual analysis. Otherwise fallback to OCR + element detection.
+        open-ended visual analysis. Otherwise fallback to OCR text extraction.
         """
         p_val = prompt.value if prompt else None
         if p_val:
@@ -55,60 +69,35 @@ class ImageProcessingProcessor(ImageProcessingProtocol):
                 ValueError,
                 OSError,
                 ImportError,
-                FileNotFoundError,
             ) as e:
-                # Fallback to OpenCV if LLM fails
+                # Fallback to OCR if LLM fails
                 return VisionAnalysis(
                     source="opencv",
-                    text=self.extract_text(image_path, LanguageCode(value="eng")).value,
-                    elements=self.find_elements(image_path),
+                    text=self.extract_text(
+                        image_path, LanguageCode(value=DEFAULT_OCR_LANGUAGE)
+                    ).value,
                     error=str(e),
                 )
 
-        # Default: OCR + element detection
-        text = self.extract_text(image_path, LanguageCode(value="eng")).value
-        elements = self.find_elements(image_path)
+        # Default: OCR text extraction
+        text = self.extract_text(
+            image_path, LanguageCode(value=DEFAULT_OCR_LANGUAGE)
+        ).value
         return VisionAnalysis(
             source="opencv",
             text=text,
-            elements=elements,
         )
 
     def extract_text(self, image_path: FilePath, lang: LanguageCode) -> OcrText:
         """Extract text from image using OCR."""
-        text_str = self._tesseract.extract_text(image_path, lang)
-        return OcrText(value=text_str)
-
-    def find_elements(self, image_path: FilePath) -> list[Detection]:
-        """Find UI elements (buttons, input fields, etc)."""
-        image = self._opencv.read_image(image_path)
-        if image is None:
-            raise ValueError(f"Failed to load image: {image_path.value}")
-
-        gray = self._opencv.to_grayscale(image)
-        edges = self._opencv.detect_edges(gray, 50, 150)
-        contours = self._opencv.find_contours(edges)
-
-        detections = []
-        for cnt in contours:
-            area = self._opencv.get_contour_area(cnt)
-            if area > 100:  # Filter out noise
-                x, y, w, h = self._opencv.get_bounding_box(cnt)
-                detections.append(
-                    Detection(
-                        label="ui_element",
-                        confidence=1.0,
-                        bbox=BoundingBox(x=x, y=y, width=w, height=h),
-                    )
-                )
-        return detections
+        return self._tesseract.extract_text(image_path, lang)
 
     def compare_screenshots(
         self, image_path1: FilePath, image_path2: FilePath
     ) -> ScreenshotComparison:
         """Compare two screenshots and find differences."""
-        img1 = self._opencv.read_image(image_path1)
-        img2 = self._opencv.read_image(image_path2)
+        img1 = read_image(image_path1)
+        img2 = read_image(image_path2)
 
         if img1 is None or img2 is None:
             raise ValueError("Failed to load one or both images")
@@ -118,37 +107,31 @@ class ImageProcessingProcessor(ImageProcessingProtocol):
             h2, w2 = img2.shape[:2]
             scale = min(w1 / w2, h1 / h2)
             new_w, new_h = int(w2 * scale), int(h2 * scale)
-            img2 = self._opencv.cv2.resize(img2, (new_w, new_h))
+            img2 = resize_image(img2, new_w, new_h)
             # Center-pad if needed
             if new_w < w1 or new_h < h1:
-                padded = self._opencv.cv2.copyMakeBorder(
+                img2 = pad_image_border(
                     img2,
-                    0,
-                    h1 - new_h,
-                    0,
-                    w1 - new_w,
-                    self._opencv.cv2.BORDER_CONSTANT,
-                    value=[0, 0, 0],
+                    top=0,
+                    bottom=h1 - new_h,
+                    left=0,
+                    right=w1 - new_w,
                 )
-                img2 = padded
 
-        diff = self._opencv.abs_diff(img1, img2)
-        gray_diff = self._opencv.to_grayscale(diff)
+        diff = compute_abs_diff(img1, img2)
+        gray_diff = to_grayscale(diff)
 
-        _, thresh = self._opencv.cv2.threshold(
-            gray_diff, 30, 255, self._opencv.cv2.THRESH_BINARY
-        )
-        contours = self._opencv.find_contours(thresh)
+        thresh = apply_threshold(gray_diff, IMAGE_DIFF_THRESHOLD, IMAGE_MAX_PIXEL_VALUE)
+        contours = find_contours(thresh)
 
         differences: list[BoundingBox] = []
         for cnt in contours:
-            area = self._opencv.get_contour_area(cnt)
-            if area > 50:
-                x, y, w, h = self._opencv.get_bounding_box(cnt)
-                differences.append(BoundingBox(x=x, y=y, width=w, height=h))
+            area = get_contour_area(cnt)
+            if area > MIN_DIFF_CONTOUR_AREA:
+                differences.append(get_bounding_box(cnt))
 
-        hash1 = self._opencv.compute_phash(img1)
-        hash2 = self._opencv.compute_phash(img2)
+        hash1 = compute_phash(img1)
+        hash2 = compute_phash(img2)
 
         return ScreenshotComparison(
             identical=len(differences) == 0 and hash1 == hash2,

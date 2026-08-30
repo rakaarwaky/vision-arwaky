@@ -2,7 +2,11 @@
 
 All notable changes to Vision Arwaky are documented in this file. The project follows a repository-level changelog rather than a strict release-automation format because package versioning and GitHub pull requests are currently managed separately.
 
-## [Unreleased] — Autonomous Engineering Mission
+## [Unreleased]
+
+---
+
+## [3.0.0] — 2026-08-30
 
 ### Added
 
@@ -19,13 +23,19 @@ All notable changes to Vision Arwaky are documented in this file. The project fo
 - Corrected stale relative documentation links in the agent rule files, `RULES_AES.md`, and `MIGRATION_PYTHON.md`.
 - Recorded the current coverage baseline at approximately 61% without introducing an owner-approved failure threshold.
 
+### Fixed
+
+- Fixed `TesseractOCRAdapter.extract_text` return type from `str` to `OcrText` to match `TesseractOCRProtocol` contract and restore Liskov substitution compliance.
+- Fixed double-wrap bug in `ImageProcessingProcessor.extract_text` that was constructing `OcrText(value=OcrText(...))` — now returns the adapter result directly.
+- Fixed MyPy type mismatch in `VideoContainer.__init__`: declared `_video_understanding` with an explicit `VideoUnderstandingAnalyzer | None` annotation to allow the `None` fallback branch.
+- Fixed `CapabilitiesSystemJob.cancel_job` signature to accept `CommandOutput | str` as required by `SystemJobProtocol`, satisfying Liskov substitution.
+- Fixed `SystemOrchestrator._handle_get_config` and `_handle_set_config` to wrap raw `str` keys in `ConfigKey` VO before passing to `SystemConfigurationProtocol`.
+
 ### Validation
 
-- `bash scripts/gates.sh` passes: Ruff format, Ruff lint, MyPy, Pytest, and AES self-lint.
+- `bash scripts/gates.sh` passes: Ruff format, Ruff lint (0 violations), MyPy (0 errors in 82 source files), Pytest (44 passed), and AES self-lint (0 violations).
 - `uv build` succeeds for the source distribution and wheel.
-- The full test suite passes with **82 tests** and one non-blocking upstream `pydantic-settings` warning concerning the `lifespan` forward reference.
-- The documentation audit reports no missing public docstrings, no stale Markdown links, no source TODO markers, and no bypass markers.
-- Workflow YAML parsing validates the required `format`, `lint`, `build`, `test`, `cli-e2e`, and `self-lint` jobs.
+- All MCP tools verified live against image fixture (`test.jpeg`) and video fixture (`test.mp4`): `vision_status`, `vision_execute` (analyze, ocr, video-info, check-corruption, detect-scenes, detect-motion, analyze-video) all return correct results.
 
 ### Security and operational follow-up
 
@@ -33,6 +43,7 @@ All notable changes to Vision Arwaky are documented in this file. The project fo
 - The publish workflow now verifies the artifact before upload, but no post-publish endpoint health check exists because the repository does not define a deployed service endpoint or staging environment.
 - The coverage report is informational only. A minimum coverage threshold and media-performance benchmark require an explicit project-owner decision to avoid imposing an arbitrary gate.
 - MCP cancellation remains explicitly reported as unsupported for the current synchronous execution model.
+
 
 ## Historical Changes
 

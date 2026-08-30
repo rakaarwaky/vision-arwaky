@@ -2,118 +2,86 @@
 
 ## System Overview
 
-The CLI is the developer-facing command surface for Vision Arwaky. It parses arguments into command-specific namespaces, builds the application graph, injects the root dispatcher, calls a command handler, and prints the returned value. Command handlers do not compose feature implementations; all execution is routed through the aggregate facade.
+The CLI is the developer-facing command surface for Vision Arwaky (available via `vision-arwaky-cli` and the short alias `va`). It parses arguments into command-specific namespaces, determines the target domain via `CommandDomain.from_command()`, instantiates the corresponding domain container, and invokes the command handler with the container's orchestrator.
 
 ```text
-vision-arwaky-cli
+vision-arwaky-cli / va
         │
         ▼
-argparse controller
+argparse controller (`surface_cli_controller.py`)
         │
         ▼
-command handler surface
+command handler surface (`surface_cli_command.py`)
         │
         ▼
-RootDispatcher
-        │
-        ▼
-Image / Video feature graph
+_resolve_orchestrator (`root_cli_entry.py`)
+  ├── ImageContainer  → ImageOrchestrator
+  ├── VideoContainer  → VideoOrchestrator
+  └── SystemContainer → SystemOrchestrator
 ```
 
-Primary implementation files are `surface_cli_controller.py`, `surface_cli_command.py`, and `root_cli_entry.py`.
+Primary implementation files are `modules/cli/src/surface_cli_controller.py`, `modules/cli/src/surface_cli_command.py`, `modules/cli/src/surface_tui_component.py`, `modules/root_cli_entry.py`, and `modules/root_tui_entry.py`.
 
 ## Functional Requirements
 
 ### FR-CLI-001: Parse commands
 
-- **Description:** Expose a stable parser for image, video, smart-video, and test commands.
+- **Description:** Expose a stable parser for workspace, image, video, and smart-video commands.
 - **Input:** Command-line arguments.
 - **Output:** Parsed command namespace.
 - **Business rules:** Required paths must be declared as required arguments; optional values must have documented defaults.
 - **Edge cases:** No command, unknown command, missing required argument, malformed numeric value.
 - **Error handling:** Argparse must print usage and return a non-zero process status for invalid invocations.
 
-### FR-CLI-002: Execute image commands
+### FR-CLI-002: Execute workspace commands
 
-- **Description:** Route `analyze`, `ocr`, `elements`, and `compare` to the root dispatcher.
+- **Description:** Route `init` to the workspace provisioner through the system orchestrator.
+- **Input:** Optional `target_dir` (default: `.`).
+- **Output:** JSON summary of created XDG paths, symlinks, skill guide file, and git exclusion status.
+- **Business rules:** Creates `.agents/skills/vision-arwaky/SKILL.md` from the embedded constant, provisions `.vision-arwaky` symlinks pointing to XDG directories, symlinks `.venv` if an XDG virtualenv exists, and adds entries to `.git/info/exclude` (or fallback `.gitignore`).
+- **Edge cases:** Missing `.git` directory, non-existent target path, existing symlinks/files.
+- **Error handling:** Safe idempotent creation, overwriting invalid symlinks, and returning structured status.
+
+### FR-CLI-003: Execute image commands
+
+- **Description:** Route `analyze`, `ocr`, and `compare` to the image orchestrator. Video files passed to `analyze` have their middle frame extracted via `utility_frame_extractor`.
 - **Input:** Image paths, optional prompt, and OCR language.
 - **Output:** Printed command result.
-- **Business rules:** The handler passes validated values and does not instantiate image capabilities.
+- **Business rules:** The handler passes validated values and does not instantiate image capabilities directly.
 - **Edge cases:** Missing files, unavailable VLM, unavailable Tesseract, invalid comparison pair.
-- **Error handling:** Preserve the dispatcher’s controlled error behavior and return a non-zero status where appropriate.
+- **Error handling:** Preserve controlled error behavior and return a non-zero status where appropriate.
 
-### FR-CLI-003: Execute video commands
+### FR-CLI-004: Execute video commands
 
-- **Description:** Route deterministic video operations and `analyze-video` to the video orchestrator through the root dispatcher.
-- **Input:** Video path and command-specific parameters such as interval, threshold, bounding box, or output path.
+- **Description:** Route deterministic video operations (`video-info`, `extract-frames`, `check-corruption`, `detect-scenes`, `detect-motion`, `track`) and `analyze-video` to the video orchestrator.
+- **Input:** Video path and command-specific parameters such as bounding box.
 - **Output:** Printed JSON or structured command output.
-- **Business rules:** `analyze-video` accepts a prompt, frame interval, scene threshold, and minimum motion area. Its interval is interpreted as a frame sampling step.
+- **Business rules:** `analyze-video` accepts a prompt and video path. Frame sampling bounds and parameters are managed predictably.
 - **Edge cases:** Missing media, invalid numeric values, unavailable FFmpeg/OpenCV, unreachable VLM, invalid bounding boxes.
 - **Error handling:** Return a controlled command error and preserve the process status contract.
 
-### FR-CLI-004: Run the test command
+### FR-CLI-005: Locked tuning parameters policy
 
-- **Description:** Run the repository test suite in-process and optionally execute image and video smoke analysis when fixtures are available.
-- **Input:** Optional test image and verbose flag.
-- **Output:** Test output, optional analysis output, and pytest exit code.
-- **Business rules:** The command dynamically imports pytest so it remains an optional development dependency rather than a runtime import requirement.
-- **Edge cases:** pytest unavailable, fixture missing, VLM unavailable, test failure.
-- **Error handling:** Report test failures without spawning an untrusted shell command and return the pytest result code.
-
-### FR-CLI-005: Extract a middle frame for legacy image analysis
-
-- **Description:** When the generic `analyze` command receives a known video extension, extract a temporary middle frame before routing to image analysis.
-- **Input:** Video path supplied to the image command.
-- **Output:** Image analysis result with temporary file cleanup.
-- **Business rules:** The temporary file must be removed after dispatcher execution.
-- **Edge cases:** Empty video, frame read failure, unsupported codec, write failure.
-- **Error handling:** Fall back to the normal image path behavior or return a controlled error.
+- **Description:** Public CLI surface intentionally does not expose tuning parameters such as frame interval, scene threshold, motion minimum area, and tracking max frames.
+- **Rationale:** Prevent agents and users from guessing tuning values, and keep command behavior bounded, deterministic, and predictable.
+- **Business rules:**
+  - Tuning values are controlled by shared constants (`FRAME_EXTRACTION_INTERVAL_S`, `SCENE_THRESHOLD`, `MIN_MOTION_AREA`, `MAX_TRACK_FRAMES`).
+  - CLI only exposes stable user-facing inputs such as paths, prompt, language, and bbox where required.
+  - Internal orchestrators may still accept tuning kwargs for internal use, but they are not part of the public CLI contract.
 
 ## API Contract
 
-| Entry point | Arguments | Output |
-|---|---|---|
-| `vision-arwaky-cli analyze` | `--image`, optional `--prompt` | Image analysis output |
-| `vision-arwaky-cli ocr` | `--image`, optional `--lang` | OCR output |
-| `vision-arwaky-cli elements` | `--image` | Element output |
-| `vision-arwaky-cli compare` | `--image1`, `--image2` | Comparison output |
-| `vision-arwaky-cli video-info` | `--video` | Video metadata |
-| `vision-arwaky-cli analyze-video` | `--video`, optional prompt and sampling values | Smart-video JSON |
-| `vision-arwaky-cli test` | optional `--image`, `--verbose` | Test exit status and output |
+| Entry point | Arguments | Output | Notes |
+|---|---|---|---|
+| `vision-arwaky-cli init` / `va init` | `[target_dir]` (optional, default: `.`) | JSON report of created workspace files and symlinks | Workspace setup |
+| `vision-arwaky-cli analyze` / `va analyze` | `--image`, optional `--prompt` | Image analysis output | VLM with deterministic fallback |
+| `vision-arwaky-cli ocr` / `va ocr` | `--image`, optional `--lang` | OCR output | Default language: `eng` |
+| `vision-arwaky-cli compare` / `va compare` | `--image1`, `--image2` | Comparison output | Structural difference report |
+| `vision-arwaky-cli video-info` / `va video-info` | `--video` | Video metadata output | Basic stream info |
+| `vision-arwaky-cli extract-frames` / `va extract-frames` | `--video` | Frame extraction output | Interval locked by internal constant |
+| `vision-arwaky-cli check-corruption` / `va check-corruption` | `--video` | Decodability check output | Decodability check |
+| `vision-arwaky-cli detect-scenes` / `va detect-scenes` | `--video` | Scene boundary list | Threshold locked by internal constant |
+| `vision-arwaky-cli detect-motion` / `va detect-motion` | `--video` | Motion event list | Minimum area locked by internal constant |
+| `vision-arwaky-cli track` / `va track` | `--video`, `--bbox` | Bounding-box trajectory list | Max frames locked by internal constant |
+| `vision-arwaky-cli analyze-video` / `va analyze-video` | `--video`, optional `--prompt` | Smart-video summary | Bounded key frame VLM analysis |
 
-The complete command table is maintained in the root [README.md](../../README.md).
-
-## Integration Points
-
-The CLI integrates with `root_composition_container.build`, `RootDispatcher`, and all feature orchestrators. It is packaged as `vision-arwaky-cli` through the `project.scripts` configuration in `pyproject.toml`.
-
-## Non-functional Requirements
-
-- **Usability:** `--help` must describe every command and its required arguments.
-- **Safety:** User-provided input must remain data passed to Python APIs, not shell-evaluated command strings.
-- **Testability:** Parser registration, handler routing, and entry-point imports must be testable without a live VLM.
-- **Compatibility:** The CLI must run on Python 3.12 and 3.13.
-- **Output stability:** Command handlers should print dispatcher output without introducing inconsistent ad-hoc schemas.
-
-## Test Scenarios / QA Checklist
-
-- [ ] `vision-arwaky-cli --help` lists every command.
-- [ ] `vision-arwaky-cli analyze-video --help` lists its sampling options.
-- [ ] Image parser tests cover all four image commands.
-- [ ] Video parser tests cover all deterministic commands and `analyze-video`.
-- [ ] Missing required arguments return a parser error.
-- [ ] The test command reports missing pytest cleanly.
-- [ ] Temporary middle-frame files are deleted after image analysis.
-- [ ] CLI entry module imports without building an external model.
-- [ ] `bash scripts/gates.sh` passes.
-
-## Assumptions and Constraints
-
-The CLI assumes that project dependencies are installed through `uv sync` and that system dependencies are available for the selected command. VLM-backed commands require a configured external endpoint, while deterministic commands do not.
-
-## Reference
-
-- [Product requirements](../../PRD.md)
-- [MCP FRD](../mcp/FRD.md)
-- [Developer README](../../README.md)
-- [Agent-facing skill](../../SKILL.md)

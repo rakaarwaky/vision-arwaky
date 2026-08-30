@@ -2,7 +2,7 @@
 
 ## System Overview
 
-The image feature provides image analysis, OCR, UI-element detection, and screenshot comparison. Its root container assembles concrete adapters behind shared contracts and injects them into `ImageOrchestrator`. CLI and MCP surfaces call the aggregate facade rather than constructing image capabilities directly.
+The image feature provides image analysis, OCR, and screenshot comparison. Its root container assembles concrete adapters behind shared contracts and injects them into `ImageOrchestrator`. CLI and MCP surfaces call the aggregate facade rather than constructing image capabilities directly. OpenCV operations are utilized directly via pure utility functions.
 
 ```text
 CLI / MCP surface
@@ -16,10 +16,9 @@ ImageOrchestrator
    ▼    ▼             ▼
 Image  Tesseract     LLM
 processing           vision
-   │    │             │
-   └────┴──────┬──────┘
-                ▼
-          OpenCV adapter
+   │
+   ▼
+OpenCV Utilities (Pure Functions)
 ```
 
 Primary implementation modules are under `modules/image/src/`:
@@ -52,16 +51,7 @@ Primary implementation modules are under `modules/image/src/`:
 - **Edge cases:** Missing Tesseract binary, missing language data, unreadable image, empty text.
 - **Error handling:** Raise a controlled runtime error with an actionable dependency message.
 
-### FR-IMG-003: Detect image elements
-
-- **Description:** Detect visual or UI elements using the image-processing capability.
-- **Input:** `image` path.
-- **Output:** Structured element records with labels and bounding boxes.
-- **Business rules:** Bounding boxes must use the shared taxonomy models rather than unvalidated dictionaries at contract boundaries.
-- **Edge cases:** Empty image, no detected elements, unsupported dimensions, corrupt file.
-- **Error handling:** Return an empty result for a valid image with no detections and a controlled error for invalid input.
-
-### FR-IMG-004: Compare screenshots
+### FR-IMG-003: Compare screenshots
 
 - **Description:** Compare two screenshots and identify perceptual differences.
 - **Input:** `image1` and `image2` paths.
@@ -76,7 +66,6 @@ Primary implementation modules are under `modules/image/src/`:
 |---|---|---|---|
 | `analyze` | `image`, optional `prompt` | `CommandOutput` containing JSON | VLM analysis with fallback |
 | `ocr` | `image`, optional `lang` | `CommandOutput` containing text | Tesseract OCR |
-| `elements` | `image` | `CommandOutput` containing element JSON | UI or visual element detection |
 | `compare` | `image1`, `image2` | `CommandOutput` containing comparison JSON | Screenshot comparison |
 
 The feature uses the following shared contracts:
@@ -84,16 +73,16 @@ The feature uses the following shared contracts:
 - `contract_image_processing_protocol.py`
 - `contract_tesseract_ocr_protocol.py`
 - `contract_llm_vision_protocol.py`
-- `contract_opencv_image_protocol.py`
+
 
 ## Integration Points
 
 | Integration | Purpose |
 |---|---|
-| OpenCV | Image decoding, processing, and perceptual comparison |
+| OpenCV Utilities | Image decoding, processing, and perceptual comparison pure functions |
 | Tesseract | OCR execution through the Tesseract adapter |
 | External VLM | OpenAI-compatible `/chat/completions` endpoint for image understanding |
-| Root composition | Injects OpenCV, OCR, and VLM capabilities into the image orchestrator |
+| Root composition | Injects OCR and VLM capabilities into the image orchestrator |
 | CLI and MCP | Public command surfaces |
 
 ## Non-functional Requirements
@@ -101,7 +90,7 @@ The feature uses the following shared contracts:
 - **Performance:** Deterministic operations must not require a network call.
 - **Reliability:** VLM failures must be handled through a fallback or explicit controlled error.
 - **Security:** Image paths and endpoint configuration must not be interpolated into shell commands.
-- **Compatibility:** The feature must work with Python 3.12 and 3.13 and the OpenCV runtime installed by CI.
+- **Compatibility:** The feature must work with Python 3.12+ and the OpenCV runtime installed by CI.
 - **Maintainability:** The orchestrator must depend on contracts and constructor-injected ports.
 
 ## Test Scenarios / QA Checklist
@@ -110,11 +99,11 @@ The feature uses the following shared contracts:
 - [ ] Analyze a valid image when the VLM endpoint is unavailable and verify fallback behavior.
 - [ ] Run OCR with the default `eng` language.
 - [ ] Run OCR with a missing Tesseract executable and verify the diagnostic error.
-- [ ] Detect elements in an image with and without detectable UI elements.
 - [ ] Compare identical screenshots and verify `identical=true`.
 - [ ] Compare different screenshots and verify differences are returned.
 - [ ] Verify missing input files produce controlled errors.
 - [ ] Verify the image root container injects every required port.
+
 
 ## Assumptions and Constraints
 

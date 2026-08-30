@@ -1,11 +1,11 @@
 ---
 name: vision-arwaky
 description: Unified image and video intelligence for computer vision, OCR, video analysis, object tracking, and MCP integrations.
-version: 2.0.7
+version: 3.0.0
 ---
 # Vision Arwaky
 
-Vision Arwaky is a Python computer-vision toolkit exposed through a CLI and an MCP server. It provides image analysis, OCR, screenshot comparison, video processing, scene and motion detection, object tracking, agent-readable timelines, and bounded smart-video understanding.
+Vision Arwaky is a Python computer-vision toolkit exposed through a CLI and an MCP server. It provides workspace initialization, image analysis, OCR, screenshot comparison, video processing, scene and motion detection, object tracking, agent-readable timelines, and bounded smart-video understanding.
 
 ## Documentation map
 
@@ -15,17 +15,17 @@ The repository uses three documentation levels with different audiences:
 | Document                 | Audience                       | Focus                                                                            |
 | -------------------------- | -------------------------------- | ---------------------------------------------------------------------------------- |
 | [`PRD.md`](PRD.md)       | Stakeholders and product teams | Product problem, goals, scope, metrics, and risks                                |
-| Feature`FRD.md` files    | Engineers and QA               | Functional requirements, contracts, edge cases, integrations, and test scenarios |
+| Feature `FRD.md` files    | Engineers and QA               | Functional requirements, contracts, edge cases, integrations, and test scenarios |
 | [`README.md`](README.md) | Developers                     | Installation, commands, configuration, testing, and contribution workflow        |
 
-Feature FRDs are available for [image](modules/image/FRD.md), [video](modules/video/FRD.md), [OpenCV](modules/opencv/FRD.md), [CLI](modules/cli/FRD.md), and [MCP](modules/mcp/FRD.md).
+Feature FRDs are available for [shared](modules/shared/FRD.md), [system](modules/system/FRD.md), [image](modules/image/FRD.md), [video](modules/video/FRD.md), [CLI](modules/cli/FRD.md), and [MCP](modules/mcp/FRD.md).
 
 ## Entry points
 
 
 | Command             | Purpose                                          |
 | --------------------- | -------------------------------------------------- |
-| `vision-arwaky-cli` | Run image, video, smart-video, and test commands |
+| `va` / `vision-arwaky-cli` | Run workspace, image, video, and smart-video commands |
 | `vision-arwaky-mcp` | Start the MCP server over stdio                  |
 | `vision-arwaky-tui` | Start the Textual configuration interface        |
 
@@ -33,12 +33,13 @@ Use `uv run <command>` during development when the project is managed by `uv`.
 
 ## MCP tools
 
-The MCP server exposes five tools:
+The MCP server exposes six tools:
 
 
 | Tool                   | Purpose                                         |
 | ------------------------ | ------------------------------------------------- |
-| `vision_execute`       | Execute a supported image or video command      |
+| `vision_init`          | Initialize workspace directory structure and SKILL guide |
+| `vision_execute`       | Execute a supported workspace, image, or video command |
 | `vision_list_commands` | List supported command groups and commands      |
 | `vision_help`          | Return this documentation or a selected section |
 | `vision_status`        | Report dependency and model availability        |
@@ -48,7 +49,7 @@ The MCP entry point is `modules/root_mcp_entry.py`, and the action surface is `m
 
 ## Backend and image analysis
 
-The `analyze` command accepts an image path and an optional prompt. The image orchestrator uses the configured external OpenAI-compatible vision endpoint and falls back to deterministic image processing when a language-model response is unavailable.
+The `analyze` command accepts an image path (or video file to extract the middle frame) and an optional prompt. The image orchestrator uses the configured external OpenAI-compatible vision endpoint and falls back to deterministic image processing when a language-model response is unavailable.
 
 The supported backend configuration is:
 
@@ -61,22 +62,26 @@ external:
 
 The repository does not bundle a model. External mode requires a reachable endpoint and an appropriate vision-capable model. Set credentials through `LLAMA_API_KEY` or `~/.config/vision-arwaky/config.yaml`; never commit an API key to the repository.
 
+## CLI reference: workspace
+
+```text
+init
+  [target_dir] (optional, default: .)
+  Initialize .vision-arwaky symlinks to XDG and create .agents/skills/vision-arwaky/SKILL.md.
+```
+
 ## CLI reference: image
 
 ```text
 analyze
   --image PATH
   --prompt TEXT (optional)
-  Analyze an image or the middle frame of a supported video.
+  Analyze an image with VLM or deterministic fallback.
 
 ocr
   --image PATH
   --lang CODE (optional, default: eng)
   Extract text with Tesseract OCR.
-
-elements
-  --image PATH
-  Detect visual or UI elements.
 
 compare
   --image1 PATH
@@ -93,64 +98,33 @@ video-info
 
 extract-frames
   --video PATH
-  --interval VALUE (optional)
-  Extract frames through the video processing port.
-
-convert
-  --input PATH
-  --output PATH
-  Convert a video from an input path to an output path.
+  Extract frames at a locked interval.
 
 check-corruption
   --video PATH
   Check whether a video is decodable.
 
-create-gif
-  --video PATH
-  --output PATH
-  --start SECONDS (optional)
-  --duration SECONDS (optional)
-  Create a GIF from a video segment.
-
 detect-scenes
   --video PATH
-  --threshold VALUE (optional)
   Detect scene changes.
 
 detect-motion
   --video PATH
-  --min-area PIXELS (optional)
   Detect motion events.
 
 track
   --video PATH
   --bbox X,Y,W,H
-  --max-frames COUNT (optional)
-  Track an object using the configured OpenCV tracker.
-
-timeline
-  --video PATH
-  --interval VALUE (optional)
-  Generate a video timeline for agent consumption.
+  Track an object using OpenCV tracker.
 
 analyze-video
   --video PATH
   --prompt TEXT (optional)
-  --interval FRAMES (optional, default: 30)
-  --scene-threshold VALUE (optional, default: 20)
-  --min-area PIXELS (optional, default: 500)
   Analyze bounded key frames with a VLM and synthesize a short summary.
 ```
 
-Smart-video analysis combines scene-change, motion, and uniform sampling. It caps selected frames at 120, bounds the summary prompt, handles per-frame VLM failure with fallback descriptions, and removes temporary frame files after execution.
+Smart-video analysis combines scene-change, motion, and uniform sampling. It caps selected frames at 12, bounds the summary prompt, handles per-frame VLM failure with fallback descriptions, and removes temporary frame files after execution.
 
-## Test command
-
-```bash
-vision-arwaky-cli test [--image PATH] [--verbose]
-```
-
-The command runs pytest in-process and can optionally run the image and video demonstration pipeline against generated fixtures. Install the development test dependency before invoking it.
 
 ## Configuration and system dependencies
 
@@ -190,5 +164,3 @@ The gates run Ruff formatting, Ruff lint, Mypy, pytest, and `lint-arwaky-cli sca
 ## Current limitations
 
 VLM analysis requires a reachable external vision endpoint and a vision-capable model. OCR requires the Tesseract binary. Video processing requires FFmpeg. Object tracking uses OpenCV trackers rather than a deep-learning detector. Smart-video analysis uses a bounded representative sample rather than exhaustively sending every video frame to the VLM.
-
-The old visual-memory CLI and MCP commands are not part of the current public surface. Do not rely on memory-related examples from older versions of this document.

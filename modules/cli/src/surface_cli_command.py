@@ -6,302 +6,191 @@ from typing import Any
 from modules.shared.src.contract_registry_service_aggregate import (
     RegistryServiceAggregate,
 )
-from modules.shared.src.taxonomy_vision_models_vo import (
+from modules.shared.src.taxonomy_vision_vo import (
     AnalysisPrompt,
     BoundingBox,
     CommandName,
-    IntervalSeconds,
-    MaxFrames,
-    MinArea,
-    SceneThreshold,
-    TimeSegment,
 )
+from modules.shared.src.utility_frame_extractor import extract_middle_frame
 
 _dispatcher: RegistryServiceAggregate | None = None
 
 
-def set_cli_dispatcher(dispatcher: RegistryServiceAggregate) -> None:
-    """Inject the aggregate facade used by all CLI commands."""
+def set_cli_dispatcher(dispatcher: RegistryServiceAggregate | None) -> None:
+    """Inject the aggregate facade used by CLI commands (optional)."""
     global _dispatcher
     _dispatcher = dispatcher
 
 
-def get_dispatcher() -> RegistryServiceAggregate:
-    """Return the injected aggregate facade."""
-    if _dispatcher is None:
-        raise RuntimeError(
-            "No dispatcher injected. Call set_cli_dispatcher() before running commands."
-        )
+def get_dispatcher() -> RegistryServiceAggregate | None:
+    """Return the injected aggregate facade if present."""
     return _dispatcher
 
 
-def _execute(command: str, kwargs: dict[str, Any]) -> str:
-    """Execute a command through the injected aggregate facade."""
-    return get_dispatcher().execute_in_process(CommandName(value=command), kwargs).value
+def _execute(
+    command: str,
+    kwargs: dict[str, Any],
+    orchestrator: RegistryServiceAggregate | None = None,
+) -> str:
+    """Execute a command through the injected or provided orchestrator."""
+    orch = orchestrator or _dispatcher
+    if orch is None:
+        raise RuntimeError(
+            "No orchestrator provided. Pass orchestrator or call set_cli_dispatcher()."
+        )
+    return orch.execute_in_process(CommandName(value=command), kwargs).value
 
 
-def _extract_middle_frame(file_path: str) -> str | None:
-    """Extract the middle frame of a video file to a temp JPG (returns temp path)."""
-    import importlib
-    import tempfile
-
-    cv2: Any = importlib.import_module("cv2")
-    cap = cv2.VideoCapture(file_path)
-    try:
-        total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-        if total <= 0:
-            return None
-        mid = total // 2
-        cap.set(cv2.CAP_PROP_POS_FRAMES, mid)
-        ret, frame = cap.read()
-        if not ret:
-            return None
-        fd, thumb = tempfile.mkstemp(suffix=".jpg")
-        os.close(fd)
-        cv2.imwrite(thumb, frame)
-        return thumb
-    finally:
-        cap.release()
+def cmd_init(args, orchestrator: RegistryServiceAggregate | None = None) -> int:
+    """Initialize workspace directory, symlinks to XDG, and SKILL.md."""
+    target_dir = getattr(args, "target_dir", ".") or "."
+    result = _execute("init", {"target_dir": target_dir}, orchestrator=orchestrator)
+    print(result)
+    return 0
 
 
-def cmd_analyze(args) -> int:
+def cmd_analyze(args, orchestrator: RegistryServiceAggregate | None = None) -> int:
     """Analyze an image or a supported video's middle frame."""
     file_path = args.image
     prompt = AnalysisPrompt(value=args.prompt) if args.prompt else None
     ext = os.path.splitext(file_path)[1].lower()
 
-    # If video file, extract middle frame first
-    if ext in (".mp4", ".mov", ".avi", ".mkv", ".webm"):
-        thumb = _extract_middle_frame(file_path)
-        if thumb is not None:
-            try:
-                result = _execute(
-                    "analyze",
-                    {"image": thumb, "prompt": prompt.value if prompt else None},
-                )
-                print(result)
-                return 0
-            finally:
-                os.unlink(thumb)
+    if ext in (".mp4", ".avi", ".mov", ".mkv", ".webm"):
+        thumb_path = extract_middle_frame(file_path)
+        if not thumb_path:
+            print("Error: Could not extract frame from video for analysis.")
+            return 1
+        try:
+            result = _execute(
+                "analyze",
+                {
+                    "image": thumb_path,
+                    "prompt": prompt.value if prompt else None,
+                },
+                orchestrator=orchestrator,
+            )
+        finally:
+            if os.path.exists(thumb_path):
+                os.unlink(thumb_path)
+    else:
+        result = _execute(
+            "analyze",
+            {"image": file_path, "prompt": prompt.value if prompt else None},
+            orchestrator=orchestrator,
+        )
 
-    result = _execute(
-        "analyze", {"image": file_path, "prompt": prompt.value if prompt else None}
-    )
     print(result)
     return 0
 
 
-def cmd_ocr(args) -> int:
-    """Extract text from an image with Tesseract OCR."""
+def cmd_ocr(args, orchestrator: RegistryServiceAggregate | None = None) -> int:
+    """Extract text from an image using OCR."""
     lang = getattr(args, "lang", "eng") or "eng"
-    result = _execute("ocr", {"image": args.image, "lang": lang})
+    result = _execute(
+        "ocr", {"image": args.image, "lang": lang}, orchestrator=orchestrator
+    )
     print(result)
     return 0
 
 
-def cmd_elements(args) -> int:
-    """Detect visual or UI elements in an image."""
-    result = _execute("elements", {"image": args.image})
-    print(result)
-    return 0
-
-
-def cmd_compare(args) -> int:
+def cmd_compare(args, orchestrator: RegistryServiceAggregate | None = None) -> int:
     """Compare two screenshots and print structured differences."""
-    result = _execute("compare", {"image1": args.image1, "image2": args.image2})
+    result = _execute(
+        "compare",
+        {"image1": args.image1, "image2": args.image2},
+        orchestrator=orchestrator,
+    )
     print(result)
     return 0
 
 
-def cmd_video_info(args) -> int:
+def cmd_video_info(args, orchestrator: RegistryServiceAggregate | None = None) -> int:
     """Print metadata for a video file."""
-    result = _execute("video-info", {"video": args.video})
+    result = _execute("video-info", {"video": args.video}, orchestrator=orchestrator)
     print(result)
     return 0
 
 
-def cmd_extract_frames(args) -> int:
+def cmd_extract_frames(
+    args, orchestrator: RegistryServiceAggregate | None = None
+) -> int:
     """Extract sampled frames from a video file."""
-    interval = IntervalSeconds(value=float(args.interval))
     result = _execute(
-        "extract-frames", {"video": args.video, "interval": interval.value}
+        "extract-frames",
+        {"video": args.video},
+        orchestrator=orchestrator,
     )
     print(result)
     return 0
 
 
-def cmd_convert(args) -> int:
-    """Convert a video to the requested output format."""
-    result = _execute("convert", {"input_path": args.input, "output_path": args.output})
-    print(result)
-    return 0
-
-
-def cmd_check_corruption(args) -> int:
-    """Check whether a video can be opened and decoded."""
-    result = _execute("check-corruption", {"video": args.video})
-    print(result)
-    return 0
-
-
-def cmd_create_gif(args) -> int:
-    """Create a GIF from an optional segment of a video."""
-    segment = TimeSegment(start=args.start, duration=args.duration)
+def cmd_check_corruption(
+    args, orchestrator: RegistryServiceAggregate | None = None
+) -> int:
+    """Check if a video file can be decoded without errors."""
     result = _execute(
-        "create-gif",
-        {
-            "video": args.video,
-            "output_path": args.output,
-            "start": segment.start,
-            "duration": segment.duration,
-        },
+        "check-corruption", {"video": args.video}, orchestrator=orchestrator
     )
     print(result)
     return 0
 
 
-def cmd_detect_scenes(args) -> int:
-    """Detect scene changes in a video."""
-    threshold = SceneThreshold(value=float(args.threshold))
+def cmd_detect_scenes(
+    args, orchestrator: RegistryServiceAggregate | None = None
+) -> int:
+    """Detect scene transitions in a video file."""
     result = _execute(
-        "detect-scenes", {"video": args.video, "threshold": threshold.value}
+        "detect-scenes",
+        {"video": args.video},
+        orchestrator=orchestrator,
     )
     print(result)
     return 0
 
 
-def cmd_detect_motion(args) -> int:
-    """Detect motion events in a video."""
-    min_area = MinArea(value=int(args.min_area))
+def cmd_detect_motion(
+    args, orchestrator: RegistryServiceAggregate | None = None
+) -> int:
+    """Detect significant motion events in a video file."""
     result = _execute(
-        "detect-motion", {"video": args.video, "min_area": min_area.value}
+        "detect-motion",
+        {"video": args.video},
+        orchestrator=orchestrator,
     )
     print(result)
     return 0
 
 
-def cmd_track(args) -> int:
-    """Track an object from an initial bounding box through a video."""
-    x, y, w, h = [int(v) for v in args.bbox.split(",")]
-    bbox = BoundingBox(x=x, y=y, width=w, height=h)
-    max_frames = MaxFrames(value=int(args.max_frames))
+def cmd_track(args, orchestrator: RegistryServiceAggregate | None = None) -> int:
+    """Track an object across frames using an initial bounding box."""
+    try:
+        x, y, w, h = map(int, args.bbox.split(","))
+    except ValueError:
+        print(f"Error: Invalid bbox format '{args.bbox}'. Expected 'X,Y,W,H'")
+        return 1
+
+    bbox_vo = BoundingBox(x=x, y=y, width=w, height=h)
     result = _execute(
         "track",
         {
             "video": args.video,
-            "bbox": f"{bbox.x},{bbox.y},{bbox.width},{bbox.height}",
-            "max_frames": max_frames.value,
+            "bbox": f"{bbox_vo.x},{bbox_vo.y},{bbox_vo.width},{bbox_vo.height}",
         },
+        orchestrator=orchestrator,
     )
     print(result)
     return 0
 
 
-def cmd_timeline(args) -> int:
-    """Generate an agent-readable timeline from a video."""
-    interval = IntervalSeconds(value=float(args.interval))
-    result = _execute("timeline", {"video": args.video, "interval": interval.value})
-    print(result)
-    return 0
-
-
-def cmd_analyze_video(args) -> int:
-    """Analyze bounded representative video frames with a VLM."""
+def cmd_analyze_video(
+    args, orchestrator: RegistryServiceAggregate | None = None
+) -> int:
+    """Run VLM-backed smart video analysis on selected key frames."""
+    prompt = AnalysisPrompt(value=args.prompt) if args.prompt else None
     result = _execute(
         "analyze-video",
-        {
-            "video": args.video,
-            "prompt": getattr(args, "prompt", None),
-            "interval": float(getattr(args, "interval", 30.0)),
-            "scene_threshold": float(getattr(args, "scene_threshold", 20.0)),
-            "min_area": int(getattr(args, "min_area", 500)),
-        },
+        {"video": args.video, "prompt": prompt.value if prompt else None},
+        orchestrator=orchestrator,
     )
     print(result)
     return 0
-
-
-def cmd_test(args) -> int:
-    """Run the vision-arwaky test suite with optional test image."""
-    try:
-        import importlib
-
-        pytest: Any = importlib.import_module("pytest")
-    except ImportError:
-        print("❌ pytest is not installed; install it to run the test command")
-        return 1
-
-    # modules/cli/src/surface_cli_command.py -> repo root
-    base = os.path.dirname(
-        os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    )
-    test_dir = os.path.join(base, "tests")
-    fixtures = os.path.join(test_dir, "fixtures")
-    default_image = os.path.join(fixtures, "test.jpeg")
-
-    print("=" * 60)
-    print("  Vision Arwaky — Test Suite")
-    print("=" * 60)
-    print(f"  Fixtures: {fixtures}")
-    test_image = args.image if args.image else default_image
-    print(f"  Test image: {test_image}")
-    print()
-
-    # Run pytest in-process; the test directory is a trusted repository path.
-    result_code = pytest.main([test_dir, "-v"])
-
-    print()
-    if result_code == 0:
-        print("✅ All tests passed!")
-    else:
-        print("❌ Some tests failed")
-
-    # Run AI vision analysis on test image
-    if os.path.exists(test_image):
-        print()
-        print("=" * 60)
-        print("  AI Vision Analysis — test image")
-        print("=" * 60)
-        try:
-            # Reuse the injected dispatcher instead of spawning a second CLI process.
-            vision_result = _execute(
-                "analyze",
-                {
-                    "image": test_image,
-                    "prompt": "Describe this image in detail. What do you see?",
-                },
-            )
-            print(vision_result)
-        except (OSError, RuntimeError, ValueError) as e:
-            print(f"  ⚠ Vision analysis unavailable: {e}")
-
-    # Run AI video understanding on test video.
-    # Delegates to the VideoUnderstanding capability in the video feature
-    # layer (scene + motion + uniform key-frame selection, per-frame VLM,
-    # and synthesized summary) instead of duplicating the logic here.
-    test_video = os.path.join(fixtures, "test.mp4")
-    if os.path.exists(test_video):
-        print()
-        print("=" * 60)
-        print("  AI Video Understanding — test.mp4")
-        print("=" * 60)
-        try:
-            video_result = _execute(
-                "analyze-video",
-                {
-                    "video": test_video,
-                    "prompt": (
-                        "Describe this video frame in detail. "
-                        "What objects, people, actions do you see?"
-                    ),
-                    "interval": 30.0,
-                    "scene_threshold": 20.0,
-                    "min_area": 500,
-                },
-            )
-            print(video_result)
-            print("\n  ✅ Video analysis complete")
-        except (OSError, RuntimeError, ValueError) as e:
-            print(f"  ⚠ Video analysis unavailable: {e}")
-
-    return result_code

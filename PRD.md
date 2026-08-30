@@ -15,11 +15,11 @@ Vision Arwaky will be a dependable visual-intelligence utility for AI agents and
 | Goal | Success metric |
 |---|---|
 | Provide a stable image and video command surface | All documented CLI commands are registered and covered by parser or integration tests |
-| Support agent integration | The MCP server exposes five stable tools and discovers all supported image and video commands |
+| Support agent integration | The MCP server exposes six stable tools and discovers all supported image and video commands |
 | Keep deterministic processing local and reproducible | The full test suite passes on Python 3.12 and 3.13 with required system tools installed |
 | Keep architecture maintainable | Ruff, Mypy, package build, and AES self-lint pass with zero violations |
 | Make smart video analysis bounded | Key-frame sampling is capped, temporary artifacts are cleaned up, and summary prompts have a bounded size |
-| Support practical local deployment | `uv sync`, the documented system dependencies, and the three package entry points are sufficient to start the project |
+| Support practical local deployment | `uv sync`, the documented system dependencies, and the package entry points (`va`, `vision-arwaky-cli`, `vision-arwaky-mcp`, `vision-arwaky-tui`) are sufficient to start the project |
 
 ## User Personas
 
@@ -47,13 +47,14 @@ The product includes the following capabilities:
 
 | Area | Included functionality |
 |---|---|
+| Workspace & System | Workspace initialization, XDG directory layout, SKILL guide embedding, configuration management, and job lifecycle |
 | Image analysis | VLM-backed image analysis with a deterministic fallback |
 | OCR | Text extraction through Tesseract |
-| Image inspection | UI element detection and screenshot comparison |
-| Video processing | Metadata, frame extraction, conversion, GIF creation, and corruption checks |
-| Video analysis | Scene changes, motion events, object tracking, and agent-readable timelines |
+| Image inspection | Screenshot comparison with perceptual hashing and bounding diffs |
+| Video processing | Metadata extraction, frame extraction, and corruption checks |
+| Video analysis | Scene changes, motion events, and object tracking |
 | Smart video understanding | Bounded key-frame selection, per-frame VLM analysis, and summary generation |
-| Agent integration | MCP tools for execution, discovery, help, status, and cancellation |
+| Agent integration | MCP tools for workspace init, execution, discovery, help, status, and cancellation |
 | Local operation | Configuration through repository or user config with FFmpeg, Tesseract, and OpenCV support |
 | Maintainability | AES architecture, typed contracts, DI composition roots, tests, and CI quality gates |
 
@@ -65,10 +66,10 @@ The current product does not include visual-memory storage or search commands, a
 
 ### P0 — Must Have
 
-- [ ] The CLI must expose `analyze`, `ocr`, `elements`, `compare`, the supported video commands, `analyze-video`, and `test`.
-- [ ] The MCP server must expose `vision_execute`, `vision_list_commands`, `vision_help`, `vision_status`, and `vision_cancel`.
-- [ ] `vision_list_commands` must list every supported image and video command, including `analyze-video`.
-- [ ] Every public execution path must route through the injected aggregate and root composition graph.
+- [ ] The CLI must expose `init`, `analyze`, `ocr`, `compare`, `video-info`, `extract-frames`, `check-corruption`, `detect-scenes`, `detect-motion`, `track`, and `analyze-video`.
+- [ ] The MCP server must expose `vision_init`, `vision_execute`, `vision_list_commands`, `vision_help`, `vision_status`, and `vision_cancel`.
+- [ ] `vision_list_commands` must list every supported workspace, image, and video command.
+- [ ] Every public execution path must route through modular domain containers and orchestrators.
 - [ ] Smart-video analysis must cap selected frames, bound summary prompt size, and remove temporary frame files after execution.
 - [ ] The package must build and the complete test suite must pass on supported Python versions.
 - [ ] The self-lint scan must finish with zero violations.
@@ -104,9 +105,10 @@ The current product does not include visual-memory storage or search commands, a
 
 The implementation uses seven AES layers: taxonomy, contract, utility, capabilities, agent, surface, and root. Feature-specific details are documented in the feature FRDs:
 
+- [Shared FRD](modules/shared/FRD.md)
+- [System FRD](modules/system/FRD.md)
 - [Image FRD](modules/image/FRD.md)
 - [Video FRD](modules/video/FRD.md)
-- [OpenCV FRD](modules/opencv/FRD.md)
 - [CLI FRD](modules/cli/FRD.md)
 - [MCP FRD](modules/mcp/FRD.md)
 

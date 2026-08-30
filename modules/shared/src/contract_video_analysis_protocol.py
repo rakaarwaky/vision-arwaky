@@ -1,10 +1,12 @@
 from abc import ABC, abstractmethod
 
-from modules.shared.src.taxonomy_vision_models_vo import (
-    FilePath,
-    MinArea,
+from modules.shared.src.taxonomy_vision_event import (
     MotionEvent,
     SceneChange,
+)
+from modules.shared.src.taxonomy_vision_vo import (
+    FilePath,
+    MinArea,
     SceneThreshold,
 )
 
