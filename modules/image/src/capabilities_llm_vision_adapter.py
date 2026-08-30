@@ -142,25 +142,70 @@ class LLMVisionAdapter(LLMVisionProtocol):
                     "Content-Type": "application/json",
                 }
             )
-            resp = session.post(
-                f"{self.base_url}/chat/completions",
-                data=json.dumps(payload),
-                timeout=timeout,
-            )
-            session.close()
-            resp.raise_for_status()
-            data = resp.json()
-            choice = data.get("choices", [{}])[0]
-            message = choice.get("message", {})
-            content = message.get("content")
-            reasoning = message.get("reasoning_content")
-            if not content and reasoning:
-                content = reasoning
-            if not content:
-                logger.warning(
-                    f"Empty response from LLM. Full data: {json.dumps(data)[:500]}"
-                )
-            return str(content or "")
+            last_err: Exception | None = None
+            for attempt in range(3):
+                try:
+                    resp = session.post(
+                        f"{self.base_url}/chat/completions",
+                        data=json.dumps(payload),
+                        timeout=timeout,
+                    )
+                    if resp.status_code >= 400:
+                        # Nondeterministic engine errors (e.g. LM Studio
+                        # "Engine protocol predict request failed: fetch failed")
+                        # can be transient; retry after a fixed pause.
+                        if attempt < 2:
+                            logger.warning(
+                                "VLM returned HTTP %s (attempt %d/3), retrying in 5s",
+                                resp.status_code,
+                                attempt + 1,
+                            )
+                            import time
+
+                            time.sleep(5)
+                            last_err = RuntimeError(
+                                f"VLM HTTP {resp.status_code}: {resp.text[:200]}"
+                            )
+                            continue
+                        resp.raise_for_status()
+                    data = resp.json()
+                    choice = data.get("choices", [{}])[0]
+                    message = choice.get("message", {})
+                    content = message.get("content")
+                    reasoning = message.get("reasoning_content")
+                    if not content and reasoning:
+                        content = reasoning
+                    if not content:
+                        logger.warning(
+                            f"Empty response from LLM. Full data: {json.dumps(data)[:500]}"
+                        )
+                    return str(content or "")
+                except (
+                    requests.exceptions.ConnectionError,
+                    requests.exceptions.Timeout,
+                ):
+                    raise
+                except requests.exceptions.HTTPError:
+                    raise
+                except (ValueError, TypeError, KeyError) as e:
+                    # Malformed or transient engine responses (e.g. LM Studio
+                    # returning a non-OpenAI payload) are retried after a
+                    # fixed 5s pause before giving up.
+                    if attempt < 2:
+                        logger.warning(
+                            "VLM request failed (attempt %d/3), retrying in 5s: %s",
+                            attempt + 1,
+                            e,
+                        )
+                        import time
+
+                        time.sleep(5)
+                        last_err = e
+                        continue
+                    raise RuntimeError(f"LLM request failed: {e}") from e
+            if last_err is not None:
+                raise RuntimeError(f"LLM request failed after retries: {last_err}")
+            return ""
         except requests.exceptions.ConnectionError as e:
             logger.exception("Cannot connect to LLM at %s", self.base_url)
             raise RuntimeError(

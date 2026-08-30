@@ -4,6 +4,7 @@ Selects bounded key frames via scene-change, motion, and uniform sampling,
 analyzes each with a vision-language model, then synthesizes a summary.
 """
 
+import concurrent.futures
 import logging
 import os
 import tempfile
@@ -38,6 +39,11 @@ from modules.shared.src.taxonomy_vision_vo import (
 from modules.shared.src.utility_opencv_ops import open_video_capture, write_image
 
 logger = logging.getLogger("modules.video.capabilities.video_understanding")
+
+#: Maximum number of concurrent VLM inference requests (e.g. 4 images
+#: in-flight at once per the LM Studio concurrency limit). Frame
+#: ``n+4`` is not dispatched until frame ``n`` has returned.
+MAX_VLM_CONCURRENCY: int = 4
 
 
 class VideoUnderstandingAnalyzer(VideoUnderstandingProtocol):
@@ -192,10 +198,19 @@ class VideoUnderstandingAnalyzer(VideoUnderstandingProtocol):
         fps: float,
         per_frame_prompt: str,
     ) -> tuple[list[FrameAnalysis], list[str]]:
-        """Run the VLM over each extracted frame, falling back on failure."""
+        """Run the VLM over each extracted frame, falling back on failure.
+
+        Concurrency is capped at ``MAX_VLM_CONCURRENCY`` (4) in-flight
+        requests so a local backend (e.g. LM Studio with a concurrent
+        limit of 4) never receives more than 4 images at once. Request
+        ``n+4`` does not start until request ``n`` has completed.
+        """
         frame_analyses: list[FrameAnalysis] = []
         descriptions: list[str] = []
-        for frame_number, (idx, frame_path) in enumerate(extracted, start=1):
+
+        def _analyze_one(
+            frame_number: int, idx: int, frame_path: str
+        ) -> tuple[FrameAnalysis, str]:
             timestamp = round(idx / fps, 1)
             source = "llm"
             try:
@@ -206,15 +221,27 @@ class VideoUnderstandingAnalyzer(VideoUnderstandingProtocol):
             except (RuntimeError, ValueError, OSError) as error:
                 text = f"(VLM unavailable: {error})"
                 source = "fallback"
-            frame_analyses.append(
-                FrameAnalysis(
-                    frame=frame_number,
-                    timestamp_s=timestamp,
-                    source=source,
-                    description=text,
-                )
+            analysis = FrameAnalysis(
+                frame=frame_number,
+                timestamp_s=timestamp,
+                source=source,
+                description=text,
             )
-            descriptions.append(f"[{timestamp}s] {text[:200]}")
+            return analysis, f"[{timestamp}s] {text[:200]}"
+
+        with concurrent.futures.ThreadPoolExecutor(
+            max_workers=MAX_VLM_CONCURRENCY
+        ) as pool:
+            results = pool.map(
+                _analyze_one,
+                range(1, len(extracted) + 1),
+                (idx for idx, _ in extracted),
+                (path for _, path in extracted),
+            )
+            for analysis, description in results:
+                frame_analyses.append(analysis)
+                descriptions.append(description)
+
         return frame_analyses, descriptions
 
     def synthesize_summary(
