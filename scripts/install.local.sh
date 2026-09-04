@@ -313,9 +313,12 @@ if [[ "$CREATE_SYMLINKS" -eq 1 ]]; then
     header "5. Setting Up Global CLI Commands ($BIN_DIR)"
     mkdir -p "$BIN_DIR"
 
-    COMMANDS=("vision-arwaky-cli" "vision-arwaky-mcp" "vision-arwaky-tui" "va")
+    COMMANDS=("vision-arwaky-cli" "vision-arwaky-mcp" "vision-arwaky-tui" "va" "vision-arwaky")
     for cmd in "${COMMANDS[@]}"; do
         SRC_EXE="$VENV_DIR/bin/$cmd"
+        if [[ "$cmd" == "vision-arwaky" ]]; then
+            SRC_EXE="$VENV_DIR/bin/vision-arwaky-cli"
+        fi
         DEST_EXE="$BIN_DIR/$cmd"
 
         if [[ -f "$SRC_EXE" ]]; then
