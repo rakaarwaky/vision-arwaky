@@ -24,10 +24,11 @@ dependencies = [
 ]
 
 [project.scripts]
-vision-arwaky-mcp = "modules.root_mcp_entry:main"
-vision-arwaky-cli = "modules.root_cli_entry:cli"
-vision-arwaky-tui = "modules.root_tui_entry:main"
+vision-arwaky = "modules.root_cli_entry:cli"
 va = "modules.root_cli_entry:cli"
+vision-arwaky-cli = "modules.root_cli_entry:cli"
+vision-arwaky-mcp = "modules.root_mcp_entry:main"
+vision-arwaky-tui = "modules.root_tui_entry:main"
 
 [dependency-groups]
 dev = ["pytest", "pytest-cov", "ruff", "mypy"]
