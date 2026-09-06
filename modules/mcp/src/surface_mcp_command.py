@@ -4,7 +4,10 @@ import json
 from pathlib import Path
 from typing import Any
 
-from mcp.server.fastmcp import FastMCP
+try:
+    from fastmcp import FastMCP
+except ImportError:
+    from mcp.server.fastmcp import FastMCP
 
 from modules.shared.src.contract_registry_service_aggregate import (
     RegistryServiceAggregate,

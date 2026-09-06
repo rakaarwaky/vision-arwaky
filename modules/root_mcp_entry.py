@@ -4,7 +4,10 @@ import logging
 import sys
 from typing import Any
 
-from mcp.server.fastmcp import FastMCP
+try:
+    from fastmcp import FastMCP
+except ImportError:
+    from mcp.server.fastmcp import FastMCP
 
 from modules.image.src.root_image_container import ImageContainer, build_image_feature
 from modules.mcp.src.surface_mcp_command import (
