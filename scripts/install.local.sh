@@ -351,10 +351,7 @@ if [[ -f "$CLI_EXEC" ]]; then
     success "Local workspace initialized"
 fi
 
-# Ensure in-tree .venv is a symlink pointing to XDG venv for tools/IDEs/agents
-rm -rf "$REPO_ROOT/.venv"
-ln -sf "$VENV_DIR" "$REPO_ROOT/.venv"
-success "In-tree .venv symlinked -> $VENV_DIR"
+# Note: .venv symlinks are created during 'init' command, not install
 
 # Write UV_PROJECT_ENVIRONMENT to .env if not already present
 if [[ ! -f "$REPO_ROOT/.env" ]] || ! grep -q "UV_PROJECT_ENVIRONMENT" "$REPO_ROOT/.env"; then
