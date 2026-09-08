@@ -5,9 +5,9 @@ from pathlib import Path
 from typing import Any
 
 try:
-    from fastmcp import FastMCP
+    from fastmcp import FastMCP  # type: ignore[assignment]
 except ImportError:
-    from mcp.server.fastmcp import FastMCP
+    from mcp.server.fastmcp import FastMCP  # type: ignore[assignment]
 
 from modules.shared.src.contract_registry_service_aggregate import (
     RegistryServiceAggregate,
