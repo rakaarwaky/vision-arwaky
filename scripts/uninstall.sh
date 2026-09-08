@@ -2,18 +2,18 @@
 # scripts/uninstall.sh — Clean uninstaller for vision-arwaky (XDG Base Directory)
 set -euo pipefail
 
+TOOL_NAME="vision-arwaky"
 BIN_DIR="${XDG_BIN_HOME:-$HOME/.local/bin}"
-DATA_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/vision-arwaky"
-CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/vision-arwaky"
-CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/vision-arwaky"
-STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/vision-arwaky"
-VENV_DIR="$DATA_DIR/venv"
+DATA_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/$TOOL_NAME"
+CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/$TOOL_NAME"
+CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/$TOOL_NAME"
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/$TOOL_NAME"
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-echo "=== Uninstalling vision-arwaky ==="
+echo "=== Uninstalling $TOOL_NAME ==="
 
-# Remove bin symlinks (full name + short alias + extras)
-COMMANDS=("vision-arwaky" "vision-arwaky-cli" "vision-arwaky-mcp" "vision-arwaky-tui" "va")
+# Remove bin launchers
+COMMANDS=("vision-arwaky" "vision-arwaky-cli" "va" "vision-arwaky-mcp")
 for cmd in "${COMMANDS[@]}"; do
     if [ -L "$BIN_DIR/$cmd" ] || [ -f "$BIN_DIR/$cmd" ]; then
         rm -f "$BIN_DIR/$cmd"
@@ -21,13 +21,15 @@ for cmd in "${COMMANDS[@]}"; do
     fi
 done
 
-# Remove in-tree .venv symlink if it points to XDG
-if [ -L "$PROJECT_DIR/.venv" ]; then
-    rm -f "$PROJECT_DIR/.venv"
-    echo "✓ Removed $PROJECT_DIR/.venv symlink"
-fi
+# Remove in-tree .venv/venv symlinks
+for name in ".venv" "venv"; do
+    if [ -L "$PROJECT_DIR/$name" ]; then
+        rm -f "$PROJECT_DIR/$name"
+        echo "✓ Removed $PROJECT_DIR/$name symlink"
+    fi
+done
 
-# Remove XDG config & cache (selalu), data & state saat --purge
+# Remove XDG config & cache (always), data & state with --purge
 if [ -d "$CONFIG_DIR" ]; then
     rm -rf "$CONFIG_DIR"
     echo "✓ Removed $CONFIG_DIR"
