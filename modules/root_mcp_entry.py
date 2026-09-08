@@ -1,13 +1,16 @@
 """Vision root MCP entry point dispatching MCP commands to domain containers."""
 
+import importlib
 import logging
 import sys
 from typing import Any
 
 try:
-    from fastmcp import FastMCP  # type: ignore[assignment]
+    _fastmcp_module = importlib.import_module("fastmcp")
 except ImportError:
-    from mcp.server.fastmcp import FastMCP  # type: ignore[assignment]
+    _fastmcp_module = importlib.import_module("mcp.server.fastmcp")
+
+FastMCP: Any = _fastmcp_module.FastMCP
 
 from modules.image.src.root_image_container import ImageContainer, build_image_feature
 from modules.mcp.src.surface_mcp_command import (

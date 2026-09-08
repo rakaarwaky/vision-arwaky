@@ -1,13 +1,16 @@
 """MCP smart-surface command tools — pure delegation to dispatcher and shared utilities."""
 
+import importlib
 import json
 from pathlib import Path
 from typing import Any
 
 try:
-    from fastmcp import FastMCP  # type: ignore[assignment]
+    _fastmcp_module = importlib.import_module("fastmcp")
 except ImportError:
-    from mcp.server.fastmcp import FastMCP  # type: ignore[assignment]
+    _fastmcp_module = importlib.import_module("mcp.server.fastmcp")
+
+FastMCP: Any = _fastmcp_module.FastMCP
 
 from modules.shared.src.contract_registry_service_aggregate import (
     RegistryServiceAggregate,
