@@ -8,6 +8,7 @@ import importlib.util
 import time
 
 import pytest
+
 from modules.shared.src.taxonomy_vision_vo import (
     CommandName,
     SystemCommandParams,
