@@ -1,13 +1,13 @@
 """Capabilities: system job and process lifecycle management (AES403).
 
-Implements SystemJobProtocol — status reporting, dependency inspection, and operation cancellation.
+Implements ISystemJobProtocol — status reporting, dependency inspection, and operation cancellation.
 """
 
 from __future__ import annotations
 
 from typing import Any
 
-from modules.shared.src.contract_system_job_protocol import SystemJobProtocol
+from modules.shared.src.contract_system_job_protocol import ISystemJobProtocol
 from modules.shared.src.taxonomy_vision_constant import DEFAULT_MODELS_TIMEOUT_S
 from modules.shared.src.taxonomy_vision_vo import CommandOutput
 from modules.shared.src.utility_config_handler import (
@@ -20,13 +20,13 @@ from modules.shared.src.utility_version_resolver import get_package_version
 
 
 # ─── Block 1: Class Definition & Constructor ──────────────
-class CapabilitiesSystemJob(SystemJobProtocol):
+class CapabilitiesSystemJob(ISystemJobProtocol):
     """Job tracking, lifecycle monitoring, and process cancellation."""
 
     def __init__(self) -> None:
         """Initialize CapabilitiesSystemJob."""
 
-    # ─── Block 2: Public Contract (SystemJobProtocol ONLY) ────
+    # ─── Block 2: Public Contract (ISystemJobProtocol ONLY) ────
     def get_status(self) -> dict[str, Any]:
         """Inspect dependencies, endpoint connectivity, and server capability status."""
         deps = check_all_dependencies()

@@ -37,7 +37,17 @@ class TestWorkspaceProvisioner:
         assert ".venv" in content
         assert "exclude" in result["git_exclude"]
 
-    def test_init_workspace_without_git_uses_gitignore(self, tmp_path: Path):
+    def test_init_workspace_without_git_uses_gitignore(
+        self, tmp_path: Path, monkeypatch
+    ):
+        # Force the no-git path: no .git in the target or any ancestor.
+        import modules.system.src.capabilities_system_workspace as ws_mod
+
+        monkeypatch.setattr(
+            ws_mod.CapabilitiesSystemWorkspace,
+            "_find_git_exclude_file",
+            classmethod(lambda cls, target_path: None),
+        )
         provisioner = CapabilitiesSystemWorkspace()
         result = provisioner.init_workspace(FilePath(value=str(tmp_path)))
 

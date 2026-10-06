@@ -11,7 +11,7 @@ from abc import ABC, abstractmethod
 from modules.shared.src.taxonomy_vision_vo import FilePath
 
 
-class WorkspaceProtocol(ABC):
+class IWorkspaceProtocol(ABC):
     """Protocol for local workspace setup, XDG symlinks, and skill provisioning."""
 
     @abstractmethod
@@ -20,4 +20,4 @@ class WorkspaceProtocol(ABC):
         ...
 
 
-__all__ = ["WorkspaceProtocol"]
+__all__ = ["IWorkspaceProtocol"]

@@ -1,6 +1,7 @@
 """Infrastructure adapter for VLM inference via OpenAI-compatible APIs.
 
 Configuration via config.yaml in the project root (backend: "external").
+
 """
 
 from __future__ import annotations
@@ -12,7 +13,7 @@ from typing import Any
 
 import requests
 
-from modules.shared.src.contract_llm_vision_protocol import LLMVisionProtocol
+from modules.shared.src.contract_llm_vision_protocol import ILLMVisionProtocol
 from modules.shared.src.taxonomy_vision_constant import (
     DEFAULT_MODELS_TIMEOUT_S,
     DEFAULT_VLM_MAX_TOKENS,
@@ -34,7 +35,10 @@ from modules.shared.src.utility_llm_check import check_llm_endpoint
 logger = logging.getLogger("modules.image.capabilities.llm_vision_adapter")
 
 
-class LLMVisionAdapter(LLMVisionProtocol):
+# ─── Block 1: Class Definition & Constructor ──────────────
+
+
+class LLMVisionAdapter(ILLMVisionProtocol):
     """Adapter for vision-capable VLM via OpenAI-compatible API."""
 
     def __init__(
@@ -51,6 +55,21 @@ class LLMVisionAdapter(LLMVisionProtocol):
         self.base_url = (base_url or res_url).rstrip("/")
         self.api_key = api_key or res_key
         self._resolved_model: str | None = model or res_model
+
+    # ─── Block 2: Protocol Method Implementation ──────────────
+
+    def analyze_image(
+        self,
+        image_path: FilePath,
+        prompt: AnalysisPrompt,
+        timeout: int = DEFAULT_VLM_TIMEOUT_S,
+    ) -> str:
+        """Send image + prompt to the VLM and return the text response."""
+        path_str = image_path.value
+        prompt_str = prompt.value if prompt and prompt.value is not None else ""
+        return self._analyze_via_http(path_str, prompt_str, timeout)
+
+    # ─── Block 3: Dunder Methods, Factories & Helpers ─────────
 
     @property
     def config(self) -> dict[str, Any]:
@@ -218,14 +237,3 @@ class LLMVisionAdapter(LLMVisionProtocol):
         except Exception as e:
             logger.exception("LLM request failed")
             raise RuntimeError(f"LLM request failed: {e}") from e
-
-    def analyze_image(
-        self,
-        image_path: FilePath,
-        prompt: AnalysisPrompt,
-        timeout: int = DEFAULT_VLM_TIMEOUT_S,
-    ) -> str:
-        """Send image + prompt to the VLM and return the text response."""
-        path_str = image_path.value
-        prompt_str = prompt.value if prompt and prompt.value is not None else ""
-        return self._analyze_via_http(path_str, prompt_str, timeout)

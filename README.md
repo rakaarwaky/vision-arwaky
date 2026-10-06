@@ -4,6 +4,10 @@ Vision Arwaky is a Python 3.12+ computer-vision MCP server for image analysis, O
 
 The documentation follows the relationship **PRD → FRD → README**. The PRD describes product intent for stakeholders, FRDs describe functional behavior for engineers and QA, and this README describes how developers install and operate the project.
 
+## Prerequisites
+
+Python 3.12 or later, the `uv` package manager, and the system dependencies listed in Quick Start.
+
 ## Quick Start
 
 The supported development workflow uses `uv` and the package metadata in `pyproject.toml`.
@@ -32,7 +36,7 @@ uv run vision-arwaky-tui
 
 For an editable installation, use `uv sync` from the repository root. The package exposes the console scripts after installation: `va`, `vision-arwaky-cli`, `vision-arwaky-mcp`, and `vision-arwaky-tui`.
 
-## Product and Feature Documentation
+### Product and Feature Documentation
 
 | Document | Audience | Purpose |
 |---|---|---|
@@ -67,7 +71,29 @@ scripts/gates.sh                      # Local mirror of the CI quality gates
 The implementation uses typed contracts and constructor injection. Each module defines its own composition root container (`ImageContainer`, `VideoContainer`, `SystemContainer`), and CLI/MCP/TUI surfaces directly delegate to the appropriate domain container on demand.
 
 
-## CLI Commands
+## Project Structure
+
+```text
+modules/
+├── root_cli_entry.py                 # CLI bootstrap and argument dispatching
+├── root_mcp_entry.py                 # MCP bootstrap and tool registration
+├── root_tui_entry.py                 # TUI bootstrap
+├── shared/                           # Taxonomy, contracts, and OpenCV pure utilities
+├── image/                            # Image container, analysis, OCR, and image orchestration
+├── video/                            # Video container, processing, analysis, tracking, and smart understanding
+├── system/                           # System container, workspace provisioning, and configuration
+├── cli/                              # CLI and TUI surfaces
+└── mcp/                              # MCP controller and action surfaces
+
+tests/                                # Focused unit and end-to-end tests
+scripts/gates.sh                      # Local mirror of the CI quality gates
+```
+
+The implementation uses typed contracts and constructor injection. Each module defines its own composition root container (`ImageContainer`, `VideoContainer`, `SystemContainer`), and CLI/MCP/TUI surfaces directly delegate to the appropriate domain container on demand.
+
+## Available Scripts/Commands
+
+### CLI Commands
 
 The CLI command list below is implemented by `modules/cli/src/surface_cli_controller.py` and dispatched by `modules/root_cli_entry.py`.
 
@@ -99,7 +125,7 @@ The CLI command list below is implemented by `modules/cli/src/surface_cli_contro
 
 Smart-video analysis selects scene-change, motion, and uniform samples. The implementation caps selected frames at 12, bounds the summary prompt, and removes generated frame files after the command completes.
 
-## MCP Tools
+### MCP Tools
 
 The MCP entry point registers six tools over stdio:
 
@@ -120,7 +146,7 @@ uv run vision-arwaky-mcp
 
 Agents can discover the current command contract through `vision_list_commands`. The MCP feature details are documented in [modules/mcp/FRD.md](modules/mcp/FRD.md).
 
-## Configuration & XDG Standards
+## Configuration
 
 Configuration is loaded from the user configuration directory and the repository-local configuration file. All runtime artifacts adhere strictly to the Linux XDG Base Directory specification:
 
@@ -141,7 +167,7 @@ external:
 
 The external backend expects an OpenAI-compatible vision endpoint. Set credentials through `LLAMA_API_KEY` or the user-only file `~/.config/vision-arwaky/config.yaml`; never commit an API key to the repository. OCR additionally requires the `tesseract` executable, and video operations require `ffmpeg`.
 
-## Development and Verification
+## Testing
 
 Run the local mirror of the GitHub Actions gates before opening or updating a PR:
 
@@ -168,7 +194,11 @@ The test suite generates its media fixtures in CI. A local environment should ha
 
 Create a focused branch from the latest `main`, keep feature code behind contracts and dependency injection, update the applicable FRD when public behavior changes, and run `bash scripts/gates.sh` before opening a PR. Documentation-only changes should update the relevant PRD or FRD without modifying unrelated architecture documents.
 
-## Key Technical Documents
+## License
+
+MIT license.
+
+### Key Technical Documents
 
 | Document | Purpose |
 |---|---|

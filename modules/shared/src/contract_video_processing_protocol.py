@@ -7,7 +7,7 @@ from modules.shared.src.taxonomy_vision_vo import (
 )
 
 
-class VideoProcessingProtocol(ABC):
+class IVideoProcessingProtocol(ABC):
     """Abstract protocol defining Video Processing capabilities."""
 
     @abstractmethod

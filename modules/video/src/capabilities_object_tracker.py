@@ -1,7 +1,7 @@
 import cv2
 
 from modules.shared.src.contract_object_tracking_protocol import (
-    ObjectTrackingProtocol,
+    IObjectTrackingProtocol,
 )
 from modules.shared.src.taxonomy_vision_constant import MAX_TRACK_FRAMES
 from modules.shared.src.taxonomy_vision_vo import (
@@ -11,43 +11,17 @@ from modules.shared.src.taxonomy_vision_vo import (
 )
 from modules.shared.src.utility_opencv_ops import open_video_capture
 
+# ─── Block 1: Class Definition & Constructor ──────────────
 
-class ObjectTrackingTracker(ObjectTrackingProtocol):
+
+class ObjectTrackingTracker(IObjectTrackingProtocol):
     """Track objects through video frames using OpenCV trackers."""
 
     def __init__(self):
         # No instance state required; tracker instances are created on demand per call.
         pass
 
-    def _create_tracker(self):
-        """Helper to dynamically construct the OpenCV tracker to avoid complexity and mypy issues."""
-        try:
-            csrt_creator = getattr(cv2, "TrackerCSRT_create", None)
-            if csrt_creator is not None:
-                return csrt_creator()
-
-            legacy = getattr(cv2, "legacy", None)
-            if legacy is not None:
-                legacy_csrt_creator = getattr(legacy, "TrackerCSRT_create", None)
-                if legacy_csrt_creator is not None:
-                    return legacy_csrt_creator()
-        except (AttributeError, RuntimeError, OSError):
-            pass
-
-        try:
-            kcf_creator = getattr(cv2, "TrackerKCF_create", None)
-            if kcf_creator is not None:
-                return kcf_creator()
-
-            legacy = getattr(cv2, "legacy", None)
-            if legacy is not None:
-                legacy_kcf_creator = getattr(legacy, "TrackerKCF_create", None)
-                if legacy_kcf_creator is not None:
-                    return legacy_kcf_creator()
-        except (AttributeError, RuntimeError, OSError):
-            pass
-
-        return None
+    # ─── Block 2: Protocol Method Implementation ──────────────
 
     def track_object(
         self,
@@ -107,3 +81,35 @@ class ObjectTrackingTracker(ObjectTrackingProtocol):
 
         cap.release()
         return boxes
+
+    # ─── Block 3: Dunder Methods, Factories & Helpers ─────────
+
+    def _create_tracker(self):
+        """Helper to dynamically construct the OpenCV tracker to avoid complexity and mypy issues."""
+        try:
+            csrt_creator = getattr(cv2, "TrackerCSRT_create", None)
+            if csrt_creator is not None:
+                return csrt_creator()
+
+            legacy = getattr(cv2, "legacy", None)
+            if legacy is not None:
+                legacy_csrt_creator = getattr(legacy, "TrackerCSRT_create", None)
+                if legacy_csrt_creator is not None:
+                    return legacy_csrt_creator()
+        except (AttributeError, RuntimeError, OSError):
+            pass
+
+        try:
+            kcf_creator = getattr(cv2, "TrackerKCF_create", None)
+            if kcf_creator is not None:
+                return kcf_creator()
+
+            legacy = getattr(cv2, "legacy", None)
+            if legacy is not None:
+                legacy_kcf_creator = getattr(legacy, "TrackerKCF_create", None)
+                if legacy_kcf_creator is not None:
+                    return legacy_kcf_creator()
+        except (AttributeError, RuntimeError, OSError):
+            pass
+
+        return None

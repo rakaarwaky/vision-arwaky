@@ -13,7 +13,7 @@ from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Input, Label, Static
 
 from modules.shared.src.contract_registry_service_aggregate import (
-    RegistryServiceAggregate,
+    IRegistryServiceAggregate,
 )
 from modules.shared.src.taxonomy_vision_vo import CommandName
 from modules.shared.src.utility_config_handler import (
@@ -22,20 +22,20 @@ from modules.shared.src.utility_config_handler import (
     scan_models,
 )
 
-_dispatcher: RegistryServiceAggregate | None = None
+_dispatcher: IRegistryServiceAggregate | None = None
 
 
 _UI_EXCEPTIONS = (OSError, ValueError, ImportError, KeyError, TypeError, TextualError)
 _BACK_LABEL = "⬅ Back"
 
 
-def set_tui_dispatcher(dispatcher: RegistryServiceAggregate | None) -> None:
+def set_tui_dispatcher(dispatcher: IRegistryServiceAggregate | None) -> None:
     """Inject the aggregate facade used by the TUI (optional)."""
     global _dispatcher
     _dispatcher = dispatcher
 
 
-def get_dispatcher() -> RegistryServiceAggregate | None:
+def get_dispatcher() -> IRegistryServiceAggregate | None:
     """Return the injected aggregate facade if present."""
     return _dispatcher
 

@@ -1,13 +1,13 @@
 from abc import ABC, abstractmethod
-from typing import Any
 
 from modules.shared.src.taxonomy_vision_vo import (
     CommandName,
     CommandOutput,
+    SystemCommandParams,
 )
 
 
-class RegistryServiceAggregate(ABC):
+class IRegistryServiceAggregate(ABC):
     """Facade contract for unified in-process command execution.
 
     Concrete per-domain agents receive their capability ports via
@@ -19,6 +19,6 @@ class RegistryServiceAggregate(ABC):
     def execute_in_process(
         self,
         command: CommandName,
-        kwargs: dict[str, Any],
+        kwargs: dict | SystemCommandParams,
     ) -> CommandOutput:
-        """Route and execute a command in-process across the domain."""
+        """Route and execute a dict-keyword or SystemCommandParams command in-process."""

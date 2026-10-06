@@ -41,6 +41,16 @@ class FilePath(BaseModel):
 
     value: str
 
+    @classmethod
+    def from_str(cls, value: str) -> FilePath:
+        """Build a FilePath from a raw string."""
+        return cls(value=value)
+
+    @classmethod
+    def from_pathlib(cls, p: object) -> FilePath:
+        """Build a FilePath from a pathlib.Path."""
+        return cls(value=str(p))
+
 
 class LanguageCode(BaseModel):
     """Value object for OCR language codes (e.g., 'eng')."""
@@ -67,6 +77,17 @@ class ConfigKey(BaseModel):
     """Value object representing a configuration key."""
 
     value: str = ""
+
+
+class SystemCommandParams(BaseModel):
+    """Typed parameter payload for system command handlers."""
+
+    model_config = {"extra": "allow"}
+
+    target_dir: str = "."
+    key: str = ""
+    value: object | None = None
+    job_id: str = ""
 
 
 class CommandOutput(BaseModel):

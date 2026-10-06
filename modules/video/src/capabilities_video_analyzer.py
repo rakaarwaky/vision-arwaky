@@ -2,7 +2,7 @@ import cv2
 import numpy
 
 from modules.shared.src.contract_video_analysis_protocol import (
-    VideoAnalysisProtocol,
+    IVideoAnalysisProtocol,
 )
 from modules.shared.src.taxonomy_vision_constant import (
     DILATION_ITERATIONS,
@@ -43,13 +43,17 @@ from modules.shared.src.utility_opencv_ops import (
     to_grayscale,
 )
 
+# ─── Block 1: Class Definition & Constructor ──────────────
 
-class VideoAnalysisAnalyzer(VideoAnalysisProtocol):
+
+class VideoAnalysisAnalyzer(IVideoAnalysisProtocol):
     """Analyze video for scene changes and motion events."""
 
     def __init__(self):
         # No instance state required; all methods are stateless and operate on video files.
         pass
+
+    # ─── Block 2: Protocol Method Implementation ──────────────
 
     def detect_scenes(
         self, video_path: FilePath, threshold: SceneThreshold
@@ -89,6 +93,53 @@ class VideoAnalysisAnalyzer(VideoAnalysisProtocol):
 
         cap.release()
         return scenes
+
+    def detect_motion(
+        self, video_path: FilePath, min_area: MinArea
+    ) -> list[MotionEvent]:
+        """Detect significant motion events using frame differencing."""
+        cap = open_video_capture(video_path)
+        if not cap.isOpened():
+            return []
+
+        fps = cap.get(cv2.CAP_PROP_FPS)
+        events: list[MotionEvent] = []
+        prev_gray = None
+        frame_idx = 0
+        min_area_val = min_area.value if min_area else MIN_MOTION_AREA
+
+        while True:
+            ret, frame = cap.read()
+            if not ret:
+                break
+
+            gray = apply_gaussian_blur(to_grayscale(frame), GAUSSIAN_BLUR_KERNEL)
+
+            if prev_gray is not None:
+                delta = compute_abs_diff(prev_gray, gray)
+                thresh = apply_threshold(
+                    delta,
+                    MOTION_DIFF_THRESHOLD,
+                    MOTION_MAX_PIXEL_VALUE,
+                )
+                thresh = apply_dilate(
+                    thresh,
+                    DILATION_KERNEL_SIZE,
+                    DILATION_ITERATIONS,
+                )
+                events.extend(
+                    self._find_motion_events(
+                        thresh, frame, frame_idx, fps, min_area_val
+                    )
+                )
+
+            prev_gray = gray
+            frame_idx += 1
+
+        cap.release()
+        return events
+
+    # ─── Block 3: Dunder Methods, Factories & Helpers ─────────
 
     def _compute_motion_direction(
         self, cnt, x: int, y: int, w: int, h: int
@@ -139,49 +190,4 @@ class VideoAnalysisAnalyzer(VideoAnalysisProtocol):
                 )
             )
 
-        return events
-
-    def detect_motion(
-        self, video_path: FilePath, min_area: MinArea
-    ) -> list[MotionEvent]:
-        """Detect significant motion events using frame differencing."""
-        cap = open_video_capture(video_path)
-        if not cap.isOpened():
-            return []
-
-        fps = cap.get(cv2.CAP_PROP_FPS)
-        events: list[MotionEvent] = []
-        prev_gray = None
-        frame_idx = 0
-        min_area_val = min_area.value if min_area else MIN_MOTION_AREA
-
-        while True:
-            ret, frame = cap.read()
-            if not ret:
-                break
-
-            gray = apply_gaussian_blur(to_grayscale(frame), GAUSSIAN_BLUR_KERNEL)
-
-            if prev_gray is not None:
-                delta = compute_abs_diff(prev_gray, gray)
-                thresh = apply_threshold(
-                    delta,
-                    MOTION_DIFF_THRESHOLD,
-                    MOTION_MAX_PIXEL_VALUE,
-                )
-                thresh = apply_dilate(
-                    thresh,
-                    DILATION_KERNEL_SIZE,
-                    DILATION_ITERATIONS,
-                )
-                events.extend(
-                    self._find_motion_events(
-                        thresh, frame, frame_idx, fps, min_area_val
-                    )
-                )
-
-            prev_gray = gray
-            frame_idx += 1
-
-        cap.release()
         return events

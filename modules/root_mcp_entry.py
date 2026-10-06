@@ -23,15 +23,19 @@ from modules.mcp.src.surface_mcp_command import (
     vision_status,
 )
 from modules.shared.src.contract_registry_service_aggregate import (
-    RegistryServiceAggregate,
+    IRegistryServiceAggregate,
 )
 from modules.shared.src.taxonomy_command_vo import CommandDomain
-from modules.shared.src.taxonomy_vision_vo import CommandName, CommandOutput
+from modules.shared.src.taxonomy_vision_vo import (
+    CommandName,
+    CommandOutput,
+    SystemCommandParams,
+)
 from modules.system.src.root_system_container import SystemContainer
 from modules.video.src.root_video_container import VideoContainer
 
 
-class RootMCPDispatcher(RegistryServiceAggregate):
+class RootMCPDispatcher(IRegistryServiceAggregate):
     """Aggregate dispatcher routing MCP commands to domain orchestrators."""
 
     # pylint: disable=too-few-public-methods
@@ -44,7 +48,9 @@ class RootMCPDispatcher(RegistryServiceAggregate):
         self._system = SystemContainer().orchestrator
 
     def execute_in_process(
-        self, command: CommandName, kwargs: dict[str, Any]
+        self,
+        command: CommandName,
+        kwargs: dict | SystemCommandParams,
     ) -> CommandOutput:
         """Execute a command against the matching domain orchestrator."""
         domain = CommandDomain.from_command(command.value)

@@ -1,6 +1,6 @@
 """Capabilities: system workspace provisioner (AES403).
 
-Implements WorkspaceProtocol — workspace initialization with XDG directories,
+Implements IWorkspaceProtocol — workspace initialization with XDG directories,
 SKILL.md provisioning, .vision-arwaky symlinks, and .git/info/exclude management.
 All file system I/O for workspace setup lives here.
 """
@@ -10,7 +10,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from modules.shared.src.contract_workspace_protocol import WorkspaceProtocol
+from modules.shared.src.contract_workspace_protocol import IWorkspaceProtocol
 from modules.shared.src.taxonomy_vision_constant import EMBEDDED_SKILL_MD
 from modules.shared.src.taxonomy_vision_vo import FilePath
 from modules.shared.src.taxonomy_xdg_paths_vo import XDGPaths
@@ -18,13 +18,13 @@ from modules.shared.src.utility_xdg_paths import ensure_xdg_dirs
 
 
 # ─── Block 1: Class Definition & Constructor ──────────────
-class CapabilitiesSystemWorkspace(WorkspaceProtocol):
+class CapabilitiesSystemWorkspace(IWorkspaceProtocol):
     """Workspace directory provisioning with symlinks and git exclude management."""
 
     def __init__(self) -> None:
         """Initialize CapabilitiesSystemWorkspace."""
 
-    # ─── Block 2: Public Contract (WorkspaceProtocol ONLY) ───
+    # ─── Block 2: Public Contract (IWorkspaceProtocol ONLY) ───
     def init_workspace(self, target_dir: FilePath) -> dict[str, str]:
         """Initialize workspace in sequential steps:
 

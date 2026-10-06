@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Sequence
 from typing import Any
 
 from pydantic import BaseModel
@@ -15,7 +16,9 @@ def to_command_output(model: BaseModel, indent: int = 2) -> CommandOutput:
     return CommandOutput(value=json.dumps(model.model_dump(), indent=indent))
 
 
-def to_command_output_list(models: list[BaseModel], indent: int = 2) -> CommandOutput:
+def to_command_output_list(
+    models: Sequence[BaseModel], indent: int = 2
+) -> CommandOutput:
     """Serialize list of Pydantic models into a CommandOutput VO."""
     return CommandOutput(
         value=json.dumps([m.model_dump() for m in models], indent=indent)
