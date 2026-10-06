@@ -1,9 +1,9 @@
 from modules.shared.src.contract_image_processing_protocol import (
-    ImageProcessingProtocol,
+    IImageProcessingProtocol,
 )
-from modules.shared.src.contract_llm_vision_protocol import LLMVisionProtocol
+from modules.shared.src.contract_llm_vision_protocol import ILLMVisionProtocol
 from modules.shared.src.contract_tesseract_ocr_protocol import (
-    TesseractOCRProtocol,
+    ITesseractOCRProtocol,
 )
 from modules.shared.src.taxonomy_vision_constant import (
     DEFAULT_OCR_LANGUAGE,
@@ -34,16 +34,20 @@ from modules.shared.src.utility_opencv_ops import (
 )
 
 
-class ImageProcessingProcessor(ImageProcessingProtocol):
+class ImageProcessingProcessor(IImageProcessingProtocol):
     """Image processing capability executing screenshot analysis and comparisons."""
+
+    # ─── Block 1: Class Definition & Constructor ──────────────
 
     def __init__(
         self,
-        tesseract_port: TesseractOCRProtocol,
-        llm_port: LLMVisionProtocol,
+        tesseract_port: ITesseractOCRProtocol,
+        llm_port: ILLMVisionProtocol,
     ):
         self._tesseract = tesseract_port
         self._llm = llm_port
+
+    # ─── Block 2: Protocol Method Implementation ──────────────
 
     def analyze_screenshot(
         self, image_path: FilePath, prompt: AnalysisPrompt
@@ -138,3 +142,8 @@ class ImageProcessingProcessor(ImageProcessingProtocol):
             phash_diff=hash1 != hash2,
             differences=differences,
         )
+
+    # ─── Block 3: Dunder Methods, Factories & Helpers ─────────
+
+    def __repr__(self) -> str:
+        return "ImageProcessingProcessor()"

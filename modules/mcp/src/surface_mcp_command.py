@@ -3,17 +3,16 @@
 import importlib
 import json
 from pathlib import Path
-from typing import Any
 
 try:
     _fastmcp_module = importlib.import_module("fastmcp")
 except ImportError:
     _fastmcp_module = importlib.import_module("mcp.server.fastmcp")
 
-FastMCP: Any = _fastmcp_module.FastMCP
+FastMCP = _fastmcp_module.FastMCP
 
 from modules.shared.src.contract_registry_service_aggregate import (
-    RegistryServiceAggregate,
+    IRegistryServiceAggregate,
 )
 from modules.shared.src.taxonomy_vision_constant import (
     DEFAULT_MODELS_TIMEOUT_S,
@@ -33,16 +32,16 @@ mcp = FastMCP("Vision")
 
 VISION_PROJECT = str(Path(__file__).resolve().parents[3])
 
-_dispatcher: RegistryServiceAggregate | None = None
+_dispatcher: IRegistryServiceAggregate | None = None
 
 
-def set_mcp_dispatcher(dispatcher: RegistryServiceAggregate | None) -> None:
+def set_mcp_dispatcher(dispatcher: IRegistryServiceAggregate | None) -> None:
     """Inject the aggregate facade used by MCP commands."""
     global _dispatcher
     _dispatcher = dispatcher
 
 
-def get_dispatcher() -> RegistryServiceAggregate | None:
+def get_dispatcher() -> IRegistryServiceAggregate | None:
     """Return the injected aggregate facade if present."""
     return _dispatcher
 
@@ -212,7 +211,7 @@ def vision_status() -> str:
     )
     deps["llm_endpoint"] = llm_status
 
-    status_cfg: dict[str, Any] = {
+    status_cfg: dict = {
         "config_yaml_detected": config_path is not None,
         "config_source": str(config_path) if config_path else "none",
         "selected_backend": selected_backend,
@@ -229,7 +228,7 @@ def vision_status() -> str:
     }
 
     server_version = get_package_version()
-    status: dict[str, Any] = {
+    status: dict = {
         "server": f"vision-mcp v{server_version}",
         "pattern": "hybrid (6 MCP tools + unlimited CLI)",
         "configuration": status_cfg,

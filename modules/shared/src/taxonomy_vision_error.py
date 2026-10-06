@@ -15,7 +15,7 @@ class VideoProcessingError(VisionDomainError):
     """Raised when a video operation fails or media is corrupt."""
 
 
-class InvalidParameterError(VisionDomainError):
+class InvalidParameterError(VisionDomainError, ValueError):
     """Raised when an operation receives invalid domain arguments."""
 
 

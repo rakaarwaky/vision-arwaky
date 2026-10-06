@@ -11,7 +11,7 @@ from typing import Any
 from modules.shared.src.taxonomy_vision_vo import ConfigKey
 
 
-class SystemConfigurationProtocol(ABC):
+class ISystemConfigurationProtocol(ABC):
     """Protocol for reading and mutating configuration with XDG precedence."""
 
     @abstractmethod
@@ -25,4 +25,4 @@ class SystemConfigurationProtocol(ABC):
         ...
 
 
-__all__ = ["SystemConfigurationProtocol"]
+__all__ = ["ISystemConfigurationProtocol"]

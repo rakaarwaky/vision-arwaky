@@ -1,7 +1,7 @@
 import logging
 
 from modules.shared.src.contract_tesseract_ocr_protocol import (
-    TesseractOCRProtocol,
+    ITesseractOCRProtocol,
 )
 from modules.shared.src.taxonomy_vision_vo import (
     FilePath,
@@ -12,8 +12,13 @@ from modules.shared.src.taxonomy_vision_vo import (
 logger = logging.getLogger("modules.image.capabilities.tesseract_ocr_adapter")
 
 
-class TesseractOCRAdapter(TesseractOCRProtocol):
+# ─── Block 1: Class Definition & Constructor ──────────────
+
+
+class TesseractOCRAdapter(ITesseractOCRProtocol):
     """Infrastructure adapter for OCR operations via Tesseract."""
+
+    # ─── Block 2: Protocol Method Implementation ──────────────
 
     def extract_text(self, image_path: FilePath, language: LanguageCode) -> OcrText:
         try:
@@ -34,3 +39,6 @@ class TesseractOCRAdapter(TesseractOCRProtocol):
         except Exception as e:
             logger.error(f"Tesseract OCR failed: {e}")
             raise RuntimeError(f"OCR failed: {e}") from e
+
+
+# ─── Block 3: Dunder Methods, Factories & Helpers ─────────

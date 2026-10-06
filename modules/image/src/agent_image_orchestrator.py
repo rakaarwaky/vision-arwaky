@@ -1,13 +1,17 @@
-"""Image Agent Orchestrator — coordinates image processing capabilities via DI."""
-
-import json
-from typing import Any
+"""Image Agent Orchestrator — coordinates image processing and OCR via DI."""
 
 from modules.shared.src.contract_image_processing_protocol import (
-    ImageProcessingProtocol,
+    IImageProcessingProtocol,
 )
 from modules.shared.src.contract_registry_service_aggregate import (
-    RegistryServiceAggregate,
+    IRegistryServiceAggregate,
+)
+from modules.shared.src.contract_tesseract_ocr_protocol import (
+    ITesseractOCRProtocol,
+)
+from modules.shared.src.taxonomy_vision_error import (
+    DependencyExecutionError,
+    InvalidParameterError,
 )
 from modules.shared.src.taxonomy_vision_vo import (
     AnalysisPrompt,
@@ -15,46 +19,46 @@ from modules.shared.src.taxonomy_vision_vo import (
     CommandOutput,
     FilePath,
     LanguageCode,
+    SystemCommandParams,
 )
+from modules.shared.src.utility_command_output import to_command_output
 
 
-class ImageOrchestrator(RegistryServiceAggregate):
+class ImageOrchestrator(IRegistryServiceAggregate):
     """Orchestrator for image processing domain (pure delegation facade)."""
 
     def __init__(
         self,
-        image_processing: ImageProcessingProtocol,
+        image_processing: IImageProcessingProtocol,
+        tesseract: ITesseractOCRProtocol,
     ):
         self._image_processing = image_processing
+        self._tesseract = tesseract
 
     def execute_in_process(
         self,
         command: CommandName,
-        kwargs: dict[str, Any],
+        kwargs: dict | SystemCommandParams,
     ) -> CommandOutput:
-        """Execute image-related commands by delegating to the injected processor."""
+        """Execute image-related commands by delegating to injected ports."""
         cap = self._image_processing
+        kwargs_dict = kwargs if isinstance(kwargs, dict) else kwargs.model_dump()
 
         if command.value == "analyze":
-            img = FilePath(value=kwargs["image"])
-            prompt_val = kwargs.get("prompt")
-            prompt = AnalysisPrompt(value=prompt_val)
-            return CommandOutput(
-                value=json.dumps(
-                    cap.analyze_screenshot(img, prompt).model_dump(), indent=2
-                )
-            )
+            img = FilePath.from_str(kwargs_dict["image"])
+            prompt = AnalysisPrompt(value=kwargs_dict.get("prompt"))
+            return to_command_output(cap.analyze_screenshot(img, prompt))
         elif command.value == "ocr":
-            img = FilePath(value=kwargs["image"])
-            lang_val = kwargs.get("lang") or "eng"
-            lang = LanguageCode(value=lang_val)
-            return CommandOutput(value=cap.extract_text(img, lang).value)
-        elif command.value == "compare":
-            img1 = FilePath(value=kwargs["image1"])
-            img2 = FilePath(value=kwargs["image2"])
-            return CommandOutput(
-                value=json.dumps(
-                    cap.compare_screenshots(img1, img2).model_dump(), indent=2
+            img = FilePath.from_str(kwargs_dict["image"])
+            lang = LanguageCode(value=kwargs_dict.get("lang") or "eng")
+            try:
+                return CommandOutput(
+                    value=self._tesseract.extract_text(img, lang).value
                 )
-            )
-        raise ValueError(f"Unknown image command: {command.value}")
+            except RuntimeError as e:
+                raise DependencyExecutionError(str(e)) from e
+        elif command.value == "compare":
+            img1 = FilePath.from_str(kwargs_dict["image1"])
+            img2 = FilePath.from_str(kwargs_dict["image2"])
+            return to_command_output(cap.compare_screenshots(img1, img2))
+        raise InvalidParameterError(f"Unknown image command: {command.value}")

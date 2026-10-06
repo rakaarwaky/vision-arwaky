@@ -6,11 +6,11 @@ AI agents and developers often need a reliable local service for inspecting imag
 
 The product is designed for local-first operation. Deterministic operations such as metadata extraction, frame sampling, OCR, motion detection, scene detection, comparison, and tracking should remain useful without a language model. Vision-language analysis is an optional enhancement supplied by an OpenAI-compatible external endpoint.
 
-## Product Vision
+### Product Vision
 
 Vision Arwaky will be a dependable visual-intelligence utility for AI agents and technical users. A caller should be able to send a supported image or video command through the CLI or MCP interface, receive structured output, and understand failures without needing to know the internal adapter graph.
 
-## Goals and Success Metrics
+## Goals & Success Metrics
 
 | Goal | Success metric |
 |---|---|
@@ -66,28 +66,28 @@ The current product does not include visual-memory storage or search commands, a
 
 ### P0 — Must Have
 
-- [ ] The CLI must expose `init`, `analyze`, `ocr`, `compare`, `video-info`, `extract-frames`, `check-corruption`, `detect-scenes`, `detect-motion`, `track`, and `analyze-video`.
-- [ ] The MCP server must expose `vision_init`, `vision_execute`, `vision_list_commands`, `vision_help`, `vision_status`, and `vision_cancel`.
-- [ ] `vision_list_commands` must list every supported workspace, image, and video command.
-- [ ] Every public execution path must route through modular domain containers and orchestrators.
-- [ ] Smart-video analysis must cap selected frames, bound summary prompt size, and remove temporary frame files after execution.
-- [ ] The package must build and the complete test suite must pass on supported Python versions.
-- [ ] The self-lint scan must finish with zero violations.
+- The CLI must expose `init`, `analyze`, `ocr`, `compare`, `video-info`, `extract-frames`, `check-corruption`, `detect-scenes`, `detect-motion`, `track`, and `analyze-video`.
+- The MCP server must expose `vision_init`, `vision_execute`, `vision_list_commands`, `vision_help`, `vision_status`, and `vision_cancel`.
+- `vision_list_commands` must list every supported workspace, image, and video command.
+- Every public execution path must route through modular domain containers and orchestrators.
+- Smart-video analysis must cap selected frames, bound summary prompt size, and remove temporary frame files after execution.
+- The package must build and the complete test suite must pass on supported Python versions.
+- The self-lint scan must finish with zero violations.
 
 ### P1 — Should Have
 
-- [ ] Image and video command outputs should be JSON-serializable and stable enough for agent consumption.
-- [ ] The status tool should distinguish missing Python packages, missing system binaries, and unavailable VLM configuration.
-- [ ] Smart-video tests should cover empty media, VLM failure fallback, frame sampling bounds, and cleanup behavior.
-- [ ] Documentation should remain synchronized across the PRD, feature FRDs, README, and agent-facing skill reference.
-- [ ] CLI errors should identify invalid paths, missing dependencies, unsupported commands, and unreachable VLM endpoints clearly.
+- Image and video command outputs should be JSON-serializable and stable enough for agent consumption.
+- The status tool should distinguish missing Python packages, missing system binaries, and unavailable VLM configuration.
+- Smart-video tests should cover empty media, VLM failure fallback, frame sampling bounds, and cleanup behavior.
+- Documentation should remain synchronized across the PRD, feature FRDs, README, and agent-facing skill reference.
+- CLI errors should identify invalid paths, missing dependencies, unsupported commands, and unreachable VLM endpoints clearly.
 
 ### P2 — Nice to Have
 
-- [ ] Add configurable concurrency for independent per-frame VLM requests.
-- [ ] Add a streaming or incremental summary mode for long videos.
-- [ ] Add optional structured schemas for command-specific outputs.
-- [ ] Add performance benchmarks for frame extraction, OCR, and bounded smart-video analysis.
+- Add configurable concurrency for independent per-frame VLM requests.
+- Add a streaming or incremental summary mode for long videos.
+- Add optional structured schemas for command-specific outputs.
+- Add performance benchmarks for frame extraction, OCR, and bounded smart-video analysis.
 
 ## Non-functional Requirements
 
@@ -101,7 +101,7 @@ The current product does not include visual-memory storage or search commands, a
 | Observability | Errors should be logged with enough context to identify the operation and external dependency involved. |
 | Packaging | `uv build` must produce a valid source distribution and wheel. |
 
-## Product Architecture
+### Product Decisions
 
 The implementation uses seven AES layers: taxonomy, contract, utility, capabilities, agent, surface, and root. Feature-specific details are documented in the feature FRDs:
 
@@ -114,7 +114,7 @@ The implementation uses seven AES layers: taxonomy, contract, utility, capabilit
 
 The shared contracts and value objects are supporting infrastructure for these features rather than an independent user-facing feature.
 
-## Risks and Open Questions
+## Open Questions / Risks
 
 | Risk or question | Mitigation or decision |
 |---|---|
@@ -124,10 +124,6 @@ The shared contracts and value objects are supporting infrastructure for these f
 | External dependency APIs may change | Keep adapters behind contracts and use explicit timeout and response handling. |
 | Configuration may contain machine-specific paths | Prefer user configuration and avoid committing credentials or model files. |
 | Feature and docs may drift | Treat FRDs and README command tables as part of the same change as public behavior. |
-
-## Acceptance Criteria
-
-A release candidate satisfies this PRD when the documented CLI and MCP surfaces match the implementation, feature FRDs describe the active contracts and edge cases, `bash scripts/gates.sh` passes, `uv build` succeeds, and smart-video analysis remains bounded and cleans up its generated artifacts.
 
 ## References
 

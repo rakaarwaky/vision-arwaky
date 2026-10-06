@@ -2,11 +2,14 @@
 
 from typing import TypedDict
 
-from modules.shared.src.contract_system_configuration_protocol import (
-    SystemConfigurationProtocol,
+from modules.shared.src.contract_registry_service_aggregate import (
+    IRegistryServiceAggregate,
 )
-from modules.shared.src.contract_system_job_protocol import SystemJobProtocol
-from modules.shared.src.contract_workspace_protocol import WorkspaceProtocol
+from modules.shared.src.contract_system_configuration_protocol import (
+    ISystemConfigurationProtocol,
+)
+from modules.shared.src.contract_system_job_protocol import ISystemJobProtocol
+from modules.shared.src.contract_workspace_protocol import IWorkspaceProtocol
 from modules.system.src.agent_system_orchestrator import SystemOrchestrator
 from modules.system.src.capabilities_system_configuration import (
     CapabilitiesSystemConfiguration,
@@ -48,10 +51,10 @@ def build_system_orchestrator(
 class SystemFeature(TypedDict):
     """Composition of system domain capability ports and orchestrator."""
 
-    workspace: WorkspaceProtocol
-    config: SystemConfigurationProtocol
-    job: SystemJobProtocol
-    system_orchestrator: SystemOrchestrator
+    workspace: IWorkspaceProtocol
+    config: ISystemConfigurationProtocol
+    job: ISystemJobProtocol
+    system_orchestrator: IRegistryServiceAggregate
 
 
 class SystemContainer:
@@ -75,8 +78,8 @@ class SystemContainer:
         )
 
     @property
-    def orchestrator(self) -> SystemOrchestrator:
-        """Return the wired System Agent Orchestrator."""
+    def orchestrator(self) -> IRegistryServiceAggregate:
+        """Return the wired System Agent Orchestrator (as its aggregate seam)."""
         return self._orchestrator
 
     @property

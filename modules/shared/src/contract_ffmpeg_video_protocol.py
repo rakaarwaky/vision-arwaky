@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from modules.shared.src.taxonomy_vision_constant import FFMPEG_TIMEOUT_S
 
 
-class FFmpegVideoProtocol(ABC):
+class IFFmpegVideoProtocol(ABC):
     """Abstract port defining FFmpeg execution services."""
 
     @abstractmethod

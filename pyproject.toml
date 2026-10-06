@@ -33,6 +33,27 @@ vision-arwaky-tui = "modules.root_tui_entry:main"
 [dependency-groups]
 dev = ["pytest", "pytest-cov", "ruff", "mypy"]
 
+[tool.ruff]
+target-version = "py313"
+
+[tool.ruff.lint]
+select = [
+    "E4",
+    "E7",
+    "E9",
+    "F",
+    "I",
+    "UP037",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"modules/shared/src/__init__.py" = ["E402"]
+"modules/mcp/src/surface_mcp_command.py" = ["E402"]
+"modules/root_mcp_entry.py" = ["E402"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["modules"]
+
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["modules*"]
@@ -63,7 +84,17 @@ testpaths = [
     "modules/shared/tests",
 ]
 pythonpath = ["."]
-python_files = ["unit_*.py", "test_*.py"]
+python_files = [
+    "unit_*.py",
+    "test_*.py",
+    "contract_*.py",
+    "integration_*.py",
+    "dogfood_*.py",
+    "smoke_*.py",
+    "e2e_*.py",
+    "acceptance_*.py",
+    "bench_*.py",
+]
 filterwarnings = [
     "ignore::pydantic_settings.IncompleteFieldDefinitionWarning",
 ]
