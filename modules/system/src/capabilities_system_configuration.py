@@ -1,6 +1,6 @@
 """Capabilities: system configuration management (AES403).
 
-Implements SystemConfigurationProtocol — reads configuration with XDG/env precedence
+Implements ISystemConfigurationProtocol — reads configuration with XDG/env precedence
 and overwrites/persists user settings to ~/.config/vision-arwaky/config.yaml.
 """
 
@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from modules.shared.src.contract_system_configuration_protocol import (
-    SystemConfigurationProtocol,
+    ISystemConfigurationProtocol,
 )
 from modules.shared.src.taxonomy_vision_vo import ConfigKey
 from modules.shared.src.utility_config_handler import (
@@ -23,7 +23,7 @@ from modules.shared.src.utility_config_handler import (
 
 
 # ─── Block 1: Class Definition & Constructor ──────────────
-class CapabilitiesSystemConfiguration(SystemConfigurationProtocol):
+class CapabilitiesSystemConfiguration(ISystemConfigurationProtocol):
     """Manage reading, merging, and overwriting configuration files."""
 
     def __init__(
@@ -39,7 +39,7 @@ class CapabilitiesSystemConfiguration(SystemConfigurationProtocol):
             else get_local_config_path()
         )
 
-    # ─── Block 2: Public Contract (SystemConfigurationProtocol ONLY)
+    # ─── Block 2: Public Contract (ISystemConfigurationProtocol ONLY)
     def get_config(self, key: ConfigKey | str | None = None) -> Any:
         """Resolve full configuration dictionary or a specific key path.
 

@@ -9,7 +9,7 @@ from modules.shared.src.taxonomy_vision_vo import (
 )
 
 
-class LLMVisionProtocol(ABC):
+class ILLMVisionProtocol(ABC):
     """Abstract port for local VLM image analysis capabilities."""
 
     @property

@@ -11,7 +11,7 @@ from modules.shared.src.taxonomy_vision_vo import (
 )
 
 
-class VideoAnalysisProtocol(ABC):
+class IVideoAnalysisProtocol(ABC):
     """Abstract protocol defining Video Analysis capabilities."""
 
     @abstractmethod

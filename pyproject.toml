@@ -63,7 +63,17 @@ testpaths = [
     "modules/shared/tests",
 ]
 pythonpath = ["."]
-python_files = ["unit_*.py", "test_*.py"]
+python_files = [
+    "unit_*.py",
+    "test_*.py",
+    "contract_*.py",
+    "integration_*.py",
+    "dogfood_*.py",
+    "smoke_*.py",
+    "e2e_*.py",
+    "acceptance_*.py",
+    "bench_*.py",
+]
 filterwarnings = [
     "ignore::pydantic_settings.IncompleteFieldDefinitionWarning",
 ]

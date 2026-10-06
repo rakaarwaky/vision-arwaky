@@ -1,10 +1,9 @@
 """CLI surface — parse args into VOs, delegate to injected aggregate, print JSON."""
 
 import os
-from typing import Any
 
 from modules.shared.src.contract_registry_service_aggregate import (
-    RegistryServiceAggregate,
+    IRegistryServiceAggregate,
 )
 from modules.shared.src.taxonomy_vision_vo import (
     AnalysisPrompt,
@@ -13,24 +12,24 @@ from modules.shared.src.taxonomy_vision_vo import (
 )
 from modules.shared.src.utility_frame_extractor import extract_middle_frame
 
-_dispatcher: RegistryServiceAggregate | None = None
+_dispatcher: IRegistryServiceAggregate | None = None
 
 
-def set_cli_dispatcher(dispatcher: RegistryServiceAggregate | None) -> None:
+def set_cli_dispatcher(dispatcher: IRegistryServiceAggregate | None) -> None:
     """Inject the aggregate facade used by CLI commands (optional)."""
     global _dispatcher
     _dispatcher = dispatcher
 
 
-def get_dispatcher() -> RegistryServiceAggregate | None:
+def get_dispatcher() -> IRegistryServiceAggregate | None:
     """Return the injected aggregate facade if present."""
     return _dispatcher
 
 
 def _execute(
     command: str,
-    kwargs: dict[str, Any],
-    orchestrator: RegistryServiceAggregate | None = None,
+    kwargs: dict,
+    orchestrator: IRegistryServiceAggregate | None = None,
 ) -> str:
     """Execute a command through the injected or provided orchestrator."""
     orch = orchestrator or _dispatcher
@@ -41,7 +40,7 @@ def _execute(
     return orch.execute_in_process(CommandName(value=command), kwargs).value
 
 
-def cmd_init(args, orchestrator: RegistryServiceAggregate | None = None) -> int:
+def cmd_init(args, orchestrator: IRegistryServiceAggregate | None = None) -> int:
     """Initialize workspace directory, symlinks to XDG, and SKILL.md."""
     target_dir = getattr(args, "target_dir", ".") or "."
     result = _execute("init", {"target_dir": target_dir}, orchestrator=orchestrator)
@@ -49,7 +48,7 @@ def cmd_init(args, orchestrator: RegistryServiceAggregate | None = None) -> int:
     return 0
 
 
-def cmd_analyze(args, orchestrator: RegistryServiceAggregate | None = None) -> int:
+def cmd_analyze(args, orchestrator: IRegistryServiceAggregate | None = None) -> int:
     """Analyze an image or a supported video's middle frame."""
     file_path = args.image
     prompt = AnalysisPrompt(value=args.prompt) if args.prompt else None
@@ -83,7 +82,7 @@ def cmd_analyze(args, orchestrator: RegistryServiceAggregate | None = None) -> i
     return 0
 
 
-def cmd_ocr(args, orchestrator: RegistryServiceAggregate | None = None) -> int:
+def cmd_ocr(args, orchestrator: IRegistryServiceAggregate | None = None) -> int:
     """Extract text from an image using OCR."""
     lang = getattr(args, "lang", "eng") or "eng"
     result = _execute(
@@ -93,7 +92,7 @@ def cmd_ocr(args, orchestrator: RegistryServiceAggregate | None = None) -> int:
     return 0
 
 
-def cmd_compare(args, orchestrator: RegistryServiceAggregate | None = None) -> int:
+def cmd_compare(args, orchestrator: IRegistryServiceAggregate | None = None) -> int:
     """Compare two screenshots and print structured differences."""
     result = _execute(
         "compare",
@@ -104,7 +103,7 @@ def cmd_compare(args, orchestrator: RegistryServiceAggregate | None = None) -> i
     return 0
 
 
-def cmd_video_info(args, orchestrator: RegistryServiceAggregate | None = None) -> int:
+def cmd_video_info(args, orchestrator: IRegistryServiceAggregate | None = None) -> int:
     """Print metadata for a video file."""
     result = _execute("video-info", {"video": args.video}, orchestrator=orchestrator)
     print(result)
@@ -112,7 +111,7 @@ def cmd_video_info(args, orchestrator: RegistryServiceAggregate | None = None) -
 
 
 def cmd_extract_frames(
-    args, orchestrator: RegistryServiceAggregate | None = None
+    args, orchestrator: IRegistryServiceAggregate | None = None
 ) -> int:
     """Extract sampled frames from a video file."""
     result = _execute(
@@ -125,7 +124,7 @@ def cmd_extract_frames(
 
 
 def cmd_check_corruption(
-    args, orchestrator: RegistryServiceAggregate | None = None
+    args, orchestrator: IRegistryServiceAggregate | None = None
 ) -> int:
     """Check if a video file can be decoded without errors."""
     result = _execute(
@@ -136,7 +135,7 @@ def cmd_check_corruption(
 
 
 def cmd_detect_scenes(
-    args, orchestrator: RegistryServiceAggregate | None = None
+    args, orchestrator: IRegistryServiceAggregate | None = None
 ) -> int:
     """Detect scene transitions in a video file."""
     result = _execute(
@@ -149,7 +148,7 @@ def cmd_detect_scenes(
 
 
 def cmd_detect_motion(
-    args, orchestrator: RegistryServiceAggregate | None = None
+    args, orchestrator: IRegistryServiceAggregate | None = None
 ) -> int:
     """Detect significant motion events in a video file."""
     result = _execute(
@@ -161,7 +160,7 @@ def cmd_detect_motion(
     return 0
 
 
-def cmd_track(args, orchestrator: RegistryServiceAggregate | None = None) -> int:
+def cmd_track(args, orchestrator: IRegistryServiceAggregate | None = None) -> int:
     """Track an object across frames using an initial bounding box."""
     try:
         x, y, w, h = map(int, args.bbox.split(","))
@@ -183,7 +182,7 @@ def cmd_track(args, orchestrator: RegistryServiceAggregate | None = None) -> int
 
 
 def cmd_analyze_video(
-    args, orchestrator: RegistryServiceAggregate | None = None
+    args, orchestrator: IRegistryServiceAggregate | None = None
 ) -> int:
     """Run VLM-backed smart video analysis on selected key frames."""
     prompt = AnalysisPrompt(value=args.prompt) if args.prompt else None

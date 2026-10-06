@@ -1,31 +1,31 @@
 """Shared layer barrel — re-exports all shared types (VO, event, error, constant, contract, utility)."""
 
-from modules.shared.src.contract_ffmpeg_video_protocol import FFmpegVideoProtocol
+from modules.shared.src.contract_ffmpeg_video_protocol import IFFmpegVideoProtocol
 from modules.shared.src.contract_image_processing_protocol import (
-    ImageProcessingProtocol,
+    IImageProcessingProtocol,
 )
-from modules.shared.src.contract_llm_vision_protocol import LLMVisionProtocol
+from modules.shared.src.contract_llm_vision_protocol import ILLMVisionProtocol
 from modules.shared.src.contract_object_tracking_protocol import (
-    ObjectTrackingProtocol,
+    IObjectTrackingProtocol,
 )
 from modules.shared.src.contract_registry_service_aggregate import (
-    RegistryServiceAggregate,
+    IRegistryServiceAggregate,
 )
 from modules.shared.src.contract_system_configuration_protocol import (
-    SystemConfigurationProtocol,
+    ISystemConfigurationProtocol,
 )
-from modules.shared.src.contract_system_job_protocol import SystemJobProtocol
-from modules.shared.src.contract_tesseract_ocr_protocol import TesseractOCRProtocol
+from modules.shared.src.contract_system_job_protocol import ISystemJobProtocol
+from modules.shared.src.contract_tesseract_ocr_protocol import ITesseractOCRProtocol
 from modules.shared.src.contract_video_analysis_protocol import (
-    VideoAnalysisProtocol,
+    IVideoAnalysisProtocol,
 )
 from modules.shared.src.contract_video_processing_protocol import (
-    VideoProcessingProtocol,
+    IVideoProcessingProtocol,
 )
 from modules.shared.src.contract_video_understanding_protocol import (
-    VideoUnderstandingProtocol,
+    IVideoUnderstandingProtocol,
 )
-from modules.shared.src.contract_workspace_protocol import WorkspaceProtocol
+from modules.shared.src.contract_workspace_protocol import IWorkspaceProtocol
 from modules.shared.src.taxonomy_command_vo import (
     ALL_COMMANDS,
     IMAGE_COMMANDS,
@@ -170,14 +170,23 @@ __all__ = [
     "CommandOutput",
     "ConfigKey",
     "DependencyExecutionError",
-    "FFmpegVideoProtocol",
     "FilePath",
     "FrameAnalysis",
+    "IFFmpegVideoProtocol",
+    "IImageProcessingProtocol",
+    "ILLMVisionProtocol",
+    "IObjectTrackingProtocol",
+    "IRegistryServiceAggregate",
+    "ISystemConfigurationProtocol",
+    "ISystemJobProtocol",
+    "ITesseractOCRProtocol",
+    "IVideoAnalysisProtocol",
+    "IVideoProcessingProtocol",
+    "IVideoUnderstandingProtocol",
+    "IWorkspaceProtocol",
     "ImageProcessingError",
-    "ImageProcessingProtocol",
     "IntervalSeconds",
     "InvalidParameterError",
-    "LLMVisionProtocol",
     "LanguageCode",
     "MaxFrames",
     "MinArea",
@@ -185,27 +194,18 @@ __all__ = [
     "MotionDirection",
     "MotionEvent",
     "MotionMagnitude",
-    "ObjectTrackingProtocol",
     "OcrText",
-    "RegistryServiceAggregate",
     "SceneChange",
     "SceneThreshold",
     "ScreenshotComparison",
     "SimilarityScore",
-    "SystemConfigurationProtocol",
-    "SystemJobProtocol",
-    "TesseractOCRProtocol",
     "Timestamp",
-    "VideoAnalysisProtocol",
     "VideoInfo",
     "VideoProcessingError",
-    "VideoProcessingProtocol",
     "VideoUnderstanding",
     "VideoUnderstandingConfig",
-    "VideoUnderstandingProtocol",
     "VisionAnalysis",
     "VisionDomainError",
-    "WorkspaceProtocol",
     "XDGPaths",
     "apply_dilate",
     "apply_gaussian_blur",

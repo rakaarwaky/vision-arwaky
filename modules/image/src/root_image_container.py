@@ -11,6 +11,9 @@ from modules.image.src.capabilities_image_processing_processor import (
 )
 from modules.image.src.capabilities_llm_vision_adapter import LLMVisionAdapter
 from modules.image.src.capabilities_tesseract_ocr_adapter import TesseractOCRAdapter
+from modules.shared.src.contract_registry_service_aggregate import (
+    IRegistryServiceAggregate,
+)
 
 
 def build_tesseract() -> TesseractOCRAdapter:
@@ -36,9 +39,13 @@ def build_image_processing(
 
 def build_image_orchestrator(
     image_processing_port: ImageProcessingProcessor,
+    tesseract_port: TesseractOCRAdapter,
 ) -> ImageOrchestrator:
-    """Instantiate Image Agent Orchestrator with the single routing port."""
-    return ImageOrchestrator(image_processing=image_processing_port)
+    """Instantiate Image Agent Orchestrator with the routing and OCR ports."""
+    return ImageOrchestrator(
+        image_processing=image_processing_port,
+        tesseract=tesseract_port,
+    )
 
 
 class ImageContainer:
@@ -57,12 +64,13 @@ class ImageContainer:
             self._tesseract, self._llm
         )
         self._orchestrator = orchestrator or build_image_orchestrator(
-            self._image_processing
+            self._image_processing,
+            self._tesseract,
         )
 
     @property
-    def orchestrator(self) -> ImageOrchestrator:
-        """Return the wired Image Agent Orchestrator."""
+    def orchestrator(self) -> IRegistryServiceAggregate:
+        """Return the wired Image Agent Orchestrator (as its aggregate seam)."""
         return self._orchestrator
 
     @property

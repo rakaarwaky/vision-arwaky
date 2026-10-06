@@ -1,123 +1,120 @@
 # FRD — Image Intelligence
 
+## Reference
+
+- PRD: [PRD.md](../../PRD.md)
+- Backlog: [BACKLOG.md](BACKLOG.md)
+- Developer README: [README.md](../../README.md)
+- Agent skill: [SKILL.md](../../SKILL.md)
+
 ## System Overview
 
-The image feature provides image analysis, OCR, and screenshot comparison. Its root container assembles concrete adapters behind shared contracts and injects them into `ImageOrchestrator`. CLI and MCP surfaces call the aggregate facade rather than constructing image capabilities directly. OpenCV operations are utilized directly via pure utility functions.
+The image feature provides image analysis, OCR, and screenshot comparison to the CLI and MCP surfaces. Surfaces dispatch through the image aggregate, which delegates to the orchestrator; the orchestrator resolves ports injected by the root composition. Deterministic pixel operations are pure utility functions, while OCR and vision analysis call external engines behind adapters.
 
 ```text
 CLI / MCP surface
         │
         ▼
-RegistryServiceAggregate
+Image aggregate (execute)
         │
         ▼
-ImageOrchestrator
+Image orchestrator
    ┌────┼─────────────┐
    ▼    ▼             ▼
-Image  Tesseract     LLM
-processing           vision
+Image  OCR adapter    Vision
+processing           model adapter
    │
    ▼
-OpenCV Utilities (Pure Functions)
+OpenCV utilities (pure functions)
 ```
-
-Primary implementation modules are under `modules/image/src/`:
-
-| Module | Responsibility |
-|---|---|
-| `agent_image_orchestrator.py` | Coordinates image commands through injected ports |
-| `capabilities_image_processing_processor.py` | Implements image operations and fallback behavior |
-| `capabilities_tesseract_ocr_adapter.py` | Adapts Tesseract OCR |
-| `capabilities_llm_vision_adapter.py` | Calls an OpenAI-compatible external VLM endpoint |
-| `root_image_container.py` | Builds the image dependency graph |
 
 ## Functional Requirements
 
 ### FR-IMG-001: Analyze image
 
-- **Description:** Analyze a supplied image with the configured vision-language model and return structured text or a deterministic fallback result.
-- **Input:** `image` path and optional `prompt`.
-- **Output:** JSON containing the analysis source and returned text or detected elements.
-- **Business rules:** The image path must be passed through the dispatcher and the VLM adapter must use configured endpoint and model settings.
-- **Edge cases:** Missing image, unsupported image format, empty VLM response, unreachable VLM endpoint, malformed VLM response.
-- **Error handling:** Return a controlled command error or fallback result; do not expose a raw unhandled network exception to the surface.
+- **Description**: Analyze a supplied image with the configured vision-language model and return structured text or a deterministic fallback result.
+- **Input**: `image` path and optional `prompt`.
+- **Output**: JSON containing the analysis source and the returned text or detected elements, wrapped in the command output envelope.
+- **Business Rules**: The image path must pass through the dispatcher; the vision adapter must use the configured endpoint and model settings; deterministic operations must not require a network call.
+- **Edge Cases**: Missing image, unsupported image format, empty model response, unreachable model endpoint, malformed model response.
+- **Error Handling**: Return a controlled command error or the fallback result; never expose a raw network exception to the surface.
 
-### FR-IMG-002: OCR
+### FR-IMG-002: Extract text with OCR
 
-- **Description:** Extract text from an image using Tesseract.
-- **Input:** `image` path and optional language code, defaulting to `eng`.
-- **Output:** Plain extracted text serialized through the command output wrapper.
-- **Business rules:** Tesseract is an external system dependency and must be detected by the status path.
-- **Edge cases:** Missing Tesseract binary, missing language data, unreadable image, empty text.
-- **Error handling:** Raise a controlled runtime error with an actionable dependency message.
+- **Description**: Extract text from an image using Tesseract.
+- **Input**: `image` path and optional language code, defaulting to `eng`.
+- **Output**: Plain extracted text wrapped in the command output envelope.
+- **Business Rules**: Tesseract is an external dependency and must be detected by the dependency probe before the command runs; the language code defaults to `eng` when absent.
+- **Edge Cases**: Missing Tesseract binary, missing language data, unreadable image, empty text result.
+- **Error Handling**: Raise a controlled runtime error carrying an actionable dependency message.
 
 ### FR-IMG-003: Compare screenshots
 
-- **Description:** Compare two screenshots and identify perceptual differences.
-- **Input:** `image1` and `image2` paths.
-- **Output:** `identical`, `phash_diff`, and a list of difference bounding boxes.
-- **Business rules:** Both images must be readable before comparison; output must be JSON-serializable.
-- **Edge cases:** Different dimensions, missing files, visually identical images, completely different images.
-- **Error handling:** Return a controlled file or image-processing error rather than silently treating unreadable input as identical.
+- **Description**: Compare two screenshots and identify perceptual differences.
+- **Input**: `image1` and `image2` paths.
+- **Output**: JSON with `identical`, `phash_diff`, and the list of difference bounding boxes.
+- **Business Rules**: Both images must be readable before comparison; the result must be JSON-serializable; unreadable input must never read as identical.
+- **Edge Cases**: Different dimensions, missing files, visually identical images, completely different images.
+- **Error Handling**: Return a controlled file or image-processing error rather than silently treating unreadable input as identical.
 
 ## API Contract
 
-| Operation | Input | Output | Description |
-|---|---|---|---|
-| `analyze` | `image`, optional `prompt` | `CommandOutput` containing JSON | VLM analysis with fallback |
-| `ocr` | `image`, optional `lang` | `CommandOutput` containing text | Tesseract OCR |
-| `compare` | `image1`, `image2` | `CommandOutput` containing comparison JSON | Screenshot comparison |
+### Protocol API
 
-The feature uses the following shared contracts:
+| Method | Input | Output | Error | Event | Description |
+|---|---|---|---|---|---|
+| `analyze` | `image`, optional `prompt` | `CommandOutput` containing analysis JSON | `CommandError` on invalid input or unhandled vision endpoint failure | — | Vision-language analysis with deterministic fallback |
+| `ocr` | `image`, optional `lang` (default `eng`) | `CommandOutput` containing extracted text | `RuntimeError` naming the missing dependency | — | Tesseract text extraction |
+| `compare` | `image1`, `image2` | `CommandOutput` containing comparison JSON | `CommandError` on unreadable input | — | Perceptual screenshot comparison |
 
-- `contract_image_processing_protocol.py`
-- `contract_tesseract_ocr_protocol.py`
-- `contract_llm_vision_protocol.py`
+### Aggregate API
 
+| Method | Input | Output | Error | Event | Description |
+|---|---|---|---|---|---|
+| `execute` | command name (`analyze`, `ocr`, `compare`) plus that command's arguments | `CommandOutput` for the dispatched command | `CommandError` raised by the dispatched command | — | Single composite entry point the surfaces call |
 
 ## Integration Points
 
-| Integration | Purpose |
-|---|---|
-| OpenCV Utilities | Image decoding, processing, and perceptual comparison pure functions |
-| Tesseract | OCR execution through the Tesseract adapter |
-| External VLM | OpenAI-compatible `/chat/completions` endpoint for image understanding |
-| Root composition | Injects OCR and VLM capabilities into the image orchestrator |
-| CLI and MCP | Public command surfaces |
+| System | Direction | Purpose | Failure mode |
+|---|---|---|---|
+| OpenCV utilities | in | Image decoding, processing, and perceptual comparison as pure functions | unreadable or unsupported input -> controlled image error |
+| Tesseract engine | out | OCR execution through the OCR adapter | missing binary or language data -> actionable dependency error |
+| External vision endpoint | out | Image understanding through an OpenAI-compatible chat completions endpoint | unreachable or malformed response -> deterministic fallback or controlled error |
+| Root composition | in | Injects OCR and vision ports into the image orchestrator | missing port -> composition fails before any command runs |
+| CLI and MCP surfaces | in | Public command entry points that call the aggregate | invalid arguments -> controlled command error |
 
 ## Non-functional Requirements
 
-- **Performance:** Deterministic operations must not require a network call.
-- **Reliability:** VLM failures must be handled through a fallback or explicit controlled error.
-- **Security:** Image paths and endpoint configuration must not be interpolated into shell commands.
-- **Compatibility:** The feature must work with Python 3.12+ and the OpenCV runtime installed by CI.
-- **Maintainability:** The orchestrator must depend on contracts and constructor-injected ports.
+| Metric | Target | Measurement method |
+|---|---|---|
+| Determinism | Deterministic image operations make no network call | Run `compare` and `ocr` with the vision endpoint unreachable and assert the command completes |
+| Reliability | Vision endpoint failures resolve to a fallback result or a controlled error | Exercise a simulated endpoint outage through the aggregate and assert the caller-visible outcome |
+| Security | Image paths and endpoint configuration are never interpolated into shell commands | Architecture lint plus a path-injection test |
+| Compatibility | Runs on Python 3.12+ with the OpenCV runtime installed by CI | CI matrix run across the supported interpreter versions |
+| Maintainability | The orchestrator depends only on contracts and injected ports | Architecture scan reporting any dependency violation |
 
-## Test Scenarios / QA Checklist
+## Test Scenarios
 
-- [ ] Analyze a valid image with a reachable fake or local VLM adapter.
-- [ ] Analyze a valid image when the VLM endpoint is unavailable and verify fallback behavior.
-- [ ] Run OCR with the default `eng` language.
-- [ ] Run OCR with a missing Tesseract executable and verify the diagnostic error.
-- [ ] Compare identical screenshots and verify `identical=true`.
-- [ ] Compare different screenshots and verify differences are returned.
-- [ ] Verify missing input files produce controlled errors.
-- [ ] Verify the image root container injects every required port.
+- Analyze a valid image with a reachable local vision adapter and receive a structured analysis result.
+- Analyze a valid image when the vision endpoint is unavailable and receive the deterministic fallback result.
+- Run OCR with the default `eng` language and receive the extracted text.
+- Run OCR with a missing Tesseract executable and receive the actionable dependency error.
+- Compare identical screenshots and verify `identical=true`.
+- Compare different screenshots and verify that differences are returned.
+- Verify missing input files produce controlled errors.
+- Verify the image root composition injects every required port.
 
+## Assumptions & Constraints
 
-## Assumptions and Constraints
-
-The repository does not bundle a VLM or model weights. The external backend must be configured separately, and deterministic image operations remain the supported fallback path when no VLM is available.
+- The repository does not bundle a vision model or model weights; the external backend is configured separately.
+- Deterministic image operations remain the supported path when no vision endpoint is reachable.
+- Tesseract and its language data are host-level dependencies installed outside this feature.
+- The vision endpoint speaks an OpenAI-compatible chat completions protocol.
 
 ## Glossary
 
-- **VLM:** Vision-language model used for image descriptions.
-- **OCR:** Optical character recognition.
-- **pHash:** Perceptual hash used to compare image similarity.
-- **Port:** Contract interface consumed by an orchestrator or implemented by a capability.
-
-## Reference
-
-- [Product requirements](../../PRD.md)
-- [Developer README](../../README.md)
-- [Agent-facing skill](../../SKILL.md)
+- **VLM**: Vision-language model used for image descriptions.
+- **OCR**: Optical character recognition.
+- **pHash**: Perceptual hash used to compare image similarity.
+- **Port**: Contract interface consumed by an orchestrator or provided by a capability.
+- **Aggregate**: Composite entry point the surfaces call to dispatch a command.

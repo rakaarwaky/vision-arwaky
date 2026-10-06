@@ -11,7 +11,7 @@ from typing import Any
 from modules.shared.src.taxonomy_vision_vo import CommandOutput
 
 
-class SystemJobProtocol(ABC):
+class ISystemJobProtocol(ABC):
     """Protocol for monitoring system status and cancelling in-flight operations."""
 
     @abstractmethod
@@ -25,4 +25,4 @@ class SystemJobProtocol(ABC):
         ...
 
 
-__all__ = ["SystemJobProtocol"]
+__all__ = ["ISystemJobProtocol"]

@@ -8,7 +8,7 @@ from modules.shared.src.taxonomy_vision_vo import (
 )
 
 
-class VideoUnderstandingProtocol(ABC):
+class IVideoUnderstandingProtocol(ABC):
     """Abstract port for smart video understanding.
 
     Selects core/key frames via scene-change, motion, and uniform sampling,

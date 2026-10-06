@@ -12,15 +12,15 @@ from typing import Any
 
 import cv2
 
-from modules.shared.src.contract_llm_vision_protocol import LLMVisionProtocol
+from modules.shared.src.contract_llm_vision_protocol import ILLMVisionProtocol
 from modules.shared.src.contract_video_analysis_protocol import (
-    VideoAnalysisProtocol,
+    IVideoAnalysisProtocol,
 )
 from modules.shared.src.contract_video_processing_protocol import (
-    VideoProcessingProtocol,
+    IVideoProcessingProtocol,
 )
 from modules.shared.src.contract_video_understanding_protocol import (
-    VideoUnderstandingProtocol,
+    IVideoUnderstandingProtocol,
 )
 from modules.shared.src.taxonomy_vision_constant import (
     DEFAULT_VIDEO_FPS,
@@ -46,7 +46,10 @@ logger = logging.getLogger("modules.video.capabilities.video_understanding")
 MAX_VLM_CONCURRENCY: int = 4
 
 
-class VideoUnderstandingAnalyzer(VideoUnderstandingProtocol):
+# ─── Block 1: Class Definition & Constructor ──────────────
+
+
+class VideoUnderstandingAnalyzer(IVideoUnderstandingProtocol):
     """Analyze selected video frames with a vision-language model.
 
     Frames are selected from scene changes, high-motion events, and uniform
@@ -56,14 +59,16 @@ class VideoUnderstandingAnalyzer(VideoUnderstandingProtocol):
 
     def __init__(
         self,
-        video_analysis: VideoAnalysisProtocol,
-        video_processing: VideoProcessingProtocol,
-        llm: LLMVisionProtocol,
+        video_analysis: IVideoAnalysisProtocol,
+        video_processing: IVideoProcessingProtocol,
+        llm: ILLMVisionProtocol,
     ):
         """Wire the analysis, processing, and vision-language dependencies."""
         self._video_analysis = video_analysis
         self._video_processing = video_processing
         self._llm = llm
+
+    # ─── Block 2: Protocol Method Implementation ──────────────
 
     def analyze(
         self,
@@ -270,3 +275,6 @@ class VideoUnderstandingAnalyzer(VideoUnderstandingProtocol):
         except (RuntimeError, ValueError, OSError) as error:
             logger.warning("Summary synthesis failed, falling back to join: %s", error)
             return " ".join(descriptions)
+
+
+# ─── Block 3: Dunder Methods, Factories & Helpers ─────────

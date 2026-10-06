@@ -7,7 +7,7 @@ from modules.shared.src.taxonomy_vision_vo import (
 )
 
 
-class ObjectTrackingProtocol(ABC):
+class IObjectTrackingProtocol(ABC):
     """Abstract protocol defining Object Tracking capabilities."""
 
     @abstractmethod

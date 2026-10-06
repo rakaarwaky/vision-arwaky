@@ -10,7 +10,7 @@ from modules.shared.src.taxonomy_vision_vo import (
 )
 
 
-class ImageProcessingProtocol(ABC):
+class IImageProcessingProtocol(ABC):
     """Abstract protocol defining Image Processing capabilities."""
 
     @abstractmethod

@@ -1,6 +1,9 @@
 from typing import Any
 
-from modules.shared.src.contract_llm_vision_protocol import LLMVisionProtocol
+from modules.shared.src.contract_llm_vision_protocol import ILLMVisionProtocol
+from modules.shared.src.contract_registry_service_aggregate import (
+    IRegistryServiceAggregate,
+)
 from modules.video.src.agent_video_orchestrator import VideoOrchestrator
 from modules.video.src.capabilities_ffmpeg_adapter import FFmpegVideoAdapter
 from modules.video.src.capabilities_object_tracker import ObjectTrackingTracker
@@ -36,7 +39,7 @@ def build_object_tracking() -> ObjectTrackingTracker:
 def build_video_understanding(
     video_analysis: VideoAnalysisAnalyzer,
     video_proc: VideoProcessingProcessor,
-    llm_port: LLMVisionProtocol,
+    llm_port: ILLMVisionProtocol,
 ) -> VideoUnderstandingAnalyzer:
     """Wire VideoUnderstandingAnalyzer capability (smart video understanding)."""
     return VideoUnderstandingAnalyzer(
@@ -66,7 +69,7 @@ class VideoContainer:
 
     def __init__(
         self,
-        llm_port: LLMVisionProtocol | None = None,
+        llm_port: ILLMVisionProtocol | None = None,
         ffmpeg_port: FFmpegVideoAdapter | None = None,
         video_processing_port: VideoProcessingProcessor | None = None,
         video_analysis_port: VideoAnalysisAnalyzer | None = None,
@@ -101,8 +104,8 @@ class VideoContainer:
         )
 
     @property
-    def orchestrator(self) -> VideoOrchestrator:
-        """Return the wired Video Agent Orchestrator."""
+    def orchestrator(self) -> IRegistryServiceAggregate:
+        """Return the wired Video Agent Orchestrator (as its aggregate seam)."""
         return self._orchestrator
 
     @property
@@ -132,7 +135,7 @@ class VideoContainer:
 
 
 def build_video_feature(
-    llm_port: LLMVisionProtocol | None = None,
+    llm_port: ILLMVisionProtocol | None = None,
 ) -> dict[str, Any]:
     """Build and wire all video feature components."""
     container = VideoContainer(llm_port=llm_port)

@@ -2,41 +2,45 @@
 
 from __future__ import annotations
 
-import json
 from collections.abc import Callable
-from typing import Any
 
 from modules.shared.src.contract_registry_service_aggregate import (
-    RegistryServiceAggregate,
+    IRegistryServiceAggregate,
 )
 from modules.shared.src.contract_system_configuration_protocol import (
-    SystemConfigurationProtocol,
+    ISystemConfigurationProtocol,
 )
-from modules.shared.src.contract_system_job_protocol import SystemJobProtocol
-from modules.shared.src.contract_workspace_protocol import WorkspaceProtocol
+from modules.shared.src.contract_system_job_protocol import ISystemJobProtocol
+from modules.shared.src.contract_workspace_protocol import IWorkspaceProtocol
+from modules.shared.src.taxonomy_vision_error import InvalidParameterError
 from modules.shared.src.taxonomy_vision_vo import (
     CommandName,
     CommandOutput,
     ConfigKey,
     FilePath,
+    SystemCommandParams,
 )
+from modules.shared.src.utility_command_output import dict_to_command_output
 
 
-class SystemOrchestrator(RegistryServiceAggregate):
+class SystemOrchestrator(IRegistryServiceAggregate):
     """Orchestrator for system domain (pure delegation facade)."""
 
     def __init__(
         self,
-        workspace: WorkspaceProtocol,
-        config: SystemConfigurationProtocol,
-        job: SystemJobProtocol,
+        workspace: IWorkspaceProtocol,
+        config: ISystemConfigurationProtocol,
+        job: ISystemJobProtocol,
     ) -> None:
         self._workspace = workspace
         self._config = config
         self._job = job
 
-        # Dispatch map: command name -> handler(kwargs) -> CommandOutput
-        self._handlers: dict[str, Callable[[dict[str, Any]], CommandOutput]] = {
+        # Dispatch map: command name -> handler(params) -> CommandOutput
+        self._handlers: dict[
+            str,
+            Callable[[SystemCommandParams], CommandOutput],
+        ] = {
             "init": self._handle_init,
             "get-config": self._handle_get_config,
             "config": self._handle_get_config,
@@ -48,44 +52,47 @@ class SystemOrchestrator(RegistryServiceAggregate):
     def execute_in_process(
         self,
         command: CommandName,
-        kwargs: dict[str, Any],
+        params: SystemCommandParams | dict,
     ) -> CommandOutput:
         """Execute system commands by delegating to injected capabilities."""
+        if isinstance(params, dict):
+            params = SystemCommandParams(**params)
         handler = self._handlers.get(command.value)
         if handler is None:
-            raise ValueError(f"Unknown system command: {command.value}")
-        return handler(kwargs)
+            raise InvalidParameterError(f"Unknown system command: {command.value}")
+        return handler(params)
 
     # ─── Private command handlers ─────────────────────────────
 
-    def _handle_init(self, kwargs: dict[str, Any]) -> CommandOutput:
-        target_val = kwargs.get("target_dir", ".") or "."
-        target = FilePath(value=str(target_val))
+    def _handle_init(self, params: SystemCommandParams) -> CommandOutput:
+        target_val = str(params.model_dump().get("target_dir", ".") or ".")
+        target = FilePath.from_str(target_val)
         result = self._workspace.init_workspace(target)
-        return CommandOutput(value=json.dumps(result, indent=2))
+        return dict_to_command_output(result)
 
-    def _handle_get_config(self, kwargs: dict[str, Any]) -> CommandOutput:
-        key_val = str(kwargs.get("key", "") or "")
+    def _handle_get_config(self, params: SystemCommandParams) -> CommandOutput:
+        key_val = str(params.model_dump().get("key", "") or "")
         result = self._config.get_config(
             key=ConfigKey(value=key_val) if key_val else None
         )
-        return CommandOutput(value=json.dumps(result, indent=2))
+        return dict_to_command_output(result)
 
-    def _handle_set_config(self, kwargs: dict[str, Any]) -> CommandOutput:
-        key_val = str(kwargs.get("key", ""))
-        val = kwargs.get("value")
+    def _handle_set_config(self, params: SystemCommandParams) -> CommandOutput:
+        data = params.model_dump()
+        key_val = str(data.get("key", ""))
+        val = data.get("value")
         result = self._config.set_config(ConfigKey(value=key_val), val)
-        return CommandOutput(value=json.dumps(result, indent=2))
+        return dict_to_command_output(result)
 
-    def _handle_status(self, kwargs: dict[str, Any]) -> CommandOutput:
-        _ = kwargs
+    def _handle_status(self, params: SystemCommandParams) -> CommandOutput:
+        _ = params
         result = self._job.get_status()
-        return CommandOutput(value=json.dumps(result, indent=2))
+        return dict_to_command_output(result)
 
-    def _handle_cancel(self, kwargs: dict[str, Any]) -> CommandOutput:
-        job_id = str(kwargs.get("job_id", "") or "")
+    def _handle_cancel(self, params: SystemCommandParams) -> CommandOutput:
+        job_id = str(params.model_dump().get("job_id", "") or "")
         result = self._job.cancel_job(job_id)
-        return CommandOutput(value=json.dumps(result, indent=2))
+        return dict_to_command_output(result)
 
 
 __all__ = ["SystemOrchestrator"]

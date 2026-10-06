@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from modules.shared.src.taxonomy_vision_vo import FilePath, LanguageCode, OcrText
 
 
-class TesseractOCRProtocol(ABC):
+class ITesseractOCRProtocol(ABC):
     """Abstract port for OCR text extraction services."""
 
     @abstractmethod

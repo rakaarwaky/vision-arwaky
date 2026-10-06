@@ -1,19 +1,21 @@
 """TUI entry point and dispatcher aggregate."""
 
-from typing import Any
-
 from modules.cli.src.surface_tui_controller import set_tui_dispatcher, tui_main
 from modules.image.src.root_image_container import ImageContainer, build_image_feature
 from modules.shared.src.contract_registry_service_aggregate import (
-    RegistryServiceAggregate,
+    IRegistryServiceAggregate,
 )
 from modules.shared.src.taxonomy_command_vo import CommandDomain
-from modules.shared.src.taxonomy_vision_vo import CommandName, CommandOutput
+from modules.shared.src.taxonomy_vision_vo import (
+    CommandName,
+    CommandOutput,
+    SystemCommandParams,
+)
 from modules.system.src.root_system_container import SystemContainer
 from modules.video.src.root_video_container import VideoContainer
 
 
-class TuiDispatcher(RegistryServiceAggregate):
+class TuiDispatcher(IRegistryServiceAggregate):
     """Aggregate dispatcher for TUI operations."""
 
     def __init__(self) -> None:
@@ -24,7 +26,9 @@ class TuiDispatcher(RegistryServiceAggregate):
         self._system = SystemContainer().orchestrator
 
     def execute_in_process(
-        self, command: CommandName, kwargs: dict[str, Any]
+        self,
+        command: CommandName,
+        kwargs: dict | SystemCommandParams,
     ) -> CommandOutput:
         domain = CommandDomain.from_command(command.value)
         if domain == CommandDomain.IMAGE:
