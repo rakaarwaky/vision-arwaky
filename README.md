@@ -70,26 +70,9 @@ scripts/gates.sh                      # Local mirror of the CI quality gates
 
 The implementation uses typed contracts and constructor injection. Each module defines its own composition root container (`ImageContainer`, `VideoContainer`, `SystemContainer`), and CLI/MCP/TUI surfaces directly delegate to the appropriate domain container on demand.
 
-
 ## Project Structure
 
-```text
-modules/
-├── root_cli_entry.py                 # CLI bootstrap and argument dispatching
-├── root_mcp_entry.py                 # MCP bootstrap and tool registration
-├── root_tui_entry.py                 # TUI bootstrap
-├── shared/                           # Taxonomy, contracts, and OpenCV pure utilities
-├── image/                            # Image container, analysis, OCR, and image orchestration
-├── video/                            # Video container, processing, analysis, tracking, and smart understanding
-├── system/                           # System container, workspace provisioning, and configuration
-├── cli/                              # CLI and TUI surfaces
-└── mcp/                              # MCP controller and action surfaces
-
-tests/                                # Focused unit and end-to-end tests
-scripts/gates.sh                      # Local mirror of the CI quality gates
-```
-
-The implementation uses typed contracts and constructor injection. Each module defines its own composition root container (`ImageContainer`, `VideoContainer`, `SystemContainer`), and CLI/MCP/TUI surfaces directly delegate to the appropriate domain container on demand.
+The source tree layout is documented in the [Architecture](#architecture) section above.
 
 ## Available Scripts/Commands
 

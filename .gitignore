@@ -145,11 +145,8 @@ credentials.json
 serviceAccountKey
 .zed/settings.json
 .archive/
-.agents/finding
+.agents/
 .kilo/
-.agents/reports
-.agents/plans
-.agents/graph-loop/
 .worktrees
 .qwen-web/
 .commandcode
