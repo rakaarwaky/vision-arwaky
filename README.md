@@ -70,10 +70,6 @@ scripts/gates.sh                      # Local mirror of the CI quality gates
 
 The implementation uses typed contracts and constructor injection. Each module defines its own composition root container (`ImageContainer`, `VideoContainer`, `SystemContainer`), and CLI/MCP/TUI surfaces directly delegate to the appropriate domain container on demand.
 
-## Project Structure
-
-The source tree layout is documented in the [Architecture](#architecture) section above.
-
 ## Available Scripts/Commands
 
 ### CLI Commands
