@@ -1,9 +1,9 @@
 from typing import Any
 
-from modules.shared.src.contract_llm_vision_protocol import ILLMVisionProtocol
 from modules.shared.src.contract_registry_service_aggregate import (
     IRegistryServiceAggregate,
 )
+from modules.shared.src.image.contract_llm_vision_protocol import ILLMVisionProtocol
 from modules.video.src.agent_video_orchestrator import VideoOrchestrator
 from modules.video.src.capabilities_ffmpeg_adapter import FFmpegVideoAdapter
 from modules.video.src.capabilities_object_tracker import ObjectTrackingTracker

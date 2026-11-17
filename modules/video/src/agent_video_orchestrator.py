@@ -2,20 +2,8 @@
 
 import json
 
-from modules.shared.src.contract_object_tracking_protocol import (
-    IObjectTrackingProtocol,
-)
 from modules.shared.src.contract_registry_service_aggregate import (
     IRegistryServiceAggregate,
-)
-from modules.shared.src.contract_video_analysis_protocol import (
-    IVideoAnalysisProtocol,
-)
-from modules.shared.src.contract_video_processing_protocol import (
-    IVideoProcessingProtocol,
-)
-from modules.shared.src.contract_video_understanding_protocol import (
-    IVideoUnderstandingProtocol,
 )
 from modules.shared.src.taxonomy_vision_constant import (
     FRAME_EXTRACTION_INTERVAL_S,
@@ -42,6 +30,18 @@ from modules.shared.src.utility_async_runner import run_async
 from modules.shared.src.utility_command_output import (
     to_command_output,
     to_command_output_list,
+)
+from modules.shared.src.video.contract_object_tracking_protocol import (
+    IObjectTrackingProtocol,
+)
+from modules.shared.src.video.contract_video_analysis_protocol import (
+    IVideoAnalysisProtocol,
+)
+from modules.shared.src.video.contract_video_processing_protocol import (
+    IVideoProcessingProtocol,
+)
+from modules.shared.src.video.contract_video_understanding_protocol import (
+    IVideoUnderstandingProtocol,
 )
 
 

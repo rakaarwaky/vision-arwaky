@@ -1,54 +1,74 @@
 # Feature Backlog: Video Intelligence
 
 FRD: [FRD.md](FRD.md)
-Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md), if applicable
-State: values from root [ROADMAP.md](../../ROADMAP.md) — do not redefine here.
-Last Updated: 2026-10-06
+Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
+State: defined in root [ROADMAP.md](../../ROADMAP.md) — cited here, not restated
+Last Updated: 2026-11-18
 
-## Current Condition
+## Progress Overview
 
-- Done: `bash scripts/gates.sh` → ruff/mypy/pytest green, AES lint 0 violations at <commit>, on 2026-10-06
+- Done: `bash scripts/gates.sh` → ruff/mypy/pytest green, AES lint 0 violations at `cf33c3a` (2026-11-18). Per-scenario evidence below.
 - In Progress: None
 - Blocked: None
-- Next Action: None — VID-01 closed
+- Next Action: Re-run `bash scripts/gates.sh` after any code change to this feature
 
-## Backlog
+## Backlog Status
 
-| ID | Priority | State | Dependencies | Next Action | Updated |
-|---|---:|---|---|---|---|
-| VID-01 | P0 | Done | — | — | 2026-10-06 |
+### FR-VID-001: Read metadata and extract frames
 
-## Scenario Evidence
+| Aspect | Detail |
+| -------------- | ------------------------------------------ |
+| State | Ready |
+| Done | FR-VID-001 shipped |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-11-18 |
 
-| Scenario | Kind | Test file | Test name | Last verified |
-|---|---|---|---|---|
-| Read video metadata | Automated | tests/unit_video_cv.py | test_get_video_metadata | <commit> |
-| FFmpeg media adapter behavior | Automated | tests/unit_video_ffmpeg_adapter.py | test_ffmpeg_uses_devnull_stdin | <commit> |
+### FR-VID-002: Check corruption
 
-Kind values: Automated, Proxy, Manual, Gap.
+| Aspect | Detail |
+| -------------- | ------------------------------------------ |
+| State | Ready |
+| Done | FR-VID-002 shipped |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-11-18 |
 
-## Blockers
+### FR-VID-003: Detect scenes and motion
 
-None
+| Aspect | Detail |
+| -------------- | ------------------------------------------ |
+| State | Ready |
+| Done | FR-VID-003 shipped |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-11-18 |
 
-## Dependencies
+### FR-VID-004: Track an object
 
-None
+| Aspect | Detail |
+| -------------- | ------------------------------------------ |
+| State | Ready |
+| Done | FR-VID-004 shipped |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-11-18 |
 
-## Release Readiness
+### FR-VID-005: Analyze video with a vision-language model
 
-| Area | Status | Notes |
-|---|---|---|
-| Tests | Done | `pytest modules/video/tests -q` → green at <commit> |
-| Scenario evidence | Done | 2 of 2 scenarios mapped |
-| Docs | Done | [FRD.md](FRD.md) is specification-only. |
+| Aspect | Detail |
+| -------------- | ------------------------------------------ |
+| State | Ready |
+| Done | FR-VID-005 shipped |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-11-18 |
 
-## Deferred
+## Reference
 
-None
-
-## Change Log
-
-| Date | Change | By |
-|---|---|---|
-| 2026-10-06 | Backlog created to satisfy AES702 feature doc pair | @raka |
+| Artifact | Purpose | Link |
+| -------------- | -------------------------------------------------------- | ------ |
+| PRD | Business goals and scope | [PRD.md](../../PRD.md) |
+| FRD | Functional requirements for this feature | [FRD.md](FRD.md) |
+| Roadmap | Timeline and dependencies | [ROADMAP.md](../../ROADMAP.md) |
+| Architecture | System boundaries, tech stack, and infra | [ARCHITECTURE.md](../../ARCHITECTURE.md) |

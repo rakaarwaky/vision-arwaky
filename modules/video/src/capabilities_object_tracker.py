@@ -1,8 +1,5 @@
 import cv2
 
-from modules.shared.src.contract_object_tracking_protocol import (
-    IObjectTrackingProtocol,
-)
 from modules.shared.src.taxonomy_vision_constant import MAX_TRACK_FRAMES
 from modules.shared.src.taxonomy_vision_vo import (
     BoundingBox,
@@ -10,8 +7,11 @@ from modules.shared.src.taxonomy_vision_vo import (
     MaxFrames,
 )
 from modules.shared.src.utility_opencv_ops import open_video_capture
+from modules.shared.src.video.contract_object_tracking_protocol import (
+    IObjectTrackingProtocol,
+)
 
-# ─── Block 1: Class Definition & Constructor ──────────────
+# ─── Block 1: Module Declaration ──────────────
 
 
 class ObjectTrackingTracker(IObjectTrackingProtocol):
@@ -21,7 +21,7 @@ class ObjectTrackingTracker(IObjectTrackingProtocol):
         # No instance state required; tracker instances are created on demand per call.
         pass
 
-    # ─── Block 2: Protocol Method Implementation ──────────────
+    # ─── Block 2: Module Contract ──────────────
 
     def track_object(
         self,
@@ -82,7 +82,7 @@ class ObjectTrackingTracker(IObjectTrackingProtocol):
         cap.release()
         return boxes
 
-    # ─── Block 3: Dunder Methods, Factories & Helpers ─────────
+    # ─── Block 3: Module Helpers ─────────
 
     def _create_tracker(self):
         """Helper to dynamically construct the OpenCV tracker to avoid complexity and mypy issues."""

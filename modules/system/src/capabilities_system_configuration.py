@@ -9,7 +9,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from modules.shared.src.contract_system_configuration_protocol import (
+from modules.shared.src.system.contract_system_configuration_protocol import (
     ISystemConfigurationProtocol,
 )
 from modules.shared.src.taxonomy_vision_vo import ConfigKey
@@ -22,7 +22,7 @@ from modules.shared.src.utility_config_handler import (
 )
 
 
-# ─── Block 1: Class Definition & Constructor ──────────────
+# ─── Block 1: Module Declaration ──────────────
 class CapabilitiesSystemConfiguration(ISystemConfigurationProtocol):
     """Manage reading, merging, and overwriting configuration files."""
 
@@ -39,7 +39,7 @@ class CapabilitiesSystemConfiguration(ISystemConfigurationProtocol):
             else get_local_config_path()
         )
 
-    # ─── Block 2: Public Contract (ISystemConfigurationProtocol ONLY)
+    # ─── Block 2: Module Contract
     def get_config(self, key: ConfigKey | str | None = None) -> Any:
         """Resolve full configuration dictionary or a specific key path.
 
@@ -92,7 +92,7 @@ class CapabilitiesSystemConfiguration(ISystemConfigurationProtocol):
             "config": self.get_config(),
         }
 
-    # ─── Block 3: Dunder Methods, Factories & Helpers ─────────
+    # ─── Block 3: Module Helpers ─────────
     def __repr__(self) -> str:
         return f"CapabilitiesSystemConfiguration(path={self._user_config_path})"
 

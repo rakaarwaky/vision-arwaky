@@ -1,9 +1,6 @@
 import cv2
 import numpy
 
-from modules.shared.src.contract_video_analysis_protocol import (
-    IVideoAnalysisProtocol,
-)
 from modules.shared.src.taxonomy_vision_constant import (
     DILATION_ITERATIONS,
     DILATION_KERNEL_SIZE,
@@ -42,8 +39,11 @@ from modules.shared.src.utility_opencv_ops import (
     open_video_capture,
     to_grayscale,
 )
+from modules.shared.src.video.contract_video_analysis_protocol import (
+    IVideoAnalysisProtocol,
+)
 
-# ─── Block 1: Class Definition & Constructor ──────────────
+# ─── Block 1: Module Declaration ──────────────
 
 
 class VideoAnalysisAnalyzer(IVideoAnalysisProtocol):
@@ -53,7 +53,7 @@ class VideoAnalysisAnalyzer(IVideoAnalysisProtocol):
         # No instance state required; all methods are stateless and operate on video files.
         pass
 
-    # ─── Block 2: Protocol Method Implementation ──────────────
+    # ─── Block 2: Module Contract ──────────────
 
     def detect_scenes(
         self, video_path: FilePath, threshold: SceneThreshold
@@ -139,7 +139,7 @@ class VideoAnalysisAnalyzer(IVideoAnalysisProtocol):
         cap.release()
         return events
 
-    # ─── Block 3: Dunder Methods, Factories & Helpers ─────────
+    # ─── Block 3: Module Helpers ─────────
 
     def _compute_motion_direction(
         self, cnt, x: int, y: int, w: int, h: int

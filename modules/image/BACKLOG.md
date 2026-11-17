@@ -1,54 +1,54 @@
 # Feature Backlog: Image Intelligence
 
 FRD: [FRD.md](FRD.md)
-Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md), if applicable
-State: values from root [ROADMAP.md](../../ROADMAP.md) — do not redefine here.
-Last Updated: 2026-10-06
+Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
+State: defined in root [ROADMAP.md](../../ROADMAP.md) — cited here, not restated
+Last Updated: 2026-11-18
 
-## Current Condition
+## Progress Overview
 
-- Done: `bash scripts/gates.sh` → ruff/mypy/pytest green, AES lint 0 violations at <commit>, on 2026-10-06
+- Done: `bash scripts/gates.sh` → ruff/mypy/pytest green, AES lint 0 violations at `cf33c3a` (2026-11-18). Per-scenario evidence below.
 - In Progress: None
 - Blocked: None
-- Next Action: None — IMG-01 closed
+- Next Action: Re-run `bash scripts/gates.sh` after any code change to this feature
 
-## Backlog
+## Backlog Status
 
-| ID | Priority | State | Dependencies | Next Action | Updated |
-|---|---:|---|---|---|---|
-| IMG-01 | P0 | Done | — | — | 2026-10-06 |
+### FR-IMG-001: Analyze image
 
-## Scenario Evidence
+| Aspect | Detail |
+| -------------- | ------------------------------------------ |
+| State | Ready |
+| Done | FR-IMG-001 shipped |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-11-18 |
 
-| Scenario | Kind | Test file | Test name | Last verified |
-|---|---|---|---|---|
-| Analyze image with VLM or fallback | Automated | tests/unit_image_cv.py | test_screenshot_comparison_identical | <commit> |
-| OCR extract text | Proxy | tests/unit_image_cv.py | test_read_and_write_image | <commit> |
+### FR-IMG-002: Extract text with OCR
 
-Kind values: Automated, Proxy, Manual, Gap.
+| Aspect | Detail |
+| -------------- | ------------------------------------------ |
+| State | Ready |
+| Done | FR-IMG-002 shipped |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-11-18 |
 
-## Blockers
+### FR-IMG-003: Compare screenshots
 
-None
+| Aspect | Detail |
+| -------------- | ------------------------------------------ |
+| State | Ready |
+| Done | FR-IMG-003 shipped |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-11-18 |
 
-## Dependencies
+## Reference
 
-None
-
-## Release Readiness
-
-| Area | Status | Notes |
-|---|---|---|
-| Tests | Done | `pytest modules/image/tests -q` → green at <commit> |
-| Scenario evidence | Done | 2 of 2 scenarios mapped |
-| Docs | Done | [FRD.md](FRD.md) is specification-only. |
-
-## Deferred
-
-None
-
-## Change Log
-
-| Date | Change | By |
-|---|---|---|
-| 2026-10-06 | Backlog created to satisfy AES702 feature doc pair | @raka |
+| Artifact | Purpose | Link |
+| -------------- | -------------------------------------------------------- | ------ |
+| PRD | Business goals and scope | [PRD.md](../../PRD.md) |
+| FRD | Functional requirements for this feature | [FRD.md](FRD.md) |
+| Roadmap | Timeline and dependencies | [ROADMAP.md](../../ROADMAP.md) |
+| Architecture | System boundaries, tech stack, and infra | [ARCHITECTURE.md](../../ARCHITECTURE.md) |

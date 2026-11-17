@@ -1,8 +1,8 @@
-from modules.shared.src.contract_image_processing_protocol import (
+from modules.shared.src.image.contract_image_processing_protocol import (
     IImageProcessingProtocol,
 )
-from modules.shared.src.contract_llm_vision_protocol import ILLMVisionProtocol
-from modules.shared.src.contract_tesseract_ocr_protocol import (
+from modules.shared.src.image.contract_llm_vision_protocol import ILLMVisionProtocol
+from modules.shared.src.image.contract_tesseract_ocr_protocol import (
     ITesseractOCRProtocol,
 )
 from modules.shared.src.taxonomy_vision_constant import (
@@ -37,7 +37,7 @@ from modules.shared.src.utility_opencv_ops import (
 class ImageProcessingProcessor(IImageProcessingProtocol):
     """Image processing capability executing screenshot analysis and comparisons."""
 
-    # ─── Block 1: Class Definition & Constructor ──────────────
+    # ─── Block 1: Module Declaration ──────────────
 
     def __init__(
         self,
@@ -47,7 +47,7 @@ class ImageProcessingProcessor(IImageProcessingProtocol):
         self._tesseract = tesseract_port
         self._llm = llm_port
 
-    # ─── Block 2: Protocol Method Implementation ──────────────
+    # ─── Block 2: Module Contract ──────────────
 
     def analyze_screenshot(
         self, image_path: FilePath, prompt: AnalysisPrompt
@@ -143,7 +143,7 @@ class ImageProcessingProcessor(IImageProcessingProtocol):
             differences=differences,
         )
 
-    # ─── Block 3: Dunder Methods, Factories & Helpers ─────────
+    # ─── Block 3: Module Helpers ─────────
 
     def __repr__(self) -> str:
         return "ImageProcessingProcessor()"
