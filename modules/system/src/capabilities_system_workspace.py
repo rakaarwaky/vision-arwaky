@@ -10,21 +10,21 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from modules.shared.src.contract_workspace_protocol import IWorkspaceProtocol
+from modules.shared.src.system.contract_workspace_protocol import IWorkspaceProtocol
 from modules.shared.src.taxonomy_vision_constant import EMBEDDED_SKILL_MD
 from modules.shared.src.taxonomy_vision_vo import FilePath
 from modules.shared.src.taxonomy_xdg_paths_vo import XDGPaths
 from modules.shared.src.utility_xdg_paths import ensure_xdg_dirs
 
 
-# ─── Block 1: Class Definition & Constructor ──────────────
+# ─── Block 1: Module Declaration ──────────────
 class CapabilitiesSystemWorkspace(IWorkspaceProtocol):
     """Workspace directory provisioning with symlinks and git exclude management."""
 
     def __init__(self) -> None:
         """Initialize CapabilitiesSystemWorkspace."""
 
-    # ─── Block 2: Public Contract (IWorkspaceProtocol ONLY) ───
+    # ─── Block 2: Module Contract ───
     def init_workspace(self, target_dir: FilePath) -> dict[str, str]:
         """Initialize workspace in sequential steps:
 
@@ -78,7 +78,7 @@ class CapabilitiesSystemWorkspace(IWorkspaceProtocol):
 
         return created_items
 
-    # ─── Block 3: Dunder Methods, Factories & Helpers ─────────
+    # ─── Block 3: Module Helpers ─────────
     def __repr__(self) -> str:
         """Return string representation of CapabilitiesSystemWorkspace."""
         return "CapabilitiesSystemWorkspace()"

@@ -2,20 +2,20 @@
 
 import inspect
 
-from modules.shared.src.contract_ffmpeg_video_protocol import IFFmpegVideoProtocol
-from modules.shared.src.contract_object_tracking_protocol import (
-    IObjectTrackingProtocol,
-)
 from modules.shared.src.contract_registry_service_aggregate import (
     IRegistryServiceAggregate,
 )
-from modules.shared.src.contract_video_analysis_protocol import (
+from modules.shared.src.video.contract_ffmpeg_video_protocol import IFFmpegVideoProtocol
+from modules.shared.src.video.contract_object_tracking_protocol import (
+    IObjectTrackingProtocol,
+)
+from modules.shared.src.video.contract_video_analysis_protocol import (
     IVideoAnalysisProtocol,
 )
-from modules.shared.src.contract_video_processing_protocol import (
+from modules.shared.src.video.contract_video_processing_protocol import (
     IVideoProcessingProtocol,
 )
-from modules.shared.src.contract_video_understanding_protocol import (
+from modules.shared.src.video.contract_video_understanding_protocol import (
     IVideoUnderstandingProtocol,
 )
 from modules.video.src.agent_video_orchestrator import VideoOrchestrator

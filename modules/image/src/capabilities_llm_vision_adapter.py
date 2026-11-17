@@ -13,7 +13,7 @@ from typing import Any
 
 import requests
 
-from modules.shared.src.contract_llm_vision_protocol import ILLMVisionProtocol
+from modules.shared.src.image.contract_llm_vision_protocol import ILLMVisionProtocol
 from modules.shared.src.taxonomy_vision_constant import (
     DEFAULT_MODELS_TIMEOUT_S,
     DEFAULT_VLM_MAX_TOKENS,
@@ -35,7 +35,7 @@ from modules.shared.src.utility_llm_check import check_llm_endpoint
 logger = logging.getLogger("modules.image.capabilities.llm_vision_adapter")
 
 
-# ─── Block 1: Class Definition & Constructor ──────────────
+# ─── Block 1: Module Declaration ──────────────
 
 
 class LLMVisionAdapter(ILLMVisionProtocol):
@@ -56,7 +56,7 @@ class LLMVisionAdapter(ILLMVisionProtocol):
         self.api_key = api_key or res_key
         self._resolved_model: str | None = model or res_model
 
-    # ─── Block 2: Protocol Method Implementation ──────────────
+    # ─── Block 2: Module Contract ──────────────
 
     def analyze_image(
         self,
@@ -69,7 +69,7 @@ class LLMVisionAdapter(ILLMVisionProtocol):
         prompt_str = prompt.value if prompt and prompt.value is not None else ""
         return self._analyze_via_http(path_str, prompt_str, timeout)
 
-    # ─── Block 3: Dunder Methods, Factories & Helpers ─────────
+    # ─── Block 3: Module Helpers ─────────
 
     @property
     def config(self) -> dict[str, Any]:

@@ -1,53 +1,55 @@
 # Feature Backlog: Shared Foundation
 
 FRD: [FRD.md](FRD.md)
-Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md), if applicable
-State: values from root [ROADMAP.md](../../ROADMAP.md) — do not redefine here.
-Last Updated: 2026-10-06
+Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
+State: defined in root [ROADMAP.md](../../ROADMAP.md) — cited here, not restated
+Last Updated: 2026-11-18
 
-## Current Condition
+## Progress Overview
 
-- Done: `bash scripts/gates.sh` → ruff/mypy/pytest green, AES lint 0 violations at <commit>, on 2026-10-06
+- Done: `bash scripts/gates.sh` → ruff/mypy/pytest green, AES lint 0 violations at `cf33c3a` (2026-11-18). Per-scenario evidence below.
 - In Progress: None
 - Blocked: None
-- Next Action: Keep kernel pure; no action required (SHR-01)
+- Next Action: Re-run `bash scripts/gates.sh` after any code change to the shared layer
 
-## Backlog
+## Backlog Status
 
-| ID | Priority | State | Dependencies | Next Action | Updated |
-|---|---:|---|---|---|---|
-| SHR-01 | P0 | Done | — | — | 2026-10-06 |
+### FR-SHR-001: Provide the taxonomy layer
 
-## Scenario Evidence
+| Aspect | Detail |
+| -------------- | ------------------------------------------ |
+| State | Ready |
+| Done | FR-SHR-001 shipped |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-11-18 |
 
-| Scenario | Kind | Test file | Test name | Last verified |
-|---|---|---|---|---|
-| Shared holds only taxonomy/utility/contract files | Automated | tests/ | n/a | <commit> |
+### FR-SHR-002: Provide the contract layer
 
-Kind values: Automated, Proxy, Manual, Gap.
+| Aspect | Detail |
+| -------------- | ------------------------------------------ |
+| State | Ready |
+| Done | FR-SHR-002 shipped |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-11-18 |
 
-## Blockers
+### FR-SHR-003: Provide the utility layer
 
-None
+| Aspect | Detail |
+| -------------- | ------------------------------------------ |
+| State | Ready |
+| Done | FR-SHR-003 shipped |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-11-18 |
 
-## Dependencies
+## Reference
 
-None
-
-## Release Readiness
-
-| Area | Status | Notes |
-|---|---|---|
-| Tests | Done | `bash scripts/gates.sh` → 0 violations at <commit> |
-| Scenario evidence | Done | 1 of 1 scenarios mapped |
-| Docs | Done | [FRD.md](FRD.md) is specification-only. |
-
-## Deferred
-
-None
-
-## Change Log
-
-| Date | Change | By |
-|---|---|---|
-| 2026-10-06 | Backlog created to satisfy AES701 shared doc pair | @raka |
+| Artifact | Purpose | Link |
+| -------------- | -------------------------------------------------------- | ------ |
+| PRD | Business goals and scope | [PRD.md](../../PRD.md) |
+| FRD | Functional requirements for this feature | [FRD.md](FRD.md) |
+| Data | Data requirements for this feature | [DATA.md](DATA.md) |
+| Roadmap | Timeline and dependencies | [ROADMAP.md](../../ROADMAP.md) |
+| Architecture | System boundaries, tech stack, and infra | [ARCHITECTURE.md](../../ARCHITECTURE.md) |

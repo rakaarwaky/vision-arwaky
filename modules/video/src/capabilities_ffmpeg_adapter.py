@@ -1,20 +1,20 @@
 import asyncio
 import logging
 
-from modules.shared.src.contract_ffmpeg_video_protocol import IFFmpegVideoProtocol
 from modules.shared.src.taxonomy_vision_constant import FFMPEG_TIMEOUT_S
 from modules.shared.src.utility_system_utils import get_ffmpeg_path
+from modules.shared.src.video.contract_ffmpeg_video_protocol import IFFmpegVideoProtocol
 
 logger = logging.getLogger("modules.video.capabilities.ffmpeg_adapter")
 
 
-# ─── Block 1: Class Definition & Constructor ──────────────
+# ─── Block 1: Module Declaration ──────────────
 
 
 class FFmpegVideoAdapter(IFFmpegVideoProtocol):
     """Infrastructure adapter for FFmpeg operations."""
 
-    # ─── Block 2: Protocol Method Implementation ──────────────
+    # ─── Block 2: Module Contract ──────────────
 
     async def run(
         self,
@@ -55,4 +55,4 @@ class FFmpegVideoAdapter(IFFmpegVideoProtocol):
         return stdout.decode() if stdout else ""
 
 
-# ─── Block 3: Dunder Methods, Factories & Helpers ─────────
+# ─── Block 3: Module Helpers ─────────

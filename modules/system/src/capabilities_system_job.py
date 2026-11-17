@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from modules.shared.src.contract_system_job_protocol import ISystemJobProtocol
+from modules.shared.src.system.contract_system_job_protocol import ISystemJobProtocol
 from modules.shared.src.taxonomy_vision_constant import DEFAULT_MODELS_TIMEOUT_S
 from modules.shared.src.taxonomy_vision_vo import CommandOutput
 from modules.shared.src.utility_config_handler import (
@@ -19,14 +19,14 @@ from modules.shared.src.utility_llm_check import check_llm_endpoint
 from modules.shared.src.utility_version_resolver import get_package_version
 
 
-# ─── Block 1: Class Definition & Constructor ──────────────
+# ─── Block 1: Module Declaration ──────────────
 class CapabilitiesSystemJob(ISystemJobProtocol):
     """Job tracking, lifecycle monitoring, and process cancellation."""
 
     def __init__(self) -> None:
         """Initialize CapabilitiesSystemJob."""
 
-    # ─── Block 2: Public Contract (ISystemJobProtocol ONLY) ────
+    # ─── Block 2: Module Contract ────
     def get_status(self) -> dict[str, Any]:
         """Inspect dependencies, endpoint connectivity, and server capability status."""
         deps = check_all_dependencies()
@@ -67,7 +67,7 @@ class CapabilitiesSystemJob(ISystemJobProtocol):
             "message": "Commands execute synchronously; no cancellable jobs are registered.",
         }
 
-    # ─── Block 3: Dunder Methods, Factories & Helpers ─────────
+    # ─── Block 3: Module Helpers ─────────
     def __repr__(self) -> str:
         return "CapabilitiesSystemJob()"
 

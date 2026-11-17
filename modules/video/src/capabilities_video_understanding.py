@@ -12,16 +12,7 @@ from typing import Any
 
 import cv2
 
-from modules.shared.src.contract_llm_vision_protocol import ILLMVisionProtocol
-from modules.shared.src.contract_video_analysis_protocol import (
-    IVideoAnalysisProtocol,
-)
-from modules.shared.src.contract_video_processing_protocol import (
-    IVideoProcessingProtocol,
-)
-from modules.shared.src.contract_video_understanding_protocol import (
-    IVideoUnderstandingProtocol,
-)
+from modules.shared.src.image.contract_llm_vision_protocol import ILLMVisionProtocol
 from modules.shared.src.taxonomy_vision_constant import (
     DEFAULT_VIDEO_FPS,
     MAX_SMART_VIDEO_FRAMES,
@@ -37,6 +28,15 @@ from modules.shared.src.taxonomy_vision_vo import (
     VideoUnderstandingConfig,
 )
 from modules.shared.src.utility_opencv_ops import open_video_capture, write_image
+from modules.shared.src.video.contract_video_analysis_protocol import (
+    IVideoAnalysisProtocol,
+)
+from modules.shared.src.video.contract_video_processing_protocol import (
+    IVideoProcessingProtocol,
+)
+from modules.shared.src.video.contract_video_understanding_protocol import (
+    IVideoUnderstandingProtocol,
+)
 
 logger = logging.getLogger("modules.video.capabilities.video_understanding")
 
@@ -46,7 +46,7 @@ logger = logging.getLogger("modules.video.capabilities.video_understanding")
 MAX_VLM_CONCURRENCY: int = 4
 
 
-# ─── Block 1: Class Definition & Constructor ──────────────
+# ─── Block 1: Module Declaration ──────────────
 
 
 class VideoUnderstandingAnalyzer(IVideoUnderstandingProtocol):
@@ -68,7 +68,7 @@ class VideoUnderstandingAnalyzer(IVideoUnderstandingProtocol):
         self._video_processing = video_processing
         self._llm = llm
 
-    # ─── Block 2: Protocol Method Implementation ──────────────
+    # ─── Block 2: Module Contract ──────────────
 
     def analyze(
         self,
@@ -277,4 +277,4 @@ class VideoUnderstandingAnalyzer(IVideoUnderstandingProtocol):
             return " ".join(descriptions)
 
 
-# ─── Block 3: Dunder Methods, Factories & Helpers ─────────
+# ─── Block 3: Module Helpers ─────────

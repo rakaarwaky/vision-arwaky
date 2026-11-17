@@ -1,12 +1,12 @@
 """Image Agent Orchestrator — coordinates image processing and OCR via DI."""
 
-from modules.shared.src.contract_image_processing_protocol import (
-    IImageProcessingProtocol,
-)
 from modules.shared.src.contract_registry_service_aggregate import (
     IRegistryServiceAggregate,
 )
-from modules.shared.src.contract_tesseract_ocr_protocol import (
+from modules.shared.src.image.contract_image_processing_protocol import (
+    IImageProcessingProtocol,
+)
+from modules.shared.src.image.contract_tesseract_ocr_protocol import (
     ITesseractOCRProtocol,
 )
 from modules.shared.src.taxonomy_vision_error import (

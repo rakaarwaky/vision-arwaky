@@ -7,11 +7,11 @@ from collections.abc import Callable
 from modules.shared.src.contract_registry_service_aggregate import (
     IRegistryServiceAggregate,
 )
-from modules.shared.src.contract_system_configuration_protocol import (
+from modules.shared.src.system.contract_system_configuration_protocol import (
     ISystemConfigurationProtocol,
 )
-from modules.shared.src.contract_system_job_protocol import ISystemJobProtocol
-from modules.shared.src.contract_workspace_protocol import IWorkspaceProtocol
+from modules.shared.src.system.contract_system_job_protocol import ISystemJobProtocol
+from modules.shared.src.system.contract_workspace_protocol import IWorkspaceProtocol
 from modules.shared.src.taxonomy_vision_error import InvalidParameterError
 from modules.shared.src.taxonomy_vision_vo import (
     CommandName,

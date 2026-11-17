@@ -1,7 +1,3 @@
-from modules.shared.src.contract_ffmpeg_video_protocol import IFFmpegVideoProtocol
-from modules.shared.src.contract_video_processing_protocol import (
-    IVideoProcessingProtocol,
-)
 from modules.shared.src.taxonomy_vision_constant import MAX_EXTRACT_FRAMES
 from modules.shared.src.taxonomy_vision_vo import (
     FilePath,
@@ -12,8 +8,12 @@ from modules.shared.src.utility_opencv_ops import (
     check_video_corruption,
     get_video_metadata,
 )
+from modules.shared.src.video.contract_ffmpeg_video_protocol import IFFmpegVideoProtocol
+from modules.shared.src.video.contract_video_processing_protocol import (
+    IVideoProcessingProtocol,
+)
 
-# ─── Block 1: Class Definition & Constructor ──────────────
+# ─── Block 1: Module Declaration ──────────────
 
 
 class VideoProcessingProcessor(IVideoProcessingProtocol):
@@ -22,7 +22,7 @@ class VideoProcessingProcessor(IVideoProcessingProtocol):
     def __init__(self, ffmpeg_port: IFFmpegVideoProtocol):
         self._ffmpeg = ffmpeg_port
 
-    # ─── Block 2: Protocol Method Implementation ──────────────
+    # ─── Block 2: Module Contract ──────────────
 
     async def extract_frames(
         self, video_path: FilePath, interval: IntervalSeconds
@@ -61,4 +61,4 @@ class VideoProcessingProcessor(IVideoProcessingProtocol):
         return check_video_corruption(video_path)
 
 
-# ─── Block 3: Dunder Methods, Factories & Helpers ─────────
+# ─── Block 3: Module Helpers ─────────
