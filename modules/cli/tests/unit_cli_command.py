@@ -29,23 +29,23 @@ class TestWorkspaceSurfaces:
         assert ret == 0
         captured = capsys.readouterr()
         data = json.loads(captured.out)
-        assert "skill_md" in data
-        assert (tmp_path / ".agents" / "skills" / "vision-arwaky" / "SKILL.md").exists()
+        assert "xdg_config" in data
+        assert (tmp_path / ".vision-arwaky").exists()
 
     def test_mcp_vision_init_tool(self, tmp_path: Path):
         """Verify MCP vision_init tool creates workspace files."""
         set_mcp_dispatcher(SystemContainer().orchestrator)
         result_raw = vision_init(target_dir=str(tmp_path))
         data = json.loads(result_raw)
-        assert "skill_md" in data
-        assert (tmp_path / ".agents" / "skills" / "vision-arwaky" / "SKILL.md").exists()
+        assert "xdg_config" in data
+        assert (tmp_path / ".vision-arwaky").exists()
 
     def test_mcp_vision_execute_init(self, tmp_path: Path):
         """Verify MCP vision_execute with init command creates workspace files."""
         set_mcp_dispatcher(SystemContainer().orchestrator)
         result_raw = vision_execute(command="init", target_dir=str(tmp_path))
         data = json.loads(result_raw)
-        assert "skill_md" in data
+        assert "xdg_config" in data
 
     def test_mcp_list_commands_includes_workspace(self):
         """Verify workspace commands are listed by MCP."""

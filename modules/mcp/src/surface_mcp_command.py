@@ -69,7 +69,7 @@ def _execute_in_process(command: str, kwargs: dict) -> str:
 
 @mcp.tool()
 def vision_init(target_dir: str = ".") -> str:
-    """Initialize workspace directory structure, XDG symlinks, and SKILL.md guide."""
+    """Initialize workspace directory structure and XDG symlinks."""
     return _execute_in_process("init", {"target_dir": target_dir})
 
 
@@ -78,23 +78,15 @@ def vision_execute(
     command: str,
     video: str = "",
     image: str = "",
-    image1: str = "",
-    image2: str = "",
     prompt: str = "",
-    lang: str = "eng",
     target_dir: str = ".",
-    bbox: str = "",
 ) -> str:
     """Execute safe vision commands."""
     kwargs = {
         "image": image,
-        "image1": image1,
-        "image2": image2,
         "video": video,
-        "lang": lang,
         "prompt": prompt,
         "target_dir": target_dir,
-        "bbox": bbox,
     }
     return _execute_in_process(command, kwargs)
 
@@ -107,57 +99,17 @@ def vision_list_commands(domain: str = "") -> str:
             {
                 "command": "init",
                 "args": "[target_dir]",
-                "desc": "Initialize workspace with .vision-arwaky symlinks and SKILL.md",
+                "desc": "Initialize workspace with .vision-arwaky symlinks",
             }
         ],
         "image": [
             {
                 "command": "analyze",
                 "args": "image, [prompt]",
-                "desc": "Analyze screenshot or image with AI vision",
-            },
-            {
-                "command": "ocr",
-                "args": "image, [lang]",
-                "desc": "Extract text from image using OCR",
-            },
-            {
-                "command": "compare",
-                "args": "image1, image2",
-                "desc": "Compare two screenshots for visual differences",
+                "desc": "Analyze image with AI vision",
             },
         ],
         "video": [
-            {
-                "command": "video-info",
-                "args": "video",
-                "desc": "Get video metadata (fps, frames, size)",
-            },
-            {
-                "command": "extract-frames",
-                "args": "video",
-                "desc": "Extract frames at locked interval",
-            },
-            {
-                "command": "check-corruption",
-                "args": "video",
-                "desc": "Check if video is corrupted",
-            },
-            {
-                "command": "detect-scenes",
-                "args": "video",
-                "desc": "Detect scene changes",
-            },
-            {
-                "command": "detect-motion",
-                "args": "video",
-                "desc": "Detect motion events",
-            },
-            {
-                "command": "track",
-                "args": "video, bbox",
-                "desc": "Track object through video",
-            },
             {
                 "command": "analyze-video",
                 "args": "video, [prompt]",
@@ -222,8 +174,6 @@ def vision_status() -> str:
 
     caps = {
         "image_analysis": deps.get("opencv") == "OK",
-        "ocr": deps.get("pytesseract") == "OK" and deps.get("pillow") == "OK",
-        "video_processing": deps.get("opencv") == "OK" and deps.get("ffmpeg") == "OK",
         "llm_vision": llm_ready,
     }
 

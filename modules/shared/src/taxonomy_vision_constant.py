@@ -45,7 +45,7 @@ DEFAULT_VLM_TEMPERATURE: float = 0.4
 DEFAULT_VLM_MAX_TOKENS: int = 2048
 FFMPEG_TIMEOUT_S: float = 120.0
 
-# --- Embedded SKILL.md for workspace provisioning ---------------------------
+# --- Embedded SKILL.md for MCP vision_help fallback -------------------------
 EMBEDDED_SKILL_MD: str = """---
 name: vision-arwaky
 description: Unified image and video intelligence for computer vision, OCR, video analysis, object tracking, and MCP integrations.
@@ -86,7 +86,7 @@ The MCP server exposes six tools:
 
 | Tool                   | Purpose                                         |
 | ------------------------ | ------------------------------------------------- |
-| `vision_init`          | Initialize workspace and provision skill guide  |
+| `vision_init`          | Initialize workspace and provision XDG symlinks |
 | `vision_execute`       | Execute a supported workspace, image, or video command |
 | `vision_list_commands` | List supported command groups and commands      |
 | `vision_help`          | Return this documentation or a selected section |
@@ -115,63 +115,26 @@ The repository does not bundle a model. External mode requires a reachable endpo
 ```text
 init
   [target_dir] (optional, default: .)
-  Initialize workspace directory structure (.vision-arwaky symlinks to XDG and .agents/skills/vision-arwaky/SKILL.md).
+  Initialize workspace directory structure (.vision-arwaky symlinks to XDG).
 ```
 
 ## CLI reference: image
 
 ```text
-analyze
+image
   --image PATH
-  --prompt TEXT (optional)
-  Analyze an image with VLM or deterministic fallback.
-
-ocr
-  --image PATH
-  --lang CODE (optional, default: eng)
-  Extract text with Tesseract OCR.
-
-compare
-  --image1 PATH
-  --image2 PATH
-  Compare two screenshots and report perceptual differences.
+  Analyze an image with VLM.
 ```
 
 ## CLI reference: video
 
 ```text
-video-info
+video
   --video PATH
-  Read video metadata.
-
-extract-frames
-  --video PATH
-  Extract frames at a locked interval.
-
-check-corruption
-  --video PATH
-  Check whether a video is decodable.
-
-detect-scenes
-  --video PATH
-  Detect scene changes.
-
-detect-motion
-  --video PATH
-  Detect motion events.
-
-track
-  --video PATH
-  --bbox X,Y,W,H
-  Track an object using OpenCV tracker.
-
-analyze-video
-  --video PATH
-  --prompt TEXT (optional)
   Analyze bounded key frames with a VLM and synthesize a short summary.
 ```
 
-Smart-video analysis combines scene-change, motion, and uniform sampling. It caps selected frames at 12, bounds the summary prompt, handles per-frame VLM failure with fallback descriptions, and removes temporary frame files after execution.
+Smart-video analysis uses uniform sampling, caps selected frames at 12, bounds the summary prompt, handles per-frame VLM failure with fallback descriptions, and removes temporary frame files after execution.
 
 ## Configuration and system dependencies
 

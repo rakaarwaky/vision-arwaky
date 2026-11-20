@@ -3,17 +3,9 @@
 import sys
 
 from modules.cli.src.surface_cli_command import (
-    cmd_analyze,
-    cmd_analyze_video,
-    cmd_check_corruption,
-    cmd_compare,
-    cmd_detect_motion,
-    cmd_detect_scenes,
-    cmd_extract_frames,
+    cmd_image,
     cmd_init,
-    cmd_ocr,
-    cmd_track,
-    cmd_video_info,
+    cmd_video,
 )
 from modules.cli.src.surface_cli_controller import create_parser
 from modules.image.src.root_image_container import ImageContainer
@@ -26,16 +18,8 @@ from modules.video.src.root_video_container import VideoContainer
 
 COMMANDS = {
     "init": cmd_init,
-    "analyze": cmd_analyze,
-    "analyze-video": cmd_analyze_video,
-    "ocr": cmd_ocr,
-    "compare": cmd_compare,
-    "video-info": cmd_video_info,
-    "extract-frames": cmd_extract_frames,
-    "check-corruption": cmd_check_corruption,
-    "detect-scenes": cmd_detect_scenes,
-    "detect-motion": cmd_detect_motion,
-    "track": cmd_track,
+    "image": cmd_image,
+    "video": cmd_video,
 }
 
 

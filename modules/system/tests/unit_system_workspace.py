@@ -2,7 +2,6 @@
 
 from pathlib import Path
 
-from modules.shared.src.taxonomy_vision_constant import EMBEDDED_SKILL_MD
 from modules.shared.src.taxonomy_vision_vo import FilePath
 from modules.system.src.capabilities_system_workspace import (
     CapabilitiesSystemWorkspace,
@@ -18,11 +17,6 @@ class TestWorkspaceProvisioner:
 
         provisioner = CapabilitiesSystemWorkspace()
         result = provisioner.init_workspace(FilePath(value=str(tmp_path)))
-
-        assert "skill_md" in result
-        skill_file = tmp_path / ".agents" / "skills" / "vision-arwaky" / "SKILL.md"
-        assert skill_file.exists()
-        assert skill_file.read_text(encoding="utf-8") == EMBEDDED_SKILL_MD
 
         dot_vision = tmp_path / ".vision-arwaky"
         assert dot_vision.exists()

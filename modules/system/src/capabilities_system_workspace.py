@@ -1,7 +1,7 @@
 """Capabilities: system workspace provisioner (AES403).
 
 Implements IWorkspaceProtocol — workspace initialization with XDG directories,
-SKILL.md provisioning, .vision-arwaky symlinks, and .git/info/exclude management.
+.vision-arwaky symlinks, and .git/info/exclude management.
 All file system I/O for workspace setup lives here.
 """
 
@@ -11,7 +11,6 @@ import os
 from pathlib import Path
 
 from modules.shared.src.system.contract_workspace_protocol import IWorkspaceProtocol
-from modules.shared.src.taxonomy_vision_constant import EMBEDDED_SKILL_MD
 from modules.shared.src.taxonomy_vision_vo import FilePath
 from modules.shared.src.taxonomy_xdg_paths_vo import XDGPaths
 from modules.shared.src.utility_xdg_paths import ensure_xdg_dirs
@@ -24,14 +23,13 @@ class CapabilitiesSystemWorkspace(IWorkspaceProtocol):
     def __init__(self) -> None:
         """Initialize CapabilitiesSystemWorkspace."""
 
-    # ─── Block 2: Module Contract ───
+    # ─── Block 2: Module Contract ────
     def init_workspace(self, target_dir: FilePath) -> dict[str, str]:
         """Initialize workspace in sequential steps:
 
         Step 1: Ensure XDG directories exist
-        Step 2: Provision .agents/skills/vision-arwaky/SKILL.md from embedded constant
-        Step 3: Provision .vision-arwaky directory with symlinks to XDG paths
-        Step 4: Update .git/info/exclude (or fallback to .gitignore) with .vision-arwaky and .venv
+        Step 2: Provision .vision-arwaky directory with symlinks to XDG paths
+        Step 3: Update .git/info/exclude (or fallback to .gitignore) with .vision-arwaky and .venv
         """
         target_path = Path(target_dir.value).expanduser().resolve()
         created_items: dict[str, str] = {}
@@ -43,14 +41,7 @@ class CapabilitiesSystemWorkspace(IWorkspaceProtocol):
         created_items["xdg_cache"] = str(XDGPaths.cache_dir())
         created_items["xdg_state"] = str(XDGPaths.state_dir())
 
-        # Step 2: Create .agents/skills/vision-arwaky/SKILL.md from embedded constant
-        skills_dir = target_path / ".agents" / "skills" / "vision-arwaky"
-        skills_dir.mkdir(parents=True, exist_ok=True)
-        skill_md_dest = skills_dir / "SKILL.md"
-        skill_md_dest.write_text(EMBEDDED_SKILL_MD, encoding="utf-8")
-        created_items["skill_md"] = str(skill_md_dest)
-
-        # Step 3: Create .vision-arwaky directory with symlinks to XDG paths
+        # Step 2: Create .vision-arwaky directory with symlinks to XDG paths
         dot_vision = target_path / ".vision-arwaky"
         dot_vision.mkdir(parents=True, exist_ok=True)
 
@@ -72,7 +63,7 @@ class CapabilitiesSystemWorkspace(IWorkspaceProtocol):
             self._ensure_symlink(dot_venv, venv_xdg)
             created_items["link_venv"] = f"{dot_venv} -> {venv_xdg}"
 
-        # Step 4: Ensure git ignores .vision-arwaky and .venv via .git/info/exclude
+        # Step 3: Ensure git ignores .vision-arwaky and .venv via .git/info/exclude
         exclude_result = self._ensure_git_exclude(target_path)
         created_items["git_exclude"] = exclude_result
 

@@ -97,7 +97,4 @@ class TestContourAndBoundingBox:
         area = get_contour_area(contours[0])
         assert area > 1500
         bbox = get_bounding_box(contours[0])
-        assert bbox.x == 20
-        assert bbox.y == 30
-        assert bbox.width == 41
-        assert bbox.height == 51
+        assert bbox == (20, 30, 41, 51)

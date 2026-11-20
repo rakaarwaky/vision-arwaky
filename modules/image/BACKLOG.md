@@ -3,7 +3,7 @@
 FRD: [FRD.md](FRD.md)
 Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
 State: defined in root [ROADMAP.md](../../ROADMAP.md) — cited here, not restated
-Last Updated: 2026-11-18
+Last Updated: 2026-11-20
 
 ## Progress Overview
 
@@ -22,27 +22,7 @@ Last Updated: 2026-11-18
 | Done | FR-IMG-001 shipped |
 | In Progress | None |
 | Risk | None |
-| Updated | 2026-11-18 |
-
-### FR-IMG-002: Extract text with OCR
-
-| Aspect | Detail |
-| -------------- | ------------------------------------------ |
-| State | Ready |
-| Done | FR-IMG-002 shipped |
-| In Progress | None |
-| Risk | None |
-| Updated | 2026-11-18 |
-
-### FR-IMG-003: Compare screenshots
-
-| Aspect | Detail |
-| -------------- | ------------------------------------------ |
-| State | Ready |
-| Done | FR-IMG-003 shipped |
-| In Progress | None |
-| Risk | None |
-| Updated | 2026-11-18 |
+| Updated | 2026-11-20 |
 
 ## Reference
 

@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-Vision Arwaky is a Python computer-vision toolkit for AI agents and technical users who need local, scriptable access to image and video intelligence. The CLI and MCP server expose a single, documented command surface for analysis, OCR, screenshot comparison, video processing, scene and motion detection, object tracking, and bounded smart-video understanding. Deterministic media operations stay local; vision-language analysis is an optional OpenAI-compatible adapter.
+Vision Arwaky is a Python computer-vision toolkit for AI agents and technical users who need local, scriptable access to image and video intelligence. The CLI and MCP server expose a single, documented command surface for workspace initialization, image analysis, and bounded smart-video understanding. Deterministic media operations stay local; vision-language analysis is an optional OpenAI-compatible adapter.
 
 ```text
 caller (CLI | MCP | TUI)
@@ -20,7 +20,7 @@ orchestrator → capability → contract → taxonomy / utility
 
 ## Goals
 
-- Provide a stable image and video command surface.
+- Provide a stable image and video command surface (init, image, video).
 - Support agent integration through six stable MCP tools.
 - Keep deterministic processing local and reproducible.
 - Keep architecture maintainable with zero AES violations.
@@ -36,7 +36,7 @@ orchestrator → capability → contract → taxonomy / utility
 | Persona | Need | Current Pain | Desired Outcome |
 |---------|------|--------------|-----------------|
 | AI agent developer | Discoverable commands, stable JSON, status reporting | Capability split across unrelated scripts | One MCP server exposing six stable tools |
-| Computer-vision developer | Local CLI for inspection, OCR, tracking, comparison | Ad-hoc tools with inconsistent output | Documented commands with structured output |
+| Computer-vision developer | Local CLI for image and video intelligence | Ad-hoc tools with inconsistent output | Documented commands with structured output |
 | QA and automation engineer | Deterministic commands and CI-runnable fixtures | Flaky manual media checks | Reproducible test suite without a live VLM |
 | Technical maintainer | Explicit layer boundaries and DI wiring | Drifted architecture across modules | AES layer contract enforced by CI gates |
 
@@ -45,11 +45,10 @@ orchestrator → capability → contract → taxonomy / utility
 ### In Scope
 
 - Workspace initialization, XDG directory layout, configuration, and job lifecycle.
-- Image analysis with deterministic fallback, Tesseract OCR, and screenshot comparison.
-- Video metadata, frame extraction, corruption checks, scene and motion detection, and object tracking.
+- Image analysis with deterministic fallback via VLM.
 - Bounded smart-video understanding with key-frame sampling, per-frame VLM analysis, and summary generation.
 - MCP tools for init, execute, discovery, help, status, and cancellation.
-- Local operation with FFmpeg, Tesseract, and OpenCV; CI quality gates across Python 3.12 and 3.13.
+- Local operation with FFmpeg and OpenCV; CI quality gates across Python 3.12 and 3.13.
 
 ### Out of Scope
 
@@ -75,7 +74,7 @@ orchestrator → capability → contract → taxonomy / utility
 
 #### Proposed Solution
 
-The CLI parser and command handlers live in the `cli` feature; the TUI is a surface over the same domain containers. Both delegate through the root orchestrator resolver so command behavior stays identical across surfaces. The CLI dispatches workspace, image, video, and agent commands.
+The CLI parser and command handlers live in the `cli` feature; the TUI is a surface over the same domain containers. Both delegate through the root orchestrator resolver so command behavior stays identical across surfaces. The CLI dispatches three public commands: `init`, `image`, and `video`.
 
 #### Main User Flow
 
@@ -92,19 +91,18 @@ The CLI parser and command handlers live in the `cli` feature; the TUI is a surf
 
 | As a | I want | So that | Priority |
 |------|--------|---------|----------|
-| CLI user | to analyze an image with a VLM and get a deterministic fallback | the command stays useful offline | P1 |
-| CLI user | to extract text with Tesseract OCR | scanned documents become searchable | P1 |
-| QA engineer | to compare two screenshots and get difference bounding boxes | visual regressions are detectable | P1 |
+| CLI user | to analyze an image with a VLM | images can be described without manual inspection | P1 |
+| CLI user | to analyze a video frame or short clip through the image command | single-frame analysis is accessible | P1 |
 
 #### Proposed Solution
 
-The image feature owns analysis, OCR, and comparison. Each capability implements its protocol, and the image orchestrator composes them behind the aggregate the surfaces call.
+The image feature owns analysis only. Each capability implements its protocol, and the image orchestrator composes them behind the aggregate the surfaces call.
 
 #### Main User Flow
 
-1. The caller sends a command name and image path through the CLI or MCP.
-2. The image orchestrator dispatches to the matching capability.
-3. The capability runs the vision adapter, OCR engine, or perceptual-hash comparison.
+1. The caller sends `va image --image <path>` through the CLI or MCP.
+2. The image orchestrator dispatches to the analysis capability.
+3. The capability runs the vision adapter.
 4. The result is wrapped in the command output envelope and returned as JSON.
 
 ### PR-VA-003: MCP agent integration surface
@@ -160,20 +158,19 @@ The system feature owns workspace provisioning, XDG path resolution, configurati
 
 | As a | I want | So that | Priority |
 |------|--------|---------|----------|
-| CLI user | to read metadata, extract frames, and check corruption | video files can be inspected quickly | P1 |
-| CLI user | to detect scenes, motion, and track objects | events and object paths are extractable | P1 |
+| CLI user | to run bounded smart-video understanding | long videos get a capped, summarized analysis | P1 |
 | Agent | to run bounded smart-video understanding | long videos get a capped, summarized analysis | P1 |
 
 #### Proposed Solution
 
-The video feature owns metadata, frame extraction, corruption checks, scene and motion detection, object tracking, and bounded smart understanding. Frame sampling is capped, summary prompts are bounded, and temporary frames are removed after execution.
+The video feature owns bounded smart understanding only. Frame sampling is capped, summary prompts are bounded, and temporary frames are removed after execution.
 
 #### Main User Flow
 
-1. The caller sends a video command through the CLI or MCP.
-2. The video orchestrator resolves the matching capability.
-3. The capability decodes the video, samples frames, and runs the requested analysis.
-4. For smart understanding, selected frames are analyzed by the VLM and synthesized into a bounded summary.
+1. The caller sends `va video --video <path>` through the CLI or MCP.
+2. The video orchestrator resolves the understanding capability.
+3. The capability decodes the video, samples frames uniformly, and runs VLM analysis.
+4. Selected frames are analyzed by the VLM and synthesized into a bounded summary.
 
 ## Reference
 

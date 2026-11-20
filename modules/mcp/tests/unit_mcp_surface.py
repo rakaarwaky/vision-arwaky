@@ -20,7 +20,7 @@ class TestMCPSurface:
         image_cmds = {item["command"] for item in result["image"]}
         video_cmds = {item["command"] for item in result["video"]}
         assert workspace_cmds == {"init"}
-        assert image_cmds == {"analyze", "ocr", "compare"}
+        assert image_cmds == {"analyze"}
         assert "analyze-video" in video_cmds
         assert "convert" not in video_cmds
         assert "elements" not in image_cmds
@@ -28,7 +28,7 @@ class TestMCPSurface:
     def test_list_commands_domain_filter(self):
         result = json.loads(vision_list_commands(domain="image"))
         assert isinstance(result, list)
-        assert len(result) == 3
+        assert len(result) == 1
 
     def test_help_output(self):
         help_all = vision_help()

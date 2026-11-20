@@ -17,14 +17,14 @@ class TestMCPActions:
         set_mcp_dispatcher(SystemContainer().orchestrator)
         result_raw = vision_init(target_dir=str(tmp_path))
         data = json.loads(result_raw)
-        assert "skill_md" in data
-        assert (tmp_path / ".agents" / "skills" / "vision-arwaky" / "SKILL.md").exists()
+        assert "xdg_config" in data
+        assert (tmp_path / ".vision-arwaky").exists()
 
     def test_vision_execute_init(self, tmp_path: Path):
         set_mcp_dispatcher(SystemContainer().orchestrator)
         result_raw = vision_execute(command="init", target_dir=str(tmp_path))
         data = json.loads(result_raw)
-        assert "skill_md" in data
+        assert "xdg_config" in data
 
     def test_list_commands_includes_workspace(self):
         result = json.loads(vision_list_commands())

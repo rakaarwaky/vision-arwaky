@@ -4,30 +4,11 @@ from __future__ import annotations
 
 from enum import Enum
 
-IMAGE_COMMANDS: frozenset[str] = frozenset({"analyze", "ocr", "compare"})
+IMAGE_COMMANDS: frozenset[str] = frozenset({"image", "analyze"})
 
-VIDEO_COMMANDS: frozenset[str] = frozenset(
-    {
-        "video-info",
-        "extract-frames",
-        "check-corruption",
-        "detect-scenes",
-        "detect-motion",
-        "track",
-        "analyze-video",
-    }
-)
+VIDEO_COMMANDS: frozenset[str] = frozenset({"video", "analyze-video"})
 
-SYSTEM_COMMANDS: frozenset[str] = frozenset(
-    {
-        "init",
-        "get-config",
-        "set-config",
-        "config",
-        "status",
-        "cancel",
-    }
-)
+SYSTEM_COMMANDS: frozenset[str] = frozenset({"init"})
 
 ALL_COMMANDS: frozenset[str] = IMAGE_COMMANDS | VIDEO_COMMANDS | SYSTEM_COMMANDS
 

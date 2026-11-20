@@ -3,7 +3,7 @@
 FRD: [FRD.md](FRD.md)
 Architecture: [ARCHITECTURE.md](../../ARCHITECTURE.md)
 State: defined in root [ROADMAP.md](../../ROADMAP.md) — cited here, not restated
-Last Updated: 2026-11-18
+Last Updated: 2026-11-20
 
 ## Progress Overview
 
@@ -14,7 +14,7 @@ Last Updated: 2026-11-18
 
 ## Backlog Status
 
-### FR-VID-001: Read metadata and extract frames
+### FR-VID-001: Analyze video with a vision-language model
 
 | Aspect | Detail |
 | -------------- | ------------------------------------------ |
@@ -22,47 +22,7 @@ Last Updated: 2026-11-18
 | Done | FR-VID-001 shipped |
 | In Progress | None |
 | Risk | None |
-| Updated | 2026-11-18 |
-
-### FR-VID-002: Check corruption
-
-| Aspect | Detail |
-| -------------- | ------------------------------------------ |
-| State | Ready |
-| Done | FR-VID-002 shipped |
-| In Progress | None |
-| Risk | None |
-| Updated | 2026-11-18 |
-
-### FR-VID-003: Detect scenes and motion
-
-| Aspect | Detail |
-| -------------- | ------------------------------------------ |
-| State | Ready |
-| Done | FR-VID-003 shipped |
-| In Progress | None |
-| Risk | None |
-| Updated | 2026-11-18 |
-
-### FR-VID-004: Track an object
-
-| Aspect | Detail |
-| -------------- | ------------------------------------------ |
-| State | Ready |
-| Done | FR-VID-004 shipped |
-| In Progress | None |
-| Risk | None |
-| Updated | 2026-11-18 |
-
-### FR-VID-005: Analyze video with a vision-language model
-
-| Aspect | Detail |
-| -------------- | ------------------------------------------ |
-| State | Ready |
-| Done | FR-VID-005 shipped |
-| In Progress | None |
-| Risk | None |
-| Updated | 2026-11-18 |
+| Updated | 2026-11-20 |
 
 ## Reference
 

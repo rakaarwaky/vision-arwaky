@@ -1,7 +1,6 @@
 """Contract: workspace provisioning protocol (AES402).
 
-Pure ABC definition for workspace initialization, XDG link creation,
-and embedded SKILL.md provisioning.
+Pure ABC definition for workspace initialization and XDG link creation.
 """
 
 from __future__ import annotations
@@ -12,11 +11,11 @@ from modules.shared.src.taxonomy_vision_vo import FilePath
 
 
 class IWorkspaceProtocol(ABC):
-    """Protocol for local workspace setup, XDG symlinks, and skill provisioning."""
+    """Protocol for local workspace setup and XDG symlinks."""
 
     @abstractmethod
     def init_workspace(self, target_dir: FilePath) -> dict[str, str]:
-        """Initialize workspace directory, symlinks to XDG, and SKILL.md."""
+        """Initialize workspace directory and symlinks to XDG."""
         ...
 
 

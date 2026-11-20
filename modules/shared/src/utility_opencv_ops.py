@@ -13,9 +13,7 @@ import cv2
 import numpy
 
 from modules.shared.src.taxonomy_vision_vo import (
-    BoundingBox,
     FilePath,
-    VideoInfo,
 )
 
 logger = logging.getLogger("modules.shared.utility.opencv_ops")
@@ -114,17 +112,17 @@ def get_contour_area(contour: Any) -> float:
     return float(cv2.contourArea(contour))
 
 
-def get_bounding_box(contour: Any) -> BoundingBox:
+def get_bounding_box(contour: Any) -> tuple[int, int, int, int]:
     """Compute the minimal bounding box for a 2D contour.
 
     Args:
         contour: Input 2D point vector.
 
     Returns:
-        BoundingBox value object with (x, y, width, height).
+        Tuple (x, y, width, height).
     """
     x, y, w, h = cv2.boundingRect(contour)
-    return BoundingBox(x=int(x), y=int(y), width=int(w), height=int(h))
+    return (int(x), int(y), int(w), int(h))
 
 
 def compare_histograms(h1: numpy.ndarray, h2: numpy.ndarray) -> float:
@@ -183,14 +181,14 @@ def open_video_capture(path: str | FilePath) -> cv2.VideoCapture:
     return cv2.VideoCapture(p)
 
 
-def get_video_metadata(video_path: FilePath) -> VideoInfo:
+def get_video_metadata(video_path: FilePath) -> dict:
     """Read structural metadata from a video file.
 
     Args:
         video_path: Path to the video file.
 
     Returns:
-        VideoInfo value object.
+        Dict with keys fps, frame_count, width, height.
     """
     cap = open_video_capture(video_path)
     if not cap.isOpened():
@@ -202,12 +200,12 @@ def get_video_metadata(video_path: FilePath) -> VideoInfo:
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     cap.release()
 
-    return VideoInfo(
-        fps=fps,
-        frame_count=frame_count,
-        width=width,
-        height=height,
-    )
+    return {
+        "fps": fps,
+        "frame_count": frame_count,
+        "width": width,
+        "height": height,
+    }
 
 
 def check_video_corruption(video_path: FilePath) -> bool:

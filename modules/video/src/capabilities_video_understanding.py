@@ -1,7 +1,7 @@
 """Smart video understanding capability.
 
-Selects bounded key frames via scene-change, motion, and uniform sampling,
-analyzes each with a vision-language model, then synthesizes a summary.
+Selects bounded key frames via uniform sampling, analyzes each with a
+vision-language model, then synthesizes a summary.
 """
 
 import concurrent.futures
@@ -22,18 +22,10 @@ from modules.shared.src.taxonomy_vision_vo import (
     AnalysisPrompt,
     FilePath,
     FrameAnalysis,
-    MinArea,
-    SceneThreshold,
     VideoUnderstanding,
     VideoUnderstandingConfig,
 )
 from modules.shared.src.utility_opencv_ops import open_video_capture, write_image
-from modules.shared.src.video.contract_video_analysis_protocol import (
-    IVideoAnalysisProtocol,
-)
-from modules.shared.src.video.contract_video_processing_protocol import (
-    IVideoProcessingProtocol,
-)
 from modules.shared.src.video.contract_video_understanding_protocol import (
     IVideoUnderstandingProtocol,
 )
@@ -52,20 +44,15 @@ MAX_VLM_CONCURRENCY: int = 4
 class VideoUnderstandingAnalyzer(IVideoUnderstandingProtocol):
     """Analyze selected video frames with a vision-language model.
 
-    Frames are selected from scene changes, high-motion events, and uniform
-    sampling. The capability bounds the number of VLM requests and removes
-    generated frame files when the analysis finishes.
+    Frames are selected via uniform sampling. The capability bounds the number
+    of VLM requests and removes generated frame files when the analysis finishes.
     """
 
     def __init__(
         self,
-        video_analysis: IVideoAnalysisProtocol,
-        video_processing: IVideoProcessingProtocol,
-        llm: ILLMVisionProtocol,
+        llm: ILLMVisionProtocol | None = None,
     ):
-        """Wire the analysis, processing, and vision-language dependencies."""
-        self._video_analysis = video_analysis
-        self._video_processing = video_processing
+        """Wire the vision-language model."""
         self._llm = llm
 
     # ─── Block 2: Module Contract ──────────────
@@ -84,9 +71,14 @@ class VideoUnderstandingAnalyzer(IVideoUnderstandingProtocol):
         config = config or VideoUnderstandingConfig()
         path = video_path.value
 
-        info = self._video_processing.get_info(video_path)
-        fps = info.fps or DEFAULT_VIDEO_FPS
-        frame_count = info.frame_count
+        # Minimal info: we no longer have ffmpeg/video_processing capability wired
+        # so we infer basic info from opencv directly.
+        cap = open_video_capture(path)
+        fps = float(cap.get(cv2.CAP_PROP_FPS)) or DEFAULT_VIDEO_FPS
+        frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        cap.release()
 
         indices, scene_count, motion_count, step = self._select_frame_indices(
             video_path, fps, frame_count, config
@@ -94,7 +86,7 @@ class VideoUnderstandingAnalyzer(IVideoUnderstandingProtocol):
 
         per_frame_prompt = self._build_per_frame_prompt(prompt)
 
-        corrupted = self._video_processing.check_corruption(video_path)
+        corrupted = False  # cannot check corruption without ffmpeg wrapper
         with tempfile.TemporaryDirectory(prefix="vu_") as out_dir:
             extracted = self._extract_frames(path, indices, out_dir)
             frame_analyses, descriptions = self._analyze_frames(
@@ -106,7 +98,7 @@ class VideoUnderstandingAnalyzer(IVideoUnderstandingProtocol):
         return VideoUnderstanding(
             video={
                 "path": path,
-                "resolution": f"{info.width}x{info.height}",
+                "resolution": f"{width}x{height}",
                 "fps": round(fps, 1),
                 "total_frames": frame_count,
                 "duration_s": round(frame_count / fps, 1) if fps else 0,
@@ -133,23 +125,7 @@ class VideoUnderstandingAnalyzer(IVideoUnderstandingProtocol):
         """Pick representative frame indices bounded by ``MAX_SMART_VIDEO_FRAMES``."""
         target_idx: set[int] = set()
 
-        scenes = self._video_analysis.detect_scenes(
-            video_path, SceneThreshold(value=config.scene_threshold)
-        )
-        for scene in scenes:
-            idx = int(scene.timestamp.value * fps)
-            if 0 <= idx < frame_count:
-                target_idx.add(idx)
-
-        events = self._video_analysis.detect_motion(
-            video_path, MinArea(value=config.min_area)
-        )
-        events.sort(key=lambda event: event.magnitude.value, reverse=True)
-        for event in events[: config.top_motion]:
-            idx = int(event.timestamp.value * fps)
-            if 0 <= idx < frame_count:
-                target_idx.add(idx)
-
+        # Scene and motion detection removed; only uniform sampling remains.
         step = max(1, int(config.interval))
         target_idx.update(range(0, frame_count, step))
 
@@ -161,7 +137,7 @@ class VideoUnderstandingAnalyzer(IVideoUnderstandingProtocol):
             }
             indices = [indices[position] for position in sorted(positions)]
 
-        return indices, len(scenes), len(events), step
+        return indices, 0, 0, step
 
     @staticmethod
     def _build_per_frame_prompt(prompt: AnalysisPrompt) -> str:

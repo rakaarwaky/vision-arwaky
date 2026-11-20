@@ -59,7 +59,7 @@ Root orchestrator resolver
 
 | Target Metric | Value |
 |---------------|-------|
-| Public Commands Registered | 11 |
+| Public Commands Registered | 3 |
 | Excluded Bloat Commands | 0 |
 | Invalid Invocation Exit Status | Non-zero |
 
@@ -107,13 +107,13 @@ Root orchestrator resolver
 
 ### FR-CLI-003: Execute image commands
 
-**Description:** Route `analyze`, `ocr`, and `compare` to the image orchestrator; a video passed to `analyze` has its middle frame extracted first.
+**Description:** Route `image` to the image orchestrator; a video passed to `image` has its middle frame extracted first.
 
 #### Business Logic
 
 - The handler passes validated values and never instantiates image capabilities directly.
 - The default OCR language is `eng`.
-- Video input to `analyze` triggers middle-frame extraction before analysis.
+- Video input to `image` triggers middle-frame extraction before analysis.
 
 #### Edge Cases
 
@@ -134,10 +134,9 @@ Root orchestrator resolver
 
 | Context | When Action | Then Observable Result |
 |---------|-------------|------------------------|
-| Valid image, reachable VLM | `analyze` invoked | Structured analysis output printed |
-| Image without `--lang` | `ocr` invoked | OCR text returned using default language `eng` |
-| Video passed to `analyze` | `analyze` invoked | Middle frame extracted and analyzed |
-| Missing image file | `ocr` invoked | Controlled error, non-zero status |
+| Valid image, reachable VLM | `image` invoked | Structured analysis output printed |
+| Video passed to `image` | `image` invoked | Middle frame extracted and analyzed |
+| Missing image file | `image` invoked | Controlled error, non-zero status |
 
 #### Metric
 
@@ -148,11 +147,11 @@ Root orchestrator resolver
 
 ### FR-CLI-004: Execute video commands
 
-**Description:** Route deterministic video operations (`video-info`, `extract-frames`, `check-corruption`, `detect-scenes`, `detect-motion`, `track`) and `analyze-video` to the video orchestrator.
+**Description:** Route `video` (smart video understanding) to the video orchestrator.
 
 #### Business Logic
 
-- `analyze-video` accepts a prompt and a video path.
+- `video` accepts a video path.
 - Frame sampling bounds and parameters are managed predictably inside the domain.
 - No tuning parameters are exposed publicly.
 
@@ -175,10 +174,8 @@ Root orchestrator resolver
 
 | Context | When Action | Then Observable Result |
 |---------|-------------|------------------------|
-| Valid video | `video-info` invoked | Video metadata output printed |
-| Valid video with `--bbox` | `track` invoked | Bounding-box trajectory list printed |
-| Missing media file | any video command invoked | Controlled error, non-zero status |
-| Invalid `--bbox` format | `track` invoked | Error message printed, non-zero status |
+| Valid video | `video` invoked | Video metadata output printed |
+| Missing media file | `video` invoked | Controlled error, non-zero status |
 
 #### Metric
 
