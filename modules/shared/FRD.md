@@ -8,7 +8,7 @@ The shared module is the foundation layer for Vision Arwaky. In compliance with 
 
 ### FR-SHR-001: Provide the taxonomy layer
 
-**Description:** Provide immutable, domain-stable value objects, errors, events, and constants. Domain concepts defined by feature specifications become reusable taxonomy types: command-domain classification (`IMAGE`, `VIDEO`, `SYSTEM` with their command sets), vision value objects (`AnalysisPrompt`, `BoundingBox`, `CommandName`, `CommandOutput`, `FilePath`, `IntervalSeconds`, `VideoInfo`, `VisionAnalysis`, `VideoUnderstanding`), XDG directory paths (`config_dir`, `data_dir`, `cache_dir`, `state_dir`, `bin_dir`), tunable constants (`DEFAULT_VLM_TIMEOUT_S`, `SCENE_THRESHOLD`, `MIN_MOTION_AREA`, `EMBEDDED_SKILL_MD`), the domain error hierarchy (`VisionDomainError`, `ImageProcessingError`, `VideoProcessingError`, `InvalidParameterError`), and domain events (`SceneChange`, `MotionEvent`).
+**Description:** Provide immutable, domain-stable value objects, errors, events, and constants. Domain concepts defined by feature specifications become reusable taxonomy types: command-domain classification (`IMAGE`, `VIDEO`, `SYSTEM` with their command sets), vision value objects (`AnalysisPrompt`, `BoundingBox`, `CommandName`, `CommandOutput`, `FilePath`, `IntervalSeconds`, `VideoInfo`, `VisionAnalysis`, `VideoUnderstanding`), XDG directory paths (`config_dir`, `data_dir`, `cache_dir`, `state_dir`, `bin_dir`), tunable constants (`DEFAULT_VLM_TIMEOUT_S`, `SCENE_THRESHOLD`, `MIN_MOTION_AREA`), the domain error hierarchy (`VisionDomainError`, `ImageProcessingError`, `VideoProcessingError`, `InvalidParameterError`), and domain events (`SceneChange`, `MotionEvent`).
 
 #### Business Logic
 

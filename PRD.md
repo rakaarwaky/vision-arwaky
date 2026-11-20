@@ -146,7 +146,7 @@ The system feature owns workspace provisioning, XDG path resolution, configurati
 #### Main User Flow
 
 1. Run `va init [target_dir]` or `vision_init` through MCP.
-2. The orchestrator provisions `.vision-arwaky` symlinks and embeds the packaged skill guide.
+2. The orchestrator provisions `.vision-arwaky` symlinks.
 3. Configuration is read from the user config directory with repository-local overrides.
 4. Subsequent commands resolve their artifacts through the provisioned layout.
 

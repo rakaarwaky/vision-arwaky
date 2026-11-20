@@ -69,7 +69,6 @@ Root orchestrator resolver
 
 #### Business Logic
 
-- Creates `.agents/skills/vision-arwaky/SKILL.md` from the embedded constant.
 - Provisions the `.vision-arwaky` symlinks pointing at XDG directories.
 - Symlinks `.venv` when an XDG virtualenv exists.
 - Adds entries to `.git/info/exclude` with a local ignore file as fallback.
@@ -84,7 +83,7 @@ Root orchestrator resolver
 | Aspect | Detail |
 |--------|--------|
 | **Input** | Optional target directory (default `.`). Source: CLI `init` command via `cmd_init`. |
-| **Output** | JSON summary of created XDG paths, symlinks, the SKILL.md file, and exclusion status. Destination: stdout / caller. |
+| **Output** | JSON summary of created XDG paths, symlinks, and exclusion status. Destination: stdout / caller. |
 | **Protocol** | `IWorkspaceProtocol` |
 | **Method** | `init_workspace` |
 | **Event** | None |
@@ -94,7 +93,7 @@ Root orchestrator resolver
 
 | Context | When Action | Then Observable Result |
 |---------|-------------|------------------------|
-| Empty target directory | `init` invoked | Reports created XDG paths, symlinks, SKILL.md, exclusion status |
+| Empty target directory | `init` invoked | Reports created XDG paths, symlinks, exclusion status |
 | Running init twice | `init` invoked again | Valid symlinks remain in place (idempotent) |
 | Missing `.git` directory | `init` invoked | Local ignore file used as fallback; structured status returned |
 

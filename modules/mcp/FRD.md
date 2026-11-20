@@ -45,11 +45,10 @@ The MCP module exposes Vision Arwaky to AI agents through a stdio server offerin
 
 ### FR-MCP-002: Initialize workspace
 
-**Description:** Initialize a workspace with XDG symlinks and the skill guide through the dedicated `vision_init` tool.
+**Description:** Initialize a workspace with XDG symlinks through the dedicated `vision_init` tool.
 
 #### Business Logic
 
-- Writes the embedded skill guide to `.agents/skills/vision-arwaky/SKILL.md`.
 - Configures the `.vision-arwaky/` symlinks.
 - Records `.vision-arwaky` and `.venv` in `.git/info/exclude` with a local ignore file as fallback.
 
@@ -62,7 +61,7 @@ The MCP module exposes Vision Arwaky to AI agents through a stdio server offerin
 | Aspect | Detail |
 |--------|--------|
 | **Input** | `target_dir`, defaulting to the current directory |
-| **Output** | A JSON string detailing created XDG paths, symlinks, the skill guide file, and exclusion status |
+| **Output** | A JSON string detailing created XDG paths, symlinks, and exclusion status |
 | **Protocol** | stdio |
 | **Method** | `vision_init` |
 | **Event** | None |
@@ -72,13 +71,13 @@ The MCP module exposes Vision Arwaky to AI agents through a stdio server offerin
 
 | Context | When Action | Then Observable Result |
 |---------|-------------|------------------------|
-| empty directory | call vision_init | reports created XDG paths, symlinks, the skill guide, and exclusion status |
+| empty directory | call vision_init | reports created XDG paths, symlinks, and exclusion status |
 
 #### Metric
 
 | Target Metric | Value |
 |---------------|-------|
-| Provisioning completeness | all four artifacts reported in summary |
+| Provisioning completeness | all reported artifacts present in summary |
 
 ### FR-MCP-003: Discover commands
 
@@ -117,11 +116,11 @@ The MCP module exposes Vision Arwaky to AI agents through a stdio server offerin
 
 ### FR-MCP-004: Read help documentation
 
-**Description:** Return the agent-facing skill guide, or one selected section of it.
+**Description:** Return workspace usage documentation, or one selected section of it.
 
 #### Business Logic
 
-- Help content is read from the repository's current skill guide with the embedded copy as fallback.
+- Help content is read from the repository's `SKILL.md` file when present, falling back to a concise built-in summary.
 
 #### Edge Cases
 

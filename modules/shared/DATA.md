@@ -28,7 +28,7 @@ The `shared` module is the kernel of the workspace. It holds the three foundatio
 
 | Type | Description |
 |------|-------------|
-| VisionConstants | Compile-time constants for tunable parameters: `DEFAULT_VLM_TIMEOUT_S`, `SCENE_THRESHOLD`, `MIN_MOTION_AREA`, `MAX_TRACK_FRAMES`, `FRAME_EXTRACTION_INTERVAL_S`, `EMBEDDED_SKILL_MD`. |
+| VisionConstants | Compile-time constants for tunable parameters: `DEFAULT_VLM_TIMEOUT_S`, `SCENE_THRESHOLD`, `MIN_MOTION_AREA`, `MAX_TRACK_FRAMES`, `FRAME_EXTRACTION_INTERVAL_S`. |
 
 ### DT-SHARED-005: Domain Error Hierarchy
 

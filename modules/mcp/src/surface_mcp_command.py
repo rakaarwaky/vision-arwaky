@@ -16,7 +16,6 @@ from modules.shared.src.contract_registry_service_aggregate import (
 )
 from modules.shared.src.taxonomy_vision_constant import (
     DEFAULT_MODELS_TIMEOUT_S,
-    EMBEDDED_SKILL_MD,
 )
 from modules.shared.src.taxonomy_vision_vo import CommandName
 from modules.shared.src.utility_config_handler import (
@@ -125,12 +124,15 @@ def vision_list_commands(domain: str = "") -> str:
 
 @mcp.tool()
 def vision_help(section: str = "all") -> str:
-    """Return SKILL.md documentation for vision commands."""
+    """Return workspace documentation for vision commands."""
     skill_path = Path(VISION_PROJECT) / "SKILL.md"
     if skill_path.exists():
         content = skill_path.read_text()
     else:
-        content = EMBEDDED_SKILL_MD
+        content = (
+            "Vision Arwaky: workspace init, image analysis, and video analysis. "
+            "Run 'va init', 'va image --image PATH', or 'va video --video PATH'."
+        )
 
     if section == "all":
         return content

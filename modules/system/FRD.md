@@ -13,7 +13,6 @@ The system module manages workspace provisioning, XDG layout, configuration, and
 #### Business Logic
 
 - Create `$XDG_CONFIG_HOME/vision-arwaky`, `$XDG_DATA_HOME/vision-arwaky`, `$XDG_CACHE_HOME/vision-arwaky`, and `$XDG_STATE_HOME/vision-arwaky`.
-- Write the embedded skill guide to `.agents/skills/vision-arwaky/SKILL.md`.
 - Create `.vision-arwaky/` holding symlinks `log` to state, `data` to data, and `cache` to cache.
 - When an isolated XDG virtualenv exists, symlink `.venv` in the target workspace.
 - Add `.vision-arwaky` and `.venv` to `.git/info/exclude` inside a repository, otherwise to a local `.gitignore`.
@@ -41,7 +40,7 @@ The system module manages workspace provisioning, XDG layout, configuration, and
 
 | Context | When Action | Then Observable Result |
 |---------|-------------|------------------------|
-| Empty workspace directory | `init_workspace` is invoked | Four XDG directories, skill guide, workspace symlinks, and exclusion entries are created; summary names every created path |
+| Empty workspace directory | `init_workspace` is invoked | Four XDG directories, workspace symlinks, and exclusion entries are created; summary names every created path |
 | Same workspace provisioned twice | `init_workspace` is invoked | Valid symlinks remain in place and the same summary is reported |
 
 #### Metric
