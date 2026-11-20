@@ -5,10 +5,10 @@ from modules.shared.src.common.taxonomy_vision_vo import (
     FilePath,
     VisionAnalysis,
 )
-from modules.shared.src.image.contract_image_processing_protocol import (
+from modules.shared.src.image.contract_image_protocol import (
     IImageProcessingProtocol,
+    ILLMVisionProtocol,
 )
-from modules.shared.src.image.contract_llm_vision_protocol import ILLMVisionProtocol
 
 
 class ImageProcessingProcessor(IImageProcessingProtocol):

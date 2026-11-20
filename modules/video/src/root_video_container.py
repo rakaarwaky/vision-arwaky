@@ -3,7 +3,7 @@ from typing import Any
 from modules.shared.src.contract_registry_service_aggregate import (
     IRegistryServiceAggregate,
 )
-from modules.shared.src.image.contract_llm_vision_protocol import ILLMVisionProtocol
+from modules.shared.src.image.contract_image_protocol import ILLMVisionProtocol
 from modules.video.src.agent_video_orchestrator import VideoOrchestrator
 from modules.video.src.capabilities_video_understanding import (
     VideoUnderstandingAnalyzer,

@@ -32,7 +32,7 @@ from modules.shared.src.common.utility_config_handler import (
     resolve_external_settings,
 )
 from modules.shared.src.common.utility_llm_check import check_llm_endpoint, list_models
-from modules.shared.src.image.contract_llm_vision_protocol import ILLMVisionProtocol
+from modules.shared.src.image.contract_image_protocol import ILLMVisionProtocol
 
 logger = logging.getLogger("modules.image.capabilities.llm_vision_adapter")
 

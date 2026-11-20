@@ -10,7 +10,7 @@ from modules.shared.src.common.taxonomy_vision_vo import (
     ModelName,
     VideoUnderstandingConfig,
 )
-from modules.shared.src.image.contract_llm_vision_protocol import ILLMVisionProtocol
+from modules.shared.src.image.contract_image_protocol import ILLMVisionProtocol
 from modules.video.src.capabilities_video_understanding import (
     VideoUnderstandingAnalyzer,
 )

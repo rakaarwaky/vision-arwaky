@@ -13,7 +13,7 @@ from pathlib import Path
 from modules.shared.src.common.taxonomy_vision_vo import FilePath
 from modules.shared.src.common.taxonomy_xdg_paths_vo import XDGPaths
 from modules.shared.src.common.utility_xdg_paths import ensure_xdg_dirs
-from modules.shared.src.system.contract_workspace_protocol import IWorkspaceProtocol
+from modules.shared.src.system.contract_system_protocol import IWorkspaceProtocol
 
 
 # ─── Block 1: Module Declaration ──────────────

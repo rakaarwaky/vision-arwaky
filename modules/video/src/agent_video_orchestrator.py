@@ -16,7 +16,7 @@ from modules.shared.src.common.utility_command_output import (
 from modules.shared.src.contract_registry_service_aggregate import (
     IRegistryServiceAggregate,
 )
-from modules.shared.src.video.contract_video_understanding_protocol import (
+from modules.shared.src.video.contract_video_protocol import (
     IVideoUnderstandingProtocol,
 )
 

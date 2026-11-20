@@ -17,7 +17,7 @@ from modules.shared.src.common.utility_config_handler import (
     read_yaml_config,
     save_user_config,
 )
-from modules.shared.src.system.contract_system_configuration_protocol import (
+from modules.shared.src.system.contract_system_protocol import (
     ISystemConfigurationProtocol,
 )
 

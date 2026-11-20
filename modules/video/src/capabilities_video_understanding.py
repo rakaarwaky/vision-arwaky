@@ -30,8 +30,8 @@ from modules.shared.src.common.utility_opencv_ops import (
     open_video_capture,
     write_image,
 )
-from modules.shared.src.image.contract_llm_vision_protocol import ILLMVisionProtocol
-from modules.shared.src.video.contract_video_understanding_protocol import (
+from modules.shared.src.image.contract_image_protocol import ILLMVisionProtocol
+from modules.shared.src.video.contract_video_protocol import (
     IVideoUnderstandingProtocol,
 )
 

@@ -5,14 +5,12 @@ from typing import TypedDict
 from modules.shared.src.contract_registry_service_aggregate import (
     IRegistryServiceAggregate,
 )
-from modules.shared.src.system.contract_system_configuration_protocol import (
+from modules.shared.src.system.contract_system_protocol import (
     ISystemConfigurationProtocol,
-)
-from modules.shared.src.system.contract_system_doctor_protocol import (
     ISystemDoctorProtocol,
+    ISystemJobProtocol,
+    IWorkspaceProtocol,
 )
-from modules.shared.src.system.contract_system_job_protocol import ISystemJobProtocol
-from modules.shared.src.system.contract_workspace_protocol import IWorkspaceProtocol
 from modules.system.src.agent_system_orchestrator import SystemOrchestrator
 from modules.system.src.capabilities_system_configuration import (
     CapabilitiesSystemConfiguration,
