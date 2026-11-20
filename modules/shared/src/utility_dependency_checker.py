@@ -6,14 +6,12 @@ import shutil
 
 PYTHON_DEPS: dict[str, str] = {
     "opencv": "cv2",
-    "pillow": "PIL",
     "numpy": "numpy",
-    "pytesseract": "pytesseract",
     "requests": "requests",
     "pyyaml": "yaml",
 }
 
-BINARY_DEPS: list[str] = ["ffmpeg", "ffprobe", "tesseract"]
+BINARY_DEPS: list[str] = ["ffmpeg", "ffprobe"]
 
 
 def check_python_dependencies() -> dict[str, str]:

@@ -5,40 +5,13 @@ These values are bound here to keep single vision calls predictable and bounded.
 
 from __future__ import annotations
 
-# --- Frame extraction / uniform sampling ------------------------------------
-FRAME_EXTRACTION_INTERVAL_S: float = 1.0
-MAX_EXTRACT_FRAMES: int = 30
-
-# --- Scene detection --------------------------------------------------------
-SCENE_THRESHOLD: float = 30.0
-HIST_HUE_BINS: int = 50
-HIST_SAT_BINS: int = 60
-
-# --- Motion detection -------------------------------------------------------
-MIN_MOTION_AREA: int = 500
-MOTION_DIFF_THRESHOLD: int = 25
-MOTION_MAX_PIXEL_VALUE: int = 255
-GAUSSIAN_BLUR_KERNEL: tuple[int, int] = (21, 21)
-DILATION_KERNEL_SIZE: tuple[int, int] = (3, 3)
-DILATION_ITERATIONS: int = 2
-
-# --- Object tracking --------------------------------------------------------
-MAX_TRACK_FRAMES: int = 300
-
 # --- Smart video understanding bounds ---------------------------------------
 MAX_SMART_VIDEO_FRAMES: int = 12
 MAX_SUMMARY_PROMPT_CHARS: int = 12000
 ANALYZE_VIDEO_INTERVAL_S: float = 30.0
-TOP_MOTION_EVENTS_LIMIT: int = 5
 DEFAULT_VIDEO_FPS: float = 30.0
 
-# --- Image processing & comparison bounds -----------------------------------
-IMAGE_DIFF_THRESHOLD: int = 30
-IMAGE_MAX_PIXEL_VALUE: int = 255
-MIN_DIFF_CONTOUR_AREA: int = 50
-DEFAULT_OCR_LANGUAGE: str = "eng"
-
-# --- VLM & FFmpeg timeout defaults ------------------------------------------
+# --- VLM & timeout defaults -------------------------------------------------
 DEFAULT_VLM_TIMEOUT_S: int = 120
 DEFAULT_MODELS_TIMEOUT_S: int = 10
 DEFAULT_VLM_TEMPERATURE: float = 0.4
@@ -53,7 +26,7 @@ version: 3.0.0
 ---
 # Vision Arwaky
 
-Vision Arwaky is a Python computer-vision toolkit exposed through a CLI and an MCP server. It provides workspace initialization, image analysis, OCR, screenshot comparison, video processing, scene and motion detection, object tracking, agent-readable timelines, and bounded smart-video understanding.
+Vision Arwaky is a Python computer-vision toolkit exposed through a CLI and an MCP server. It provides workspace initialization, image analysis, and bounded smart-video understanding.
 
 ## Documentation map
 
@@ -73,7 +46,7 @@ Feature FRDs are available for [shared](modules/shared/FRD.md), [system](modules
 
 | Command             | Purpose                                          |
 | --------------------- | -------------------------------------------------- |
-| `va` / `vision-arwaky-cli` | Run workspace, image, video, and smart-video commands |
+| `va` / `vision-arwaky-cli` | Run workspace, image, and video commands |
 | `vision-arwaky-mcp` | Start the MCP server over stdio                  |
 | `vision-arwaky-tui` | Start the Textual configuration interface        |
 
@@ -97,7 +70,7 @@ The MCP entry point is `modules/root_mcp_entry.py`, and the action surface is `m
 
 ## Backend and image analysis
 
-The `analyze` command accepts an image path and an optional prompt. The image orchestrator uses the configured external OpenAI-compatible vision endpoint and falls back to deterministic image processing when a language-model response is unavailable.
+The `image` command accepts an image path and an optional prompt. The image orchestrator uses the configured external OpenAI-compatible vision endpoint and falls back to deterministic image processing when a language-model response is unavailable.
 
 The supported backend configuration is:
 
@@ -148,11 +121,9 @@ The project reads configuration through `utility_config_handler` and adheres to 
 | Cache                    | `~/.cache/vision-arwaky` (`$XDG_CACHE_HOME/vision-arwaky`) |
 | Logs & State             | `~/.local/state/vision-arwaky` (`$XDG_STATE_HOME/vision-arwaky`) |
 | Executable Binaries      | `~/.local/bin` (`$XDG_BIN_HOME`) |
-| Video tools              | `ffmpeg` and `ffprobe` available on `PATH` |
 
 Required system executables are:
 
-- `tesseract` for OCR.
 - `ffmpeg` and `ffprobe` for video operations.
 - A working headless OpenCV runtime for image and video processing.
 
@@ -160,7 +131,7 @@ On Debian or Ubuntu:
 
 ```bash
 sudo apt-get update
-sudo apt-get install -y ffmpeg libgl1 tesseract-ocr
+sudo apt-get install -y ffmpeg libgl1
 ```
 
 ## Development verification
@@ -176,35 +147,18 @@ The gates run Ruff formatting, Ruff lint, Mypy, pytest, and `lint-arwaky-cli sca
 
 ## Current limitations
 
-VLM analysis requires a reachable external vision endpoint and a vision-capable model. OCR requires the Tesseract binary. Video processing requires FFmpeg. Object tracking uses OpenCV trackers rather than a deep-learning detector. Smart-video analysis uses a bounded representative sample rather than exhaustively sending every video frame to the VLM.
+VLM analysis requires a reachable external vision endpoint and a vision-capable model. Smart-video analysis uses a bounded representative sample rather than exhaustively sending every video frame to the VLM.
 """
 
 __all__ = [
     "ANALYZE_VIDEO_INTERVAL_S",
     "DEFAULT_MODELS_TIMEOUT_S",
-    "DEFAULT_OCR_LANGUAGE",
     "DEFAULT_VIDEO_FPS",
     "DEFAULT_VLM_MAX_TOKENS",
     "DEFAULT_VLM_TEMPERATURE",
     "DEFAULT_VLM_TIMEOUT_S",
-    "DILATION_ITERATIONS",
-    "DILATION_KERNEL_SIZE",
     "EMBEDDED_SKILL_MD",
     "FFMPEG_TIMEOUT_S",
-    "FRAME_EXTRACTION_INTERVAL_S",
-    "GAUSSIAN_BLUR_KERNEL",
-    "HIST_HUE_BINS",
-    "HIST_SAT_BINS",
-    "IMAGE_DIFF_THRESHOLD",
-    "IMAGE_MAX_PIXEL_VALUE",
-    "MAX_EXTRACT_FRAMES",
     "MAX_SMART_VIDEO_FRAMES",
     "MAX_SUMMARY_PROMPT_CHARS",
-    "MAX_TRACK_FRAMES",
-    "MIN_DIFF_CONTOUR_AREA",
-    "MIN_MOTION_AREA",
-    "MOTION_DIFF_THRESHOLD",
-    "MOTION_MAX_PIXEL_VALUE",
-    "SCENE_THRESHOLD",
-    "TOP_MOTION_EVENTS_LIMIT",
 ]

@@ -262,8 +262,6 @@ class StatusScreen(Screen):
 
             caps = {
                 "image_analysis": deps_status.get("opencv") == "OK",
-                "ocr": deps_status.get("pytesseract") == "OK"
-                and deps_status.get("pillow") == "OK",
                 "video_processing": deps_status.get("opencv") == "OK"
                 and deps_status.get("ffmpeg") == "OK",
             }
@@ -301,7 +299,7 @@ class StatusScreen(Screen):
 
 
 class TestScreen(Screen):
-    """Run lightweight image, OCR, and dispatcher smoke checks."""
+    """Run lightweight image and dispatcher smoke checks."""
 
     BINDINGS: ClassVar[list[BindingType]] = [
         Binding("escape", "go_back", "Back"),
@@ -349,17 +347,17 @@ class TestScreen(Screen):
         cv2.imwrite(path, img)
         results.append(("Test image created", True))
 
-        # 2. OCR
+        # 2. Image analysis
         try:
             if _dispatcher is not None:
-                ocr_result = _dispatcher.execute_in_process(
-                    CommandName(value="ocr"), {"image": path, "lang": "eng"}
+                img_result = _dispatcher.execute_in_process(
+                    CommandName(value="analyze"), {"image": path}
                 )
-                results.append(("OCR", bool(ocr_result.value)))
+                results.append(("Image Analysis", bool(img_result.value)))
             else:
-                results.append(("OCR (no dispatcher — skipped)", False))
+                results.append(("Image Analysis (no dispatcher — skipped)", False))
         except _UI_EXCEPTIONS:
-            results.append(("OCR (fallback)", True))
+            results.append(("Image Analysis (fallback)", True))
 
         # Cleanup
         os.unlink(path)

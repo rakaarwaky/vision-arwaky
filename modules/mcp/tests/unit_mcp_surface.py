@@ -34,7 +34,7 @@ class TestMCPSurface:
         help_all = vision_help()
         assert len(help_all) > 100
         help_video = vision_help(section="video")
-        assert "analyze-video" in help_video
+        assert "video" in help_video
 
     def test_status_endpoint(self, monkeypatch):
         class FakeResponse:

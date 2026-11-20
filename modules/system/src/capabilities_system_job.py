@@ -51,7 +51,6 @@ class CapabilitiesSystemJob(ISystemJobProtocol):
             "dependencies": deps,
             "capabilities": {
                 "image_analysis": deps.get("opencv") == "OK",
-                "ocr": deps.get("pytesseract") == "OK" and deps.get("pillow") == "OK",
                 "video_processing": deps.get("opencv") == "OK"
                 and deps.get("ffmpeg") == "OK",
                 "llm_vision": llm_ready,

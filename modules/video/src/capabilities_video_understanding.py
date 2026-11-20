@@ -50,7 +50,7 @@ class VideoUnderstandingAnalyzer(IVideoUnderstandingProtocol):
 
     def __init__(
         self,
-        llm: ILLMVisionProtocol | None = None,
+        llm: ILLMVisionProtocol,
     ):
         """Wire the vision-language model."""
         self._llm = llm
