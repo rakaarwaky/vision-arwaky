@@ -55,3 +55,10 @@ def cmd_video(args, orchestrator: IRegistryServiceAggregate | None = None) -> in
     result = _execute("analyze-video", {"video": video_path}, orchestrator=orchestrator)
     print(result)
     return 0
+
+
+def cmd_doctor(args, orchestrator: IRegistryServiceAggregate | None = None) -> int:
+    """Check system dependencies and readiness."""
+    result = _execute("doctor", {}, orchestrator=orchestrator)
+    print(result)
+    return 0

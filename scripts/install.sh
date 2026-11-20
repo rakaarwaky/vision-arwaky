@@ -55,6 +55,8 @@ DEV_MODE=0
 REINSTALL=0
 CREATE_SYMLINKS=1
 CHECK_ONLY=0
+INSTALL_FFMPEG=0
+YES_FFMPEG=0
 BIN_DIR="$XDG_BIN_DIR"
 VENV_DIR="$XDG_VENV_DIR"
 PYTHON_BIN="python3"
@@ -73,6 +75,8 @@ Options:
   --bin-dir <path>  Target directory for CLI symlinks (default: $XDG_BIN_HOME or ~/.local/bin)
   --python <path>   Path to Python 3 binary (default: python3)
   --check-only      Run prerequisite checks only and exit
+  --yes-ffmpeg      Install FFmpeg automatically via system package manager (no prompt)
+  --no-ffmpeg       Do not attempt to install FFmpeg at all
   -h, --help        Show this help message and exit
 
 XDG Base Directory Layout:
@@ -123,6 +127,15 @@ while [[ $# -gt 0 ]]; do
             ;;
         --check-only)
             CHECK_ONLY=1
+            shift
+            ;;
+        --yes-ffmpeg)
+            INSTALL_FFMPEG=1
+            YES_FFMPEG=1
+            shift
+            ;;
+        --no-ffmpeg)
+            INSTALL_FFMPEG=0
             shift
             ;;
         -h|--help)
@@ -308,10 +321,74 @@ fi
 success "uv sync complete — package installed into $XDG_VENV_DIR"
 
 # ==============================================================================
-# 5. CLI Symlinks Setup (~/.local/bin)
+# 5. Optional: Install FFmpeg via system package manager
+# ==============================================================================
+# FFmpeg is not a hard prerequisite — only the video pipeline uses it. If the
+# user did not opt out and ffmpeg is missing, offer to install it with the
+# detected system package manager. The prompt is skipped when --yes-ffmpeg
+# was passed; the step is skipped entirely when ffmpeg is already present.
+header "5. Checking for FFmpeg (optional, used by the video pipeline)"
+
+if command -v ffmpeg >/dev/null 2>&1; then
+    FFMPEG_VER="$(ffmpeg -version 2>&1 | sed -n '1p')"
+    success "FFmpeg found: ${FFMPEG_VER}"
+    info "Skipping install step (already available)."
+else
+    if [[ "$INSTALL_FFMPEG" -eq 1 && "$YES_FFMPEG" -eq 0 ]]; then
+        read -r -p "FFmpeg not found. Install it now via the system package manager? [Y/n] " ANSWER
+        case "${ANSWER:-Y}" in
+            [Yy]*) YES_FFMPEG=1 ;;
+            *) YES_FFMPEG=0 ;;
+        esac
+    fi
+    if [[ "$INSTALL_FFMPEG" -eq 1 || "$YES_FFMPEG" -eq 1 ]]; then
+        case "$(uname -s)" in
+            Linux)
+                if command -v apt-get >/dev/null 2>&1; then
+                    sudo apt-get update -y >/dev/null 2>&1 || true
+                    PKG_CMD=(sudo apt-get install -y ffmpeg)
+                elif command -v pacman >/dev/null 2>&1; then
+                    PKG_CMD=(sudo pacman -S --noconfirm ffmpeg)
+                elif command -v dnf >/dev/null 2>&1; then
+                    PKG_CMD=(sudo dnf install -y ffmpeg)
+                elif command -v yum >/dev/null 2>&1; then
+                    PKG_CMD=(sudo yum install -y ffmpeg)
+                else
+                    warn "No supported package manager detected (apt-get/pacman/dnf/yum)."
+                    info "Install FFmpeg manually to enable the video pipeline."
+                fi
+                ;;
+            Darwin)
+                if command -v brew >/dev/null 2>&1; then
+                    PKG_CMD=(brew install ffmpeg)
+                else
+                    warn "Homebrew not found. Install FFmpeg manually to enable the video pipeline."
+                fi
+                ;;
+            *)
+                warn "Unsupported OS '$(uname -s)'. Install FFmpeg manually to enable the video pipeline."
+                ;;
+        esac
+        if [[ -v PKG_CMD && "${PKG_CMD[@]}" ]]; then
+            info "Installing FFmpeg via: ${PKG_CMD[*]}"
+            if ! "${PKG_CMD[@]}" || ! command -v ffmpeg >/dev/null 2>&1; then
+                warn "FFmpeg install failed or ffmpeg still not in PATH."
+                info "Re-run the install command manually to resolve any package manager errors."
+            else
+                success "FFmpeg installed successfully: $(ffmpeg -version 2>&1 | sed -n '1p')"
+            fi
+        fi
+    else
+        info "FFmpeg not installed (skipping). The video pipeline will report video_processing=false in 'va doctor'."
+        info "Re-run with --yes-ffmpeg to install it, or install it manually via your package manager."
+    fi
+fi
+
+# ==============================================================================
+# 6. CLI Symlinks Setup (~/.local/bin)
 # ==============================================================================
 if [[ "$CREATE_SYMLINKS" -eq 1 ]]; then
-    header "5. Setting Up Global CLI Commands ($BIN_DIR)"
+    header "6. Setting Up Global CLI Commands ($BIN_DIR)"
     mkdir -p "$BIN_DIR"
 
     # Map each CLI name to the executable that provides it. `va` and
@@ -355,9 +432,9 @@ if [[ "$CREATE_SYMLINKS" -eq 1 ]]; then
 fi
 
 # ==============================================================================
-# 6. Workspace Initialization (.vision-arwaky -> XDG, .venv -> XDG Venv)
+# 7. Workspace Initialization (.vision-arwaky -> XDG, .venv -> XDG Venv)
 # ==============================================================================
-header "6. Initializing Workspace Symlink"
+header "7. Initializing Workspace Symlink"
 
 CLI_EXEC="$XDG_VENV_DIR/bin/vision-arwaky-cli"
 if [[ -x "$CLI_EXEC" ]]; then
@@ -382,9 +459,9 @@ if [[ ! -f "$REPO_ROOT/.env" ]] || ! grep -q "UV_PROJECT_ENVIRONMENT" "$REPO_ROO
 fi
 
 # ==============================================================================
-# 7. Verification & Smoke Test
+# 8. Verification & Smoke Test
 # ==============================================================================
-header "7. Verifying Installation"
+header "8. Verifying Installation"
 
 if [[ -x "$CLI_EXEC" ]]; then
     if "$CLI_EXEC" --help >/dev/null 2>&1; then
@@ -421,9 +498,12 @@ echo "Quick Test / Examples:"
 echo "  1) Initialize any workspace:"
 echo "     vision-arwaky-cli init /path/to/project"
 echo ""
-echo "  2) Analyze an image with AI vision:"
+echo "  2) Check system dependency readiness (ffmpeg, opencv, LLM, config):"
+echo "     vision-arwaky-cli doctor"
+echo ""
+echo "  3) Analyze an image with AI vision:"
 echo "     vision-arwaky-cli image photo.png"
 echo ""
-echo "  3) Analyze video frames and synthesize a summary:"
+echo "  4) Analyze video frames and synthesize a summary:"
 echo "     vision-arwaky-cli video recording.mp4"
 echo ""

@@ -10,6 +10,9 @@ from modules.shared.src.contract_registry_service_aggregate import (
 from modules.shared.src.system.contract_system_configuration_protocol import (
     ISystemConfigurationProtocol,
 )
+from modules.shared.src.system.contract_system_doctor_protocol import (
+    ISystemDoctorProtocol,
+)
 from modules.shared.src.system.contract_system_job_protocol import ISystemJobProtocol
 from modules.shared.src.system.contract_workspace_protocol import IWorkspaceProtocol
 from modules.shared.src.taxonomy_vision_error import InvalidParameterError
@@ -31,10 +34,12 @@ class SystemOrchestrator(IRegistryServiceAggregate):
         workspace: IWorkspaceProtocol,
         config: ISystemConfigurationProtocol,
         job: ISystemJobProtocol,
+        doctor: ISystemDoctorProtocol | None = None,
     ) -> None:
         self._workspace = workspace
         self._config = config
         self._job = job
+        self._doctor = doctor
 
         # Dispatch map: command name -> handler(params) -> CommandOutput
         self._handlers: dict[
@@ -47,6 +52,7 @@ class SystemOrchestrator(IRegistryServiceAggregate):
             "set-config": self._handle_set_config,
             "status": self._handle_status,
             "cancel": self._handle_cancel,
+            "doctor": self._handle_doctor,
         }
 
     def execute_in_process(
@@ -93,6 +99,13 @@ class SystemOrchestrator(IRegistryServiceAggregate):
         job_id = str(params.model_dump().get("job_id", "") or "")
         result = self._job.cancel_job(job_id)
         return dict_to_command_output(result)
+
+    def _handle_doctor(self, params: SystemCommandParams) -> CommandOutput:
+        _ = params
+        if self._doctor is None:
+            raise RuntimeError("Doctor capability not wired into orchestrator.")
+        result = self._doctor.check_readiness()
+        return result
 
 
 __all__ = ["SystemOrchestrator"]

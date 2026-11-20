@@ -3,6 +3,7 @@
 import sys
 
 from modules.cli.src.surface_cli_command import (
+    cmd_doctor,
     cmd_image,
     cmd_init,
     cmd_video,
@@ -18,6 +19,7 @@ from modules.video.src.root_video_container import VideoContainer
 
 COMMANDS = {
     "init": cmd_init,
+    "doctor": cmd_doctor,
     "image": cmd_image,
     "video": cmd_video,
 }

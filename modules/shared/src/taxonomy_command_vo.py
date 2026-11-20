@@ -8,7 +8,7 @@ IMAGE_COMMANDS: frozenset[str] = frozenset({"image", "analyze"})
 
 VIDEO_COMMANDS: frozenset[str] = frozenset({"video", "analyze-video"})
 
-SYSTEM_COMMANDS: frozenset[str] = frozenset({"init"})
+SYSTEM_COMMANDS: frozenset[str] = frozenset({"init", "doctor"})
 
 ALL_COMMANDS: frozenset[str] = IMAGE_COMMANDS | VIDEO_COMMANDS | SYSTEM_COMMANDS
 

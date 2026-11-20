@@ -49,4 +49,7 @@ def create_parser() -> argparse.ArgumentParser:
         help="Video path",
     )
 
+    # --- System commands ---
+    subparsers.add_parser("doctor", help="Check system dependencies and readiness")
+
     return parser
