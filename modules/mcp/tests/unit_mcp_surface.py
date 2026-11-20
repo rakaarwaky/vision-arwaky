@@ -2,6 +2,8 @@
 
 import json
 
+import pytest
+
 from modules.mcp.src.surface_mcp_command import (
     vision_execute,
     vision_help,
@@ -52,10 +54,24 @@ class TestMCPSurface:
         status = json.loads(vision_status())
         assert status["configuration"]["llm_endpoint"] == "https://status.example/v1"
         assert status["dependencies"]["llm_endpoint"] == "OK"
+        assert "video_processing" in status["capabilities"]
 
-    def test_execute_validation_errors(self):
-        res_analyze = json.loads(vision_execute(command="analyze"))
-        assert "error" in res_analyze
+    def test_execute_validation_errors(self, monkeypatch):
+        # No dispatcher configured -> exceptions propagate per Finding 20.
+        monkeypatch.setattr("modules.mcp.src.surface_mcp_command._dispatcher", None)
+        with pytest.raises(RuntimeError):
+            vision_execute(command="analyze")
+        with pytest.raises(RuntimeError):
+            vision_execute(command="nonexistent_cmd")
 
-        res_unknown = json.loads(vision_execute(command="nonexistent_cmd"))
-        assert "error" in res_unknown
+    def test_execute_propagates_dispatcher_exception(self, monkeypatch):
+        class _FailingDispatcher:
+            def execute_in_process(self, cmd, kwargs):
+                raise ValueError("boom")
+
+        monkeypatch.setattr(
+            "modules.mcp.src.surface_mcp_command._dispatcher",
+            _FailingDispatcher(),
+        )
+        with pytest.raises(ValueError, match="boom"):
+            vision_execute(command="analyze")

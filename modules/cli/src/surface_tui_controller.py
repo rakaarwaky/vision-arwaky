@@ -16,6 +16,7 @@ from modules.shared.src.contract_registry_service_aggregate import (
     IRegistryServiceAggregate,
 )
 from modules.shared.src.taxonomy_vision_vo import CommandName
+from modules.shared.src.taxonomy_xdg_paths_vo import XDGPaths
 from modules.shared.src.utility_config_handler import (
     load_config,
     save_config,
@@ -210,7 +211,7 @@ class ModelScreen(Screen):
     def get_model_dirs(self) -> list[Path]:
         browse = self.query_one("#browse_dir", Input).value.strip()
         dirs = [
-            Path.home() / ".cache" / "vision-arwaky" / "models",
+            XDGPaths.cache_dir() / "models",
             Path.cwd() / "models",
             Path.home() / "models",
         ]
@@ -251,12 +252,12 @@ class StatusScreen(Screen):
 
     def refresh_status(self) -> None:
         try:
-            from modules.shared.src.utility_config_handler import load_config
+            from modules.shared.src.utility_config_handler import load_merged_config
             from modules.shared.src.utility_dependency_checker import (
                 check_all_dependencies,
             )
 
-            cfg = load_config()
+            cfg = load_merged_config()
             selected_backend = str(cfg.get("backend", "external"))
             deps_status = check_all_dependencies()
 

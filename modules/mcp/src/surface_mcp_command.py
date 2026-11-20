@@ -2,7 +2,6 @@
 
 import importlib
 import json
-from pathlib import Path
 
 try:
     _fastmcp_module = importlib.import_module("fastmcp")
@@ -14,9 +13,7 @@ FastMCP = _fastmcp_module.FastMCP
 from modules.shared.src.contract_registry_service_aggregate import (
     IRegistryServiceAggregate,
 )
-from modules.shared.src.taxonomy_vision_constant import (
-    DEFAULT_MODELS_TIMEOUT_S,
-)
+from modules.shared.src.taxonomy_vision_constant import DEFAULT_MODELS_TIMEOUT_S
 from modules.shared.src.taxonomy_vision_vo import CommandName
 from modules.shared.src.utility_config_handler import (
     find_active_config,
@@ -28,8 +25,6 @@ from modules.shared.src.utility_llm_check import check_llm_endpoint
 from modules.shared.src.utility_version_resolver import get_package_version
 
 mcp = FastMCP("Vision")
-
-VISION_PROJECT = str(Path(__file__).resolve().parents[3])
 
 _dispatcher: IRegistryServiceAggregate | None = None
 
@@ -46,24 +41,17 @@ def get_dispatcher() -> IRegistryServiceAggregate | None:
 
 
 def _execute_in_process(command: str, kwargs: dict) -> str:
-    """Route command to the injected aggregate dispatcher."""
-    try:
-        if _dispatcher is None:
-            raise RuntimeError(
-                "No dispatcher configured. Call set_mcp_dispatcher() before execution."
-            )
-        cmd_vo = CommandName(value=command)
-        return _dispatcher.execute_in_process(cmd_vo, kwargs).value
-    except (KeyError, TypeError, ValueError, RuntimeError, OSError) as e:
-        return json.dumps(
-            {
-                "ok": False,
-                "error": {
-                    "code": type(e).__name__,
-                    "message": str(e),
-                },
-            }
+    """Route command to the injected aggregate dispatcher.
+
+    Exceptions propagate to the caller so the MCP framework can report
+    them consistently with the CLI surface, which also raises.
+    """
+    if _dispatcher is None:
+        raise RuntimeError(
+            "No dispatcher configured. Call set_mcp_dispatcher() before execution."
         )
+    cmd_vo = CommandName(value=command)
+    return _dispatcher.execute_in_process(cmd_vo, kwargs).value
 
 
 @mcp.tool()
@@ -125,14 +113,18 @@ def vision_list_commands(domain: str = "") -> str:
 @mcp.tool()
 def vision_help(section: str = "all") -> str:
     """Return workspace documentation for vision commands."""
-    skill_path = Path(VISION_PROJECT) / "SKILL.md"
-    if skill_path.exists():
-        content = skill_path.read_text()
-    else:
-        content = (
-            "Vision Arwaky: workspace init, image analysis, and video analysis. "
-            "Run 'va init', 'va image --image PATH', or 'va video --video PATH'."
-        )
+    content = """Vision Arwaky: workspace init, image analysis, and video analysis.
+
+## workspace
+  init [target_dir]       Initialize workspace with .vision-arwaky symlinks
+
+## image
+  analyze --image PATH    Analyze an image with AI vision
+
+## video
+  analyze-video --video PATH   Analyze sampled video frames with a VLM and summarize
+
+Troubleshooting: use the `vision_status` MCP tool to check dependencies and LLM endpoint connectivity."""
 
     if section == "all":
         return content
@@ -154,7 +146,6 @@ def vision_help(section: str = "all") -> str:
 @mcp.tool()
 def vision_status() -> str:
     """Check vision server status, dependencies, and capabilities."""
-    config_path = find_active_config()
     config = load_merged_config()
     base_url, api_key, model = resolve_external_settings(config)
     selected_backend = str(config.get("backend", "external"))
@@ -165,27 +156,26 @@ def vision_status() -> str:
     )
     deps["llm_endpoint"] = llm_status
 
-    status_cfg: dict = {
-        "config_yaml_detected": config_path is not None,
-        "config_source": str(config_path) if config_path else "none",
-        "selected_backend": selected_backend,
-        "llm_endpoint": base_url,
-        "llm_model": model or None,
-        "llm_api_key_configured": bool(api_key),
-    }
-
-    caps = {
-        "image_analysis": deps.get("opencv") == "OK",
-        "llm_vision": llm_ready,
-    }
-
-    server_version = get_package_version()
+    config_path = find_active_config()
+    pkg_version = get_package_version()
     status: dict = {
-        "server": f"vision-mcp v{server_version}",
+        "server": f"vision-mcp v{pkg_version}",
         "pattern": "hybrid (6 MCP tools + unlimited CLI)",
-        "configuration": status_cfg,
+        "configuration": {
+            "config_yaml_detected": config_path is not None,
+            "config_source": str(config_path) if config_path else "none",
+            "selected_backend": selected_backend,
+            "llm_endpoint": base_url,
+            "llm_model": model or None,
+            "llm_api_key_configured": bool(api_key),
+        },
         "dependencies": deps,
-        "capabilities": caps,
+        "capabilities": {
+            "image_analysis": deps.get("opencv") == "OK",
+            "video_processing": deps.get("opencv") == "OK"
+            and deps.get("ffmpeg") == "OK",
+            "llm_vision": llm_ready,
+        },
     }
     return json.dumps(status, indent=2)
 

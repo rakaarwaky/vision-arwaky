@@ -87,7 +87,7 @@ class CapabilitiesSystemConfiguration(ISystemConfigurationProtocol):
         return {
             "status": "updated",
             "path": str(self._user_config_path),
-            "key": key,
+            "key": key_str,
             "value": value,
             "config": self.get_config(),
         }

@@ -2,6 +2,7 @@
 
 from pathlib import Path
 
+from modules.shared.src.utility_config_handler import DEFAULT_LLM_URL
 from modules.system.src.capabilities_system_configuration import (
     CapabilitiesSystemConfiguration,
 )
@@ -16,7 +17,10 @@ class TestSystemConfiguration:
         cap = CapabilitiesSystemConfiguration(
             config_path=cfg_file, local_config_path=local_cfg
         )
-        assert cap.get_config() == {}
+        result = cap.get_config()
+        assert isinstance(result, dict)
+        assert isinstance(result.get("external"), dict)
+        assert result["external"].get("url") == DEFAULT_LLM_URL
 
     def test_set_and_get_config(self, tmp_path: Path):
         cfg_file = tmp_path / "user_config.yaml"

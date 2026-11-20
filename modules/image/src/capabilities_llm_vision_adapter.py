@@ -9,6 +9,8 @@ from __future__ import annotations
 import base64
 import json
 import logging
+import mimetypes
+import time
 from typing import Any
 
 import requests
@@ -30,7 +32,7 @@ from modules.shared.src.utility_config_handler import (
     load_merged_config,
     resolve_external_settings,
 )
-from modules.shared.src.utility_llm_check import check_llm_endpoint
+from modules.shared.src.utility_llm_check import check_llm_endpoint, list_models
 
 logger = logging.getLogger("modules.image.capabilities.llm_vision_adapter")
 
@@ -55,6 +57,7 @@ class LLMVisionAdapter(ILLMVisionProtocol):
         self.base_url = (base_url or res_url).rstrip("/")
         self.api_key = api_key or res_key
         self._resolved_model: str | None = model or res_model
+        self._session: requests.Session | None = None
 
     # ─── Block 2: Module Contract ──────────────
 
@@ -95,27 +98,12 @@ class LLMVisionAdapter(ILLMVisionProtocol):
         if not is_ready:
             return "local-model"
 
-        try:
-            session = requests.Session()
-            session.headers.update(
-                {
-                    "Authorization": f"Bearer {self.api_key}",
-                    "Content-Type": "application/json",
-                }
-            )
-            resp = session.get(
-                f"{self.base_url}/models", timeout=DEFAULT_MODELS_TIMEOUT_S
-            )
-            session.close()
-            resp.raise_for_status()
-            data = resp.json()
-            models = data.get("data", [])
-            if models:
-                selected = str(models[0]["id"])
+        models = list_models(self.base_url, self.api_key, DEFAULT_MODELS_TIMEOUT_S)
+        if models:
+            selected = str(models[0].get("id", ""))
+            if selected:
                 logger.info(f"Auto-selected model: {selected}")
                 return selected
-        except (requests.RequestException, KeyError, ValueError) as e:
-            logger.warning(f"Failed to list models: {e}")
 
         return "local-model"
 
@@ -123,10 +111,23 @@ class LLMVisionAdapter(ILLMVisionProtocol):
     def _encode_image(path: str) -> str:
         with open(path, "rb") as f:
             data = f.read()
-        ext = path.split(".")[-1].lower()
-        mime = "image/jpeg" if ext in ("jpg", "jpeg") else "image/png"
+        mime, _ = mimetypes.guess_type(path)
+        if mime is None or not mime.startswith("image/"):
+            mime = "image/png"
         b64 = base64.b64encode(data).decode("utf-8")
         return f"data:{mime};base64,{b64}"
+
+    def _get_session(self) -> requests.Session:
+        """Return the shared session, creating it on first use."""
+        if self._session is None:
+            self._session = requests.Session()
+            self._session.headers.update(
+                {
+                    "Authorization": f"Bearer {self.api_key}",
+                    "Content-Type": "application/json",
+                }
+            )
+        return self._session
 
     def _analyze_via_http(
         self,
@@ -154,13 +155,7 @@ class LLMVisionAdapter(ILLMVisionProtocol):
         }
 
         try:
-            session = requests.Session()
-            session.headers.update(
-                {
-                    "Authorization": f"Bearer {self.api_key}",
-                    "Content-Type": "application/json",
-                }
-            )
+            session = self._get_session()
             last_err: Exception | None = None
             for attempt in range(3):
                 try:
@@ -179,8 +174,6 @@ class LLMVisionAdapter(ILLMVisionProtocol):
                                 resp.status_code,
                                 attempt + 1,
                             )
-                            import time
-
                             time.sleep(5)
                             last_err = RuntimeError(
                                 f"VLM HTTP {resp.status_code}: {resp.text[:200]}"
@@ -216,8 +209,6 @@ class LLMVisionAdapter(ILLMVisionProtocol):
                             attempt + 1,
                             e,
                         )
-                        import time
-
                         time.sleep(5)
                         last_err = e
                         continue

@@ -25,7 +25,12 @@ from modules.shared.src.taxonomy_vision_vo import (
     VideoUnderstanding,
     VideoUnderstandingConfig,
 )
-from modules.shared.src.utility_opencv_ops import open_video_capture, write_image
+from modules.shared.src.utility_opencv_ops import (
+    check_video_corruption,
+    get_video_metadata,
+    open_video_capture,
+    write_image,
+)
 from modules.shared.src.video.contract_video_understanding_protocol import (
     IVideoUnderstandingProtocol,
 )
@@ -71,29 +76,31 @@ class VideoUnderstandingAnalyzer(IVideoUnderstandingProtocol):
         config = config or VideoUnderstandingConfig()
         path = video_path.value
 
-        # Minimal info: we no longer have ffmpeg/video_processing capability wired
-        # so we infer basic info from opencv directly.
-        cap = open_video_capture(path)
-        fps = float(cap.get(cv2.CAP_PROP_FPS)) or DEFAULT_VIDEO_FPS
-        frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-        width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-        height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        cap.release()
+        # Read structural metadata via the shared utility.
+        meta = get_video_metadata(video_path)
+        fps = float(meta["fps"]) or DEFAULT_VIDEO_FPS
+        frame_count = int(meta["frame_count"])
+        width = int(meta["width"])
+        height = int(meta["height"])
 
-        indices, scene_count, motion_count, step = self._select_frame_indices(
-            video_path, fps, frame_count, config
-        )
+        indices, step = self._select_frame_indices(video_path, fps, frame_count, config)
 
         per_frame_prompt = self._build_per_frame_prompt(prompt)
 
-        corrupted = False  # cannot check corruption without ffmpeg wrapper
-        with tempfile.TemporaryDirectory(prefix="vu_") as out_dir:
-            extracted = self._extract_frames(path, indices, out_dir)
-            frame_analyses, descriptions = self._analyze_frames(
-                extracted, fps, per_frame_prompt
-            )
-            summary = self.synthesize_summary(extracted, descriptions)
-            extracted_count = len(extracted)
+        corrupted = check_video_corruption(video_path)
+        cap: Any = open_video_capture(path)
+        try:
+            with tempfile.TemporaryDirectory(prefix="vu_") as out_dir:
+                extracted = self._extract_frames(cap, indices, out_dir)
+                cap.release()
+                frame_analyses, descriptions = self._analyze_frames(
+                    extracted, fps, per_frame_prompt
+                )
+                summary = self.synthesize_summary(extracted, descriptions)
+                extracted_count = len(extracted)
+        finally:
+            if cap is not None:
+                cap.release()
 
         return VideoUnderstanding(
             video={
@@ -105,8 +112,8 @@ class VideoUnderstandingAnalyzer(IVideoUnderstandingProtocol):
                 "corrupted": corrupted,
             },
             sampling={
-                "scene_changes": scene_count,
-                "motion_events": motion_count,
+                "scene_changes": 0,
+                "motion_events": 0,
                 "uniform_interval": step,
                 "key_frames_extracted": extracted_count,
                 "max_key_frames": MAX_SMART_VIDEO_FRAMES,
@@ -121,7 +128,7 @@ class VideoUnderstandingAnalyzer(IVideoUnderstandingProtocol):
         fps: float,
         frame_count: int,
         config: VideoUnderstandingConfig,
-    ) -> tuple[list[int], int, int, int]:
+    ) -> tuple[list[int], float]:
         """Pick representative frame indices bounded by ``MAX_SMART_VIDEO_FRAMES``."""
         target_idx: set[int] = set()
 
@@ -137,7 +144,7 @@ class VideoUnderstandingAnalyzer(IVideoUnderstandingProtocol):
             }
             indices = [indices[position] for position in sorted(positions)]
 
-        return indices, 0, 0, step
+        return indices, float(step)
 
     @staticmethod
     def _build_per_frame_prompt(prompt: AnalysisPrompt) -> str:
@@ -151,26 +158,22 @@ class VideoUnderstandingAnalyzer(IVideoUnderstandingProtocol):
 
     def _extract_frames(
         self,
-        path: str,
+        cap: Any,
         indices: list[int],
         out_dir: str,
     ) -> list[tuple[int, str]]:
         """Decode and persist the selected frames to temporary files."""
         extracted: list[tuple[int, str]] = []
-        cap: Any = open_video_capture(path)
-        try:
-            for idx in indices:
-                cap.set(cv2.CAP_PROP_POS_FRAMES, idx)
-                ret, frame = cap.read()
-                if not ret:
-                    continue
-                out_path = os.path.join(out_dir, f"frame_{idx:06d}.jpg")
-                if not write_image(out_path, frame):
-                    logger.warning("Failed to write sampled frame %s", out_path)
-                    continue
-                extracted.append((idx, out_path))
-        finally:
-            cap.release()
+        for idx in indices:
+            cap.set(cv2.CAP_PROP_POS_FRAMES, idx)
+            ret, frame = cap.read()
+            if not ret:
+                continue
+            out_path = os.path.join(out_dir, f"frame_{idx:06d}.jpg")
+            if not write_image(out_path, frame):
+                logger.warning("Failed to write sampled frame %s", out_path)
+                continue
+            extracted.append((idx, out_path))
         return extracted
 
     def _analyze_frames(
@@ -238,19 +241,7 @@ class VideoUnderstandingAnalyzer(IVideoUnderstandingProtocol):
                 summary_text[:MAX_SUMMARY_PROMPT_CHARS]
                 + "\n[Additional frame descriptions omitted from summary prompt.]"
             )
-        summary_prompt = (
-            "Based on these frame-by-frame descriptions, write a brief video "
-            "summary (3-5 sentences) covering what happens, the setting, people "
-            "involved, and key actions:\n\n" + summary_text
-        )
-        first_frame = FilePath(value=extracted[0][1])
-        try:
-            return self._llm.analyze_image(
-                first_frame, AnalysisPrompt(value=summary_prompt)
-            )
-        except (RuntimeError, ValueError, OSError) as error:
-            logger.warning("Summary synthesis failed, falling back to join: %s", error)
-            return " ".join(descriptions)
+        return summary_text
 
 
 # ─── Block 3: Module Helpers ─────────

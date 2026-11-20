@@ -23,9 +23,6 @@ from modules.shared.src.utility_version_resolver import get_package_version
 class CapabilitiesSystemJob(ISystemJobProtocol):
     """Job tracking, lifecycle monitoring, and process cancellation."""
 
-    def __init__(self) -> None:
-        """Initialize CapabilitiesSystemJob."""
-
     # ─── Block 2: Module Contract ────
     def get_status(self) -> dict[str, Any]:
         """Inspect dependencies, endpoint connectivity, and server capability status."""

@@ -28,10 +28,11 @@ def _resolve_orchestrator(
 ) -> IRegistryServiceAggregate:
     """Return the orchestrator for the given command."""
     domain = CommandDomain.from_command(command)
+    image_container = ImageContainer()
     if domain == CommandDomain.IMAGE:
-        return ImageContainer().orchestrator
+        return image_container.orchestrator
     if domain == CommandDomain.VIDEO:
-        return VideoContainer(llm_port=ImageContainer().llm).orchestrator
+        return VideoContainer(llm_port=image_container.llm).orchestrator
     return SystemContainer().orchestrator
 
 
