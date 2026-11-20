@@ -46,6 +46,46 @@ The image feature sits in the feature layer, invoked by the CLI and MCP surfaces
 | Fallback Rate on Endpoint Failure | 100% |
 | Raw Network Exceptions Exposed | 0 |
 
+### FR-IMG-002: Analyze screenshot
+
+**Description:** Analyze a supplied screenshot image with the image-processing capability and return structured `VisionAnalysis` output.
+
+#### Business Logic
+
+- The image path must pass through the dispatcher before any analysis runs.
+- The image-processing capability wraps the VLM adapter behind the `IImageProcessingProtocol` seam.
+- Deterministic operations must not require a network call.
+
+#### Edge Cases
+
+- Missing image, unsupported image format, empty model response, unreachable model endpoint, malformed model response.
+
+#### Technical Specification
+
+| Aspect | Detail |
+|--------|--------|
+| **Input** | `image` path and optional `prompt`. Source: caller command request. |
+| **Output** | Structured `VisionAnalysis` record containing source, text, model name, and optional error. Destination: caller. |
+| **Protocol** | `IImageProcessingProtocol` |
+| **Method** | `analyze_screenshot` |
+| **Event** | None |
+| **Error** | Controlled command error or the deterministic fallback result; never a raw network exception. |
+
+#### Test
+
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| Valid image with reachable VLM adapter | `analyze_screenshot` is invoked | Structured `VisionAnalysis` result is returned |
+| Valid image with unreachable vision endpoint | `analyze_screenshot` is invoked | Deterministic fallback result is returned |
+| Missing image path | `analyze_screenshot` is invoked | Controlled command error is raised |
+
+#### Metric
+
+| Target Metric | Value |
+|---------------|-------|
+| Fallback Rate on Endpoint Failure | 100% |
+| Raw Network Exceptions Exposed | 0 |
+
 ## Public Interface
 
 | Aspect | Detail |

@@ -1,5 +1,7 @@
 """Image processing capability executing LLM-based screenshot analysis."""
 
+# ─── Block 1: Module Declaration ──────────────
+
 from modules.shared.src.common.taxonomy_vision_vo import (
     AnalysisPrompt,
     FilePath,
@@ -19,6 +21,8 @@ class ImageProcessingProcessor(IImageProcessingProtocol):
         llm_port: ILLMVisionProtocol | None = None,
     ):
         self._llm = llm_port
+
+    # ─── Block 2: Module Contract ──────────────
 
     def analyze_screenshot(
         self, image_path: FilePath, prompt: AnalysisPrompt | None = None
@@ -46,6 +50,8 @@ class ImageProcessingProcessor(IImageProcessingProtocol):
             source="opencv",
             text="No VLM available",
         )
+
+    # ─── Block 3: Module Helpers ─────────────
 
     def __repr__(self) -> str:
         return "ImageProcessingProcessor()"

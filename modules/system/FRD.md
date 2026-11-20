@@ -134,6 +134,49 @@ The system module manages workspace provisioning, XDG layout, configuration, and
 | Readiness Report Latency | Under 500 ms |
 | Cancellation Response | Under 3 s to release a registered job |
 
+### FR-SYS-004: Check system readiness and dependencies
+
+**Description:** Inspect dependencies, endpoint connectivity, and capability readiness for the Vision Arwaky system.
+
+#### Business Logic
+
+- Report external LLM endpoint connectivity status.
+- Check availability of system binaries: `ffmpeg`, `tesseract`.
+- Check availability of Python packages: `cv2`, `PIL`, `pytesseract`.
+- Return a structured readiness report covering all checks.
+
+#### Edge Cases
+
+- Endpoint unreachable.
+- One or more binaries missing.
+- One or more packages missing.
+- All dependencies available.
+
+#### Technical Specification
+
+| Aspect | Detail |
+|--------|--------|
+| **Input** | None. Source: caller command request. |
+| **Output** | Structured readiness report covering endpoint connectivity, binary and package availability. Destination: caller. |
+| **Protocol** | `ISystemDoctorProtocol` |
+| **Method** | `check_readiness` |
+| **Event** | None |
+| **Error** | Missing dependencies are reported as a degraded payload instead of an exception; unreachable endpoint is reported as degraded connectivity. |
+
+#### Test
+
+| Context | When Action | Then Observable Result |
+|---------|-------------|------------------------|
+| All dependencies available | `check_readiness` is invoked | A ready report is returned |
+| Endpoint unreachable | `check_readiness` is invoked | A degraded report is returned that still lists binary and package availability |
+| Binary or package absent | `check_readiness` is invoked | A degraded report names the missing dependency |
+
+#### Metric
+
+| Target Metric | Value |
+|---------------|-------|
+| Readiness Report Latency | Under 500 ms |
+
 ## Public Interface
 
 | Aspect | Detail |
