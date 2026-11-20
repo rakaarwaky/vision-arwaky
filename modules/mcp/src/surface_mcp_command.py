@@ -119,10 +119,10 @@ def vision_help(section: str = "all") -> str:
   init [target_dir]       Initialize workspace with .vision-arwaky symlinks
 
 ## image
-  analyze --image PATH    Analyze an image with AI vision
+  image <path>            Analyze an image with AI vision
 
 ## video
-  analyze-video --video PATH   Analyze sampled video frames with a VLM and summarize
+  video <path>            Analyze sampled video frames with a VLM and summarize
 
 Troubleshooting: use the `vision_status` MCP tool to check dependencies and LLM endpoint connectivity."""
 

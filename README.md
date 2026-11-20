@@ -18,9 +18,9 @@ Python 3.12 or later, the `uv` package manager, and the system dependencies inst
 | 2 | Install system dependencies | `sudo apt-get install -y ffmpeg libgl1 tesseract-ocr` |
 | 3 | Verify the CLI | `uv run vision-arwaky-cli --help` |
 | 4 | Initialize a workspace | `uv run va init` |
-| 5 | Analyze an image | `uv run va analyze --image photo.png --prompt "Describe this scene"` |
-| 6 | Extract text with OCR | `uv run va ocr --image scan.jpg` |
-| 7 | Analyze a video | `uv run va analyze-video --video recording.mp4` |
+| 5 | Analyze an image | `uv run va image photo.png` |
+| 6 | Analyze another image | `uv run va image scan.jpg` |
+| 7 | Analyze a video | `uv run va video recording.mp4` |
 | 8 | Start the MCP server | `uv run vision-arwaky-mcp` |
 | 9 | Start the TUI | `uv run vision-arwaky-tui` |
 

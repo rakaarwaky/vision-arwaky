@@ -18,7 +18,6 @@ from modules.shared.src.contract_registry_service_aggregate import (
 from modules.shared.src.taxonomy_vision_vo import CommandName
 from modules.shared.src.taxonomy_xdg_paths_vo import XDGPaths
 from modules.shared.src.utility_config_handler import (
-    load_config,
     save_config,
     scan_models,
 )
@@ -117,7 +116,9 @@ class ConfigScreen(Screen):
     BINDINGS: ClassVar[list[BindingType]] = [Binding("escape", "go_back", "Back")]
 
     def compose(self) -> ComposeResult:
-        cfg = load_config()
+        from modules.shared.src.utility_config_handler import load_merged_config
+
+        cfg = load_merged_config()
         ext = cfg.get("external", {})
 
         yield Header()
@@ -145,7 +146,9 @@ class ConfigScreen(Screen):
             self.save_config()
 
     def save_config(self):
-        cfg = load_config()
+        from modules.shared.src.utility_config_handler import load_merged_config
+
+        cfg = load_merged_config()
         cfg["backend"] = "external"
         ext = cfg.setdefault("external", {})
         ext["url"] = self.query_one("#ext_url", Input).value

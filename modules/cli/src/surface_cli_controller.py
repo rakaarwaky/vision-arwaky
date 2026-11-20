@@ -35,12 +35,18 @@ def create_parser() -> argparse.ArgumentParser:
 
     # --- Image commands ---
     image = subparsers.add_parser("image", help="Analyze image with AI vision")
-    image.add_argument("--image", required=True, help="Image path")
+    image.add_argument(
+        "image",
+        help="Image path",
+    )
 
     # --- Video commands ---
     video = subparsers.add_parser(
         "video", help="Smart video understanding (key-frame + VLM)"
     )
-    video.add_argument("--video", required=True, help="Video path")
+    video.add_argument(
+        "video",
+        help="Video path",
+    )
 
     return parser

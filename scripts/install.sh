@@ -34,12 +34,21 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 cd "$REPO_ROOT"
 
 # XDG Base Directory Resolutions
+# XDG-compliant precedence: a shell env var wins; otherwise the per-tool
+# fallback below is used. (If you want a persistent default, export the
+# XDG_*_HOME variables in your shell rc — that takes effect automatically.)
 XDG_BIN_DIR="${XDG_BIN_HOME:-$HOME/.local/bin}"
 XDG_CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/vision-arwaky"
 XDG_DATA_ROOT="${XDG_DATA_HOME:-$HOME/.local/share}/vision-arwaky"
 XDG_VENV_DIR="$XDG_DATA_ROOT/venv"
 XDG_CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/vision-arwaky"
 XDG_STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/vision-arwaky"
+
+# Point uv at the XDG venv. uv sync (Step 4) creates the venv AND installs
+# into it, so the package and all entry points (va, vision-arwaky, ...) end
+# up in $XDG_VENV_DIR/bin. PYTHON_BIN is defaulted below and re-applied to
+# UV_PYTHON after argument parsing (so --python works).
+export UV_PROJECT_ENVIRONMENT="$XDG_VENV_DIR"
 
 # Configuration variables & Defaults
 DEV_MODE=0
@@ -126,6 +135,10 @@ while [[ $# -gt 0 ]]; do
             ;;
     esac
 done
+
+# Re-apply the user's Python to uv so Step 4 uses the interpreter from --python
+# (or the default python3). This runs before any step that invokes uv.
+export UV_PYTHON="${PYTHON_BIN}"
 
 printf "\n%s%s" "$BOLD" "$CYAN"
 cat << 'EOF'
@@ -224,6 +237,7 @@ header "2. Initializing XDG Directories"
 
 info "Creating standard XDG directories..."
 mkdir -p "$XDG_CONFIG_DIR" "$XDG_DATA_ROOT" "$XDG_CACHE_DIR" "$XDG_STATE_DIR" "$BIN_DIR"
+chmod 700 "$XDG_CONFIG_DIR" "$XDG_DATA_ROOT" "$XDG_CACHE_DIR" "$XDG_STATE_DIR" "$BIN_DIR"
 success "XDG directories prepared:"
 echo "  - Config : $XDG_CONFIG_DIR"
 echo "  - Data   : $XDG_DATA_ROOT"
@@ -235,11 +249,28 @@ echo "  - Bin    : $BIN_DIR"
 if [ ! -f "$XDG_CONFIG_DIR/config.yaml" ]; then
     if [ -f "$REPO_ROOT/config.yaml" ]; then
         cp "$REPO_ROOT/config.yaml" "$XDG_CONFIG_DIR/config.yaml"
+        chmod 600 "$XDG_CONFIG_DIR/config.yaml"
         success "Default config copied to $XDG_CONFIG_DIR/config.yaml"
     fi
 else
     success "Config already exists at $XDG_CONFIG_DIR/config.yaml"
 fi
+
+# ==============================================================================
+# 3. uv availability check (uv owns the XDG venv end-to-end)
+# ==============================================================================
+header "3. Checking uv (the repo's package manager)"
+
+if ! command -v uv >/dev/null 2>&1; then
+    error "'uv' is required but not in PATH."
+    info "Install it with one of:"
+    echo "  - curl -LsSf https://astral.sh/uv/install.sh | sh"
+    echo "  - pip install uv"
+    echo "  - Ubuntu/Debian: sudo apt install uv"
+    exit 1
+fi
+UV_VER="$(uv --version 2>/dev/null || true)"
+success "uv found: ${UV_VER:-$(command -v uv)}"
 
 # Clean old in-tree .venv before setup
 if [[ -e "$REPO_ROOT/.venv" ]] || [[ -L "$REPO_ROOT/.venv" ]]; then
@@ -247,63 +278,34 @@ if [[ -e "$REPO_ROOT/.venv" ]] || [[ -L "$REPO_ROOT/.venv" ]]; then
 fi
 
 # ==============================================================================
-# 3. XDG Virtual Environment Setup
+# 4. Install into the XDG venv via uv sync
 # ==============================================================================
-header "3. Setting Up XDG Virtual Environment ($VENV_DIR)"
+# uv sync creates the venv at $UV_PROJECT_ENVIRONMENT (= $XDG_VENV_DIR) and
+# installs the package editable into it, so all entry points (va,
+# vision-arwaky-cli, ...) land in $XDG_VENV_DIR/bin. No separate venv step,
+# no mixing python -m venv with uv pip. Fail loudly: a bad install must not
+# fall through to a silent "all done".
+header "4. Installing dependencies into the XDG venv ($XDG_VENV_DIR)"
 
-VENV_PYTHON="$VENV_DIR/bin/python"
-
-if [[ "$REINSTALL" -eq 1 ]] && [[ -d "$VENV_DIR" ]]; then
-    info "Purging existing XDG virtual environment at $VENV_DIR (--reinstall)..."
-    rm -rf "$VENV_DIR"
+if [[ "$REINSTALL" -eq 1 ]] && [[ -d "$XDG_VENV_DIR" ]]; then
+    info "Purging existing XDG venv at $XDG_VENV_DIR (--reinstall)..."
+    rm -rf "$XDG_VENV_DIR"
 fi
 
-if [[ ! -d "$VENV_DIR" ]] || [[ ! -f "$VENV_PYTHON" ]]; then
-    info "Creating clean XDG virtual environment at $VENV_DIR..."
-    mkdir -p "$(dirname "$VENV_DIR")"
-    "$PYTHON_BIN" -m venv "$VENV_DIR"
-    success "XDG Virtual environment created at $VENV_DIR"
-else
-    info "Using existing XDG virtual environment at $VENV_DIR"
-fi
-
-# Determine package installer (uv or pip)
-USE_UV=0
-if command -v uv >/dev/null 2>&1; then
-    USE_UV=1
-    info "Found 'uv' package manager - using fast installation mode"
-fi
-
-# Upgrade pip, wheel, setuptools inside XDG venv
-info "Upgrading pip, wheel, setuptools in XDG environment..."
-if [[ "$USE_UV" -eq 1 ]]; then
-    uv pip install --python "$VENV_PYTHON" --upgrade pip setuptools wheel >/dev/null 2>&1 || true
-else
-    "$VENV_PYTHON" -m pip install --upgrade pip setuptools wheel --quiet
-fi
-success "Packaging tools updated"
-
-# ==============================================================================
-# 4. Installing Dependencies & Vision Arwaky
-# ==============================================================================
-header "4. Installing Dependencies into XDG Environment"
-
+SYNC_ARGS=(--frozen)
 if [[ "$DEV_MODE" -eq 1 ]]; then
-    info "Installing Vision Arwaky with dev dependencies (--dev)..."
-    if [[ "$USE_UV" -eq 1 ]]; then
-        uv pip install --python "$VENV_PYTHON" -e "$REPO_ROOT[dev]"
-    else
-        "$VENV_PYTHON" -m pip install -e "$REPO_ROOT[dev]"
-    fi
+    SYNC_ARGS+=(--group dev)
+    info "Installing with dev dependencies (--dev)."
 else
-    info "Installing Vision Arwaky package (editable)..."
-    if [[ "$USE_UV" -eq 1 ]]; then
-        uv pip install --python "$VENV_PYTHON" -e "$REPO_ROOT"
-    else
-        "$VENV_PYTHON" -m pip install -e "$REPO_ROOT"
-    fi
+    info "Installing the runtime dependencies."
 fi
-success "Vision Arwaky package installed successfully"
+
+if ! uv sync "${SYNC_ARGS[@]}" --python "$PYTHON_BIN"; then
+    error "uv sync failed. The XDG venv was not fully installed."
+    info "Re-run with: $0 --reinstall   (or without --dev if that was the flag that failed)"
+    exit 1
+fi
+success "uv sync complete — package installed into $XDG_VENV_DIR"
 
 # ==============================================================================
 # 5. CLI Symlinks Setup (~/.local/bin)
@@ -312,21 +314,34 @@ if [[ "$CREATE_SYMLINKS" -eq 1 ]]; then
     header "5. Setting Up Global CLI Commands ($BIN_DIR)"
     mkdir -p "$BIN_DIR"
 
-    COMMANDS=("vision-arwaky-cli" "vision-arwaky-mcp" "vision-arwaky-tui" "va" "vision-arwaky")
-    for cmd in "${COMMANDS[@]}"; do
-        SRC_EXE="$VENV_DIR/bin/$cmd"
-        if [[ "$cmd" == "vision-arwaky" ]]; then
-            SRC_EXE="$VENV_DIR/bin/vision-arwaky-cli"
-        fi
-        DEST_EXE="$BIN_DIR/$cmd"
+    # Map each CLI name to the executable that provides it. `va` and
+    # `vision-arwaky` are aliases for the same CLI entry point.
+    declare -A SRC_MAP=(
+        [vision-arwaky-cli]=vision-arwaky-cli
+        [vision-arwaky-mcp]=vision-arwaky-mcp
+        [vision-arwaky-tui]=vision-arwaky-tui
+        [va]=vision-arwaky-cli
+        [vision-arwaky]=vision-arwaky-cli
+    )
 
-        if [[ -f "$SRC_EXE" ]]; then
+    MISSING_EXES=0
+    for cmd in "vision-arwaky-cli" "vision-arwaky-mcp" "vision-arwaky-tui" "va" "vision-arwaky"; do
+        SRC_EXE="$XDG_VENV_DIR/bin/${SRC_MAP[$cmd]}"
+        DEST_EXE="$BIN_DIR/$cmd"
+        if [[ -x "$SRC_EXE" ]]; then
             ln -sf "$SRC_EXE" "$DEST_EXE"
             success "Linked $DEST_EXE -> $SRC_EXE"
         else
-            warn "Executable $SRC_EXE not found; skipping link."
+            error "Expected executable not found: $SRC_EXE"
+            info "uv sync succeeded but this CLI is missing — check for a failed build in Step 4."
+            MISSING_EXES=1
         fi
     done
+
+    if [[ "$MISSING_EXES" -eq 1 ]]; then
+        error "Some CLI symlinks could not be created. Re-run with --reinstall."
+        exit 1
+    fi
 
     # Check if BIN_DIR is in PATH
     if [[ ":$PATH:" != *":$BIN_DIR:"* ]]; then
@@ -343,18 +358,25 @@ fi
 # ==============================================================================
 header "6. Initializing Workspace Symlink"
 
-CLI_EXEC="$VENV_DIR/bin/vision-arwaky-cli"
-if [[ -f "$CLI_EXEC" ]]; then
-    info "Initializing workspace (.vision-arwaky, SKILL.md, and .git/info/exclude)..."
-    "$CLI_EXEC" init "$REPO_ROOT" >/dev/null 2>&1 || true
-    success "Local workspace initialized"
+CLI_EXEC="$XDG_VENV_DIR/bin/vision-arwaky-cli"
+if [[ -x "$CLI_EXEC" ]]; then
+    info "Initializing workspace (.vision-arwaky, .venv symlink, .git/info/exclude)..."
+    if ! "$CLI_EXEC" init "$REPO_ROOT"; then
+        warn "workspace init returned a non-zero status — check the message above"
+    else
+        success "Local workspace initialized"
+    fi
 fi
 
-# Note: .venv symlinks are created during 'init' command, not install
-
-# Write UV_PROJECT_ENVIRONMENT to .env if not already present
+# Ensure .env carries the UV_PROJECT_ENVIRONMENT so later `uv run` / `uv sync`
+# invocations target the XDG venv, not a freshly created in-tree .venv.
 if [[ ! -f "$REPO_ROOT/.env" ]] || ! grep -q "UV_PROJECT_ENVIRONMENT" "$REPO_ROOT/.env"; then
-    echo "UV_PROJECT_ENVIRONMENT=\"$VENV_DIR\"" >> "$REPO_ROOT/.env"
+    {
+        echo ""
+        echo "# Written by scripts/install.sh — target uv at the XDG venv"
+        echo "UV_PROJECT_ENVIRONMENT=\"$XDG_VENV_DIR\""
+    } >> "$REPO_ROOT/.env"
+    chmod 600 "$REPO_ROOT/.env"
     success ".env updated with UV_PROJECT_ENVIRONMENT"
 fi
 
@@ -363,14 +385,16 @@ fi
 # ==============================================================================
 header "7. Verifying Installation"
 
-if [[ -f "$CLI_EXEC" ]]; then
+if [[ -x "$CLI_EXEC" ]]; then
     if "$CLI_EXEC" --help >/dev/null 2>&1; then
         success "vision-arwaky-cli runs and is ready to use!"
     else
-        warn "CLI execution check returned an unexpected status."
+        error "CLI execution check returned an unexpected status."
+        exit 1
     fi
 else
-    warn "vision-arwaky-cli binary was not found at $CLI_EXEC"
+    error "vision-arwaky-cli binary was not found at $CLI_EXEC"
+    exit 1
 fi
 
 # ==============================================================================
@@ -381,7 +405,7 @@ printf "%s%s[✓] Vision Arwaky installation complete! (100%% XDG Compliant)%s\n
 printf "%s%s========================================================================%s\n\n" "$BOLD" "$GREEN" "$RESET"
 
 echo "XDG Directory Layout:"
-echo "  - Venv & Data: $VENV_DIR"
+echo "  - Venv & Data: $XDG_VENV_DIR"
 echo "  - Binaries   : $BIN_DIR"
 echo "  - Config     : $XDG_CONFIG_DIR"
 echo "  - Cache      : $XDG_CACHE_DIR"
@@ -396,9 +420,9 @@ echo "Quick Test / Examples:"
 echo "  1) Initialize any workspace:"
 echo "     vision-arwaky-cli init /path/to/project"
 echo ""
-echo "  2) Extract text with OCR:"
-echo "     vision-arwaky-cli ocr --image document.png"
+echo "  2) Analyze an image with AI vision:"
+echo "     vision-arwaky-cli image photo.png"
 echo ""
-echo "  3) Analyze video scene transitions:"
-echo "     vision-arwaky-cli detect-scenes --video recording.mp4"
+echo "  3) Analyze video frames and synthesize a summary:"
+echo "     vision-arwaky-cli video recording.mp4"
 echo ""
