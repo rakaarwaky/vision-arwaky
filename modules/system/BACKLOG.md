@@ -44,6 +44,16 @@ Last Updated: 2026-11-18
 | Risk | None |
 | Updated | 2026-11-18 |
 
+### FR-SYS-004: Check system readiness and dependencies
+
+| Aspect | Detail |
+| -------------- | ------------------------------------------ |
+| State | Ready |
+| Done | FR-SYS-004 shipped |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-11-20 |
+
 ## Reference
 
 | Artifact | Purpose | Link |

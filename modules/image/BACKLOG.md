@@ -24,6 +24,16 @@ Last Updated: 2026-11-20
 | Risk | None |
 | Updated | 2026-11-20 |
 
+### FR-IMG-002: Analyze screenshot
+
+| Aspect | Detail |
+| -------------- | ------------------------------------------ |
+| State | Ready |
+| Done | FR-IMG-002 shipped |
+| In Progress | None |
+| Risk | None |
+| Updated | 2026-11-20 |
+
 ## Reference
 
 | Artifact | Purpose | Link |
