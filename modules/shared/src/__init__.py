@@ -57,11 +57,9 @@ from modules.shared.src.taxonomy_xdg_paths_vo import (
 from modules.shared.src.utility_command_output import (
     dict_to_command_output,
     to_command_output,
-    to_command_output_list,
 )
 from modules.shared.src.utility_config_handler import (
     find_active_config,
-    find_config,
     get_local_config_path,
     get_user_config_path,
     load_config,
@@ -75,7 +73,7 @@ from modules.shared.src.utility_config_handler import (
 from modules.shared.src.utility_dependency_checker import (
     check_all_dependencies,
 )
-from modules.shared.src.utility_llm_check import check_llm_endpoint
+from modules.shared.src.utility_llm_check import check_llm_endpoint, list_models
 from modules.shared.src.utility_opencv_ops import (
     open_video_capture,
     read_image,
@@ -134,12 +132,12 @@ __all__ = [
     "dict_to_command_output",
     "ensure_xdg_dirs",
     "find_active_config",
-    "find_config",
     "get_local_config_path",
     "get_package_version",
     "get_user_config_path",
     "load_config",
     "load_merged_config",
+    "list_models",
     "open_video_capture",
     "read_image",
     "read_yaml_config",
@@ -149,7 +147,6 @@ __all__ = [
     "save_user_config",
     "scan_models",
     "to_command_output",
-    "to_command_output_list",
     "to_grayscale",
     "write_image",
 ]
