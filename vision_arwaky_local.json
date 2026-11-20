@@ -1,13 +1,6 @@
 {
-    "vision-arwaky": {
-      "command": "/home/raka/.local/bin/uv",
-      "args": [
-        "run",
-        "--directory",
-        "/home/raka/SharedData/agents-arwaky/vision-arwaky",
-        "vision-arwaky-mcp"
-      ]
-    }
+  "vision-arwaky": {
+    "command": "vision-arwaky-mcp",
+    "args": []
   }
 }
-  

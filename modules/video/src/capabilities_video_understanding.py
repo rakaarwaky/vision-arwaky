@@ -12,25 +12,25 @@ from typing import Any
 
 import cv2
 
-from modules.shared.src.image.contract_llm_vision_protocol import ILLMVisionProtocol
-from modules.shared.src.taxonomy_vision_constant import (
+from modules.shared.src.common.taxonomy_vision_constant import (
     DEFAULT_VIDEO_FPS,
     MAX_SMART_VIDEO_FRAMES,
     MAX_SUMMARY_PROMPT_CHARS,
 )
-from modules.shared.src.taxonomy_vision_vo import (
+from modules.shared.src.common.taxonomy_vision_vo import (
     AnalysisPrompt,
     FilePath,
     FrameAnalysis,
     VideoUnderstanding,
     VideoUnderstandingConfig,
 )
-from modules.shared.src.utility_opencv_ops import (
+from modules.shared.src.common.utility_opencv_ops import (
     check_video_corruption,
     get_video_metadata,
     open_video_capture,
     write_image,
 )
+from modules.shared.src.image.contract_llm_vision_protocol import ILLMVisionProtocol
 from modules.shared.src.video.contract_video_understanding_protocol import (
     IVideoUnderstandingProtocol,
 )

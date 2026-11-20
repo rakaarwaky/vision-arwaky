@@ -1,7 +1,7 @@
 """Unit tests for XDG Base Directory paths."""
 
-from modules.shared.src.taxonomy_xdg_paths_vo import APP_NAME, XDGPaths
-from modules.shared.src.utility_xdg_paths import ensure_xdg_dirs
+from modules.shared.src.common.taxonomy_xdg_paths_vo import APP_NAME, XDGPaths
+from modules.shared.src.common.utility_xdg_paths import ensure_xdg_dirs
 
 
 class TestXDGPaths:

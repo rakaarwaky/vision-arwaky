@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
-from modules.shared.src.taxonomy_vision_vo import FilePath
+from modules.shared.src.common.taxonomy_vision_vo import FilePath
 
 
 class IWorkspaceProtocol(ABC):

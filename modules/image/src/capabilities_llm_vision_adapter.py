@@ -15,24 +15,24 @@ from typing import Any
 
 import requests
 
-from modules.shared.src.image.contract_llm_vision_protocol import ILLMVisionProtocol
-from modules.shared.src.taxonomy_vision_constant import (
+from modules.shared.src.common.taxonomy_vision_constant import (
     DEFAULT_MODELS_TIMEOUT_S,
     DEFAULT_VLM_MAX_TOKENS,
     DEFAULT_VLM_TEMPERATURE,
     DEFAULT_VLM_TIMEOUT_S,
 )
-from modules.shared.src.taxonomy_vision_vo import (
+from modules.shared.src.common.taxonomy_vision_vo import (
     AnalysisPrompt,
     BackendType,
     FilePath,
     ModelName,
 )
-from modules.shared.src.utility_config_handler import (
+from modules.shared.src.common.utility_config_handler import (
     load_merged_config,
     resolve_external_settings,
 )
-from modules.shared.src.utility_llm_check import check_llm_endpoint, list_models
+from modules.shared.src.common.utility_llm_check import check_llm_endpoint, list_models
+from modules.shared.src.image.contract_llm_vision_protocol import ILLMVisionProtocol
 
 logger = logging.getLogger("modules.image.capabilities.llm_vision_adapter")
 

@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 import requests
 
-from modules.shared.src.utility_llm_check import list_models
+from modules.shared.src.common.utility_llm_check import list_models
 
 
 class FakeResponse:
@@ -23,7 +23,7 @@ class FakeResponse:
 
 def test_list_models_success():
     with patch(
-        "modules.shared.src.utility_llm_check.requests.get",
+        "modules.shared.src.common.utility_llm_check.requests.get",
         return_value=FakeResponse(payload={"data": [{"id": "model-a"}]}),
     ):
         models = list_models("http://localhost:1234/v1")
@@ -32,7 +32,7 @@ def test_list_models_success():
 
 def test_list_models_empty_data():
     with patch(
-        "modules.shared.src.utility_llm_check.requests.get",
+        "modules.shared.src.common.utility_llm_check.requests.get",
         return_value=FakeResponse(payload={"data": []}),
     ):
         models = list_models("http://localhost:1234/v1")
@@ -41,7 +41,7 @@ def test_list_models_empty_data():
 
 def test_list_models_http_error():
     with patch(
-        "modules.shared.src.utility_llm_check.requests.get",
+        "modules.shared.src.common.utility_llm_check.requests.get",
         return_value=FakeResponse(raise_on_status=True),
     ):
         models = list_models("http://localhost:1234/v1")
@@ -50,7 +50,7 @@ def test_list_models_http_error():
 
 def test_list_models_connection_error():
     with patch(
-        "modules.shared.src.utility_llm_check.requests.get",
+        "modules.shared.src.common.utility_llm_check.requests.get",
         side_effect=requests.ConnectionError("refused"),
     ):
         models = list_models("http://localhost:1234/v1")

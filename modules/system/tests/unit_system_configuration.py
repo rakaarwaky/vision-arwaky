@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from modules.shared.src.utility_config_handler import DEFAULT_LLM_URL
+from modules.shared.src.common.utility_config_handler import DEFAULT_LLM_URL
 from modules.system.src.capabilities_system_configuration import (
     CapabilitiesSystemConfiguration,
 )

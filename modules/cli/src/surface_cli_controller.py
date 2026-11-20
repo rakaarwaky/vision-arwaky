@@ -1,6 +1,6 @@
 import argparse
 
-from modules.shared.src.utility_version_resolver import get_package_version
+from modules.shared.src.common.utility_version_resolver import get_package_version
 
 _HELP_IMAGE_PATH = "Image path"
 _HELP_VIDEO_PATH = "Video path"

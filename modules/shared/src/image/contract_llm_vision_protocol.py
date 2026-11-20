@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
-from modules.shared.src.taxonomy_vision_constant import DEFAULT_VLM_TIMEOUT_S
-from modules.shared.src.taxonomy_vision_vo import (
+from modules.shared.src.common.taxonomy_vision_constant import DEFAULT_VLM_TIMEOUT_S
+from modules.shared.src.common.taxonomy_vision_vo import (
     AnalysisPrompt,
     BackendType,
     FilePath,

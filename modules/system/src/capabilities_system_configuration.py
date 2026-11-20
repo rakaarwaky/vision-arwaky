@@ -9,16 +9,16 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from modules.shared.src.system.contract_system_configuration_protocol import (
-    ISystemConfigurationProtocol,
-)
-from modules.shared.src.taxonomy_vision_vo import ConfigKey
-from modules.shared.src.utility_config_handler import (
+from modules.shared.src.common.taxonomy_vision_vo import ConfigKey
+from modules.shared.src.common.utility_config_handler import (
     get_local_config_path,
     get_user_config_path,
     load_merged_config,
     read_yaml_config,
     save_user_config,
+)
+from modules.shared.src.system.contract_system_configuration_protocol import (
+    ISystemConfigurationProtocol,
 )
 
 

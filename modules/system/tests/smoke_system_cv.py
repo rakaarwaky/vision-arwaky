@@ -2,7 +2,7 @@
 
 import time
 
-from modules.shared.src.taxonomy_vision_vo import (
+from modules.shared.src.common.taxonomy_vision_vo import (
     CommandName,
     SystemCommandParams,
 )

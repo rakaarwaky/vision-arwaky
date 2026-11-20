@@ -9,7 +9,7 @@ from typing import Any
 
 import yaml
 
-from modules.shared.src.taxonomy_xdg_paths_vo import XDGPaths
+from modules.shared.src.common.taxonomy_xdg_paths_vo import XDGPaths
 
 logger = logging.getLogger("modules.shared.utility.config_handler")
 

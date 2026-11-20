@@ -1,14 +1,14 @@
 """Image processing capability executing LLM-based screenshot analysis."""
 
-from modules.shared.src.image.contract_image_processing_protocol import (
-    IImageProcessingProtocol,
-)
-from modules.shared.src.image.contract_llm_vision_protocol import ILLMVisionProtocol
-from modules.shared.src.taxonomy_vision_vo import (
+from modules.shared.src.common.taxonomy_vision_vo import (
     AnalysisPrompt,
     FilePath,
     VisionAnalysis,
 )
+from modules.shared.src.image.contract_image_processing_protocol import (
+    IImageProcessingProtocol,
+)
+from modules.shared.src.image.contract_llm_vision_protocol import ILLMVisionProtocol
 
 
 class ImageProcessingProcessor(IImageProcessingProtocol):

@@ -12,7 +12,7 @@ from typing import Any
 import cv2
 import numpy
 
-from modules.shared.src.taxonomy_vision_vo import (
+from modules.shared.src.common.taxonomy_vision_vo import (
     FilePath,
 )
 

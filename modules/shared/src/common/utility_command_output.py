@@ -7,7 +7,7 @@ from typing import Any
 
 from pydantic import BaseModel
 
-from modules.shared.src.taxonomy_vision_vo import CommandOutput
+from modules.shared.src.common.taxonomy_vision_vo import CommandOutput
 
 
 def to_command_output(model: BaseModel, indent: int = 2) -> CommandOutput:

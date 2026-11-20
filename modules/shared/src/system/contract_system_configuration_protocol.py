@@ -8,7 +8,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Any
 
-from modules.shared.src.taxonomy_vision_vo import ConfigKey
+from modules.shared.src.common.taxonomy_vision_vo import ConfigKey
 
 
 class ISystemConfigurationProtocol(ABC):

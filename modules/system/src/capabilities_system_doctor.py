@@ -7,21 +7,21 @@ summary of overall system readiness.
 
 from __future__ import annotations
 
-from modules.shared.src.system.contract_system_doctor_protocol import (
-    ISystemDoctorProtocol,
-)
-from modules.shared.src.taxonomy_vision_constant import (
+from modules.shared.src.common.taxonomy_vision_constant import (
     DEFAULT_MODELS_TIMEOUT_S,
 )
-from modules.shared.src.taxonomy_vision_vo import CommandOutput
-from modules.shared.src.utility_command_output import dict_to_command_output
-from modules.shared.src.utility_config_handler import (
+from modules.shared.src.common.taxonomy_vision_vo import CommandOutput
+from modules.shared.src.common.utility_command_output import dict_to_command_output
+from modules.shared.src.common.utility_config_handler import (
     find_active_config,
     resolve_external_settings,
 )
-from modules.shared.src.utility_dependency_checker import check_all_dependencies
-from modules.shared.src.utility_llm_check import check_llm_endpoint
-from modules.shared.src.utility_version_resolver import get_package_version
+from modules.shared.src.common.utility_dependency_checker import check_all_dependencies
+from modules.shared.src.common.utility_llm_check import check_llm_endpoint
+from modules.shared.src.common.utility_version_resolver import get_package_version
+from modules.shared.src.system.contract_system_doctor_protocol import (
+    ISystemDoctorProtocol,
+)
 
 
 # ─── Block 1: Module Declaration ──────────────

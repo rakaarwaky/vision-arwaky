@@ -1,9 +1,9 @@
 """CLI surface — parse args into VOs, delegate to injected aggregate, print JSON."""
 
+from modules.shared.src.common.taxonomy_vision_vo import CommandName
 from modules.shared.src.contract_registry_service_aggregate import (
     IRegistryServiceAggregate,
 )
-from modules.shared.src.taxonomy_vision_vo import CommandName
 
 _dispatcher: IRegistryServiceAggregate | None = None
 

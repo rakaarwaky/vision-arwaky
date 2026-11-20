@@ -2,15 +2,15 @@
 
 from unittest.mock import MagicMock, patch
 
-from modules.shared.src.image.contract_llm_vision_protocol import ILLMVisionProtocol
-from modules.shared.src.taxonomy_vision_constant import MAX_SMART_VIDEO_FRAMES
-from modules.shared.src.taxonomy_vision_vo import (
+from modules.shared.src.common.taxonomy_vision_constant import MAX_SMART_VIDEO_FRAMES
+from modules.shared.src.common.taxonomy_vision_vo import (
     AnalysisPrompt,
     BackendType,
     FilePath,
     ModelName,
     VideoUnderstandingConfig,
 )
+from modules.shared.src.image.contract_llm_vision_protocol import ILLMVisionProtocol
 from modules.video.src.capabilities_video_understanding import (
     VideoUnderstandingAnalyzer,
 )
@@ -47,7 +47,7 @@ class TestVideoUnderstandingAnalyzer:
         assert result == "No frames could be extracted for analysis."
 
     def test_synthesize_summary_truncates_long_input(self):
-        from modules.shared.src.taxonomy_vision_constant import (
+        from modules.shared.src.common.taxonomy_vision_constant import (
             MAX_SUMMARY_PROMPT_CHARS,
         )
 

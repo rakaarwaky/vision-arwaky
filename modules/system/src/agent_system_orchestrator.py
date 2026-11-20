@@ -4,6 +4,15 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
+from modules.shared.src.common.taxonomy_vision_error import InvalidParameterError
+from modules.shared.src.common.taxonomy_vision_vo import (
+    CommandName,
+    CommandOutput,
+    ConfigKey,
+    FilePath,
+    SystemCommandParams,
+)
+from modules.shared.src.common.utility_command_output import dict_to_command_output
 from modules.shared.src.contract_registry_service_aggregate import (
     IRegistryServiceAggregate,
 )
@@ -15,15 +24,6 @@ from modules.shared.src.system.contract_system_doctor_protocol import (
 )
 from modules.shared.src.system.contract_system_job_protocol import ISystemJobProtocol
 from modules.shared.src.system.contract_workspace_protocol import IWorkspaceProtocol
-from modules.shared.src.taxonomy_vision_error import InvalidParameterError
-from modules.shared.src.taxonomy_vision_vo import (
-    CommandName,
-    CommandOutput,
-    ConfigKey,
-    FilePath,
-    SystemCommandParams,
-)
-from modules.shared.src.utility_command_output import dict_to_command_output
 
 
 class SystemOrchestrator(IRegistryServiceAggregate):

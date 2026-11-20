@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel, Field
 
-from modules.shared.src.taxonomy_vision_constant import (
+from modules.shared.src.common.taxonomy_vision_constant import (
     ANALYZE_VIDEO_INTERVAL_S,
 )
 

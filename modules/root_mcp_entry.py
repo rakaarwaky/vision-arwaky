@@ -15,21 +15,19 @@ FastMCP: Any = _fastmcp_module.FastMCP
 from modules.image.src.root_image_container import ImageContainer, build_image_feature
 from modules.mcp.src.surface_mcp_command import (
     set_mcp_dispatcher,
-    vision_cancel,
-    vision_execute,
-    vision_help,
+    vision_doctor,
+    vision_image,
     vision_init,
-    vision_list_commands,
-    vision_status,
+    vision_video,
 )
-from modules.shared.src.contract_registry_service_aggregate import (
-    IRegistryServiceAggregate,
-)
-from modules.shared.src.taxonomy_command_vo import CommandDomain
-from modules.shared.src.taxonomy_vision_vo import (
+from modules.shared.src.common.taxonomy_command_vo import CommandDomain
+from modules.shared.src.common.taxonomy_vision_vo import (
     CommandName,
     CommandOutput,
     SystemCommandParams,
+)
+from modules.shared.src.contract_registry_service_aggregate import (
+    IRegistryServiceAggregate,
 )
 from modules.system.src.root_system_container import SystemContainer
 from modules.video.src.root_video_container import VideoContainer
@@ -74,11 +72,9 @@ def main() -> None:
     set_mcp_dispatcher(RootMCPDispatcher())
 
     mcp_server.tool(name="vision_init")(vision_init)
-    mcp_server.tool(name="vision_execute")(vision_execute)
-    mcp_server.tool(name="vision_list_commands")(vision_list_commands)
-    mcp_server.tool(name="vision_help")(vision_help)
-    mcp_server.tool(name="vision_status")(vision_status)
-    mcp_server.tool(name="vision_cancel")(vision_cancel)
+    mcp_server.tool(name="vision_image")(vision_image)
+    mcp_server.tool(name="vision_video")(vision_video)
+    mcp_server.tool(name="vision_doctor")(vision_doctor)
 
     mcp_server.run(transport="stdio")
 

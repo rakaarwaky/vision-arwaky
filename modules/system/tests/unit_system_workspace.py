@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from modules.shared.src.taxonomy_vision_vo import FilePath
+from modules.shared.src.common.taxonomy_vision_vo import FilePath
 from modules.system.src.capabilities_system_workspace import (
     CapabilitiesSystemWorkspace,
 )

@@ -1,20 +1,20 @@
 """Video Agent Orchestrator — coordinates video understanding via DI."""
 
-from modules.shared.src.contract_registry_service_aggregate import (
-    IRegistryServiceAggregate,
-)
-from modules.shared.src.taxonomy_vision_error import (
+from modules.shared.src.common.taxonomy_vision_error import (
     InvalidParameterError,
 )
-from modules.shared.src.taxonomy_vision_vo import (
+from modules.shared.src.common.taxonomy_vision_vo import (
     AnalysisPrompt,
     CommandName,
     CommandOutput,
     FilePath,
     SystemCommandParams,
 )
-from modules.shared.src.utility_command_output import (
+from modules.shared.src.common.utility_command_output import (
     to_command_output,
+)
+from modules.shared.src.contract_registry_service_aggregate import (
+    IRegistryServiceAggregate,
 )
 from modules.shared.src.video.contract_video_understanding_protocol import (
     IVideoUnderstandingProtocol,

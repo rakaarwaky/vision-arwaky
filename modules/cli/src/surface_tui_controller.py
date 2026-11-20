@@ -12,14 +12,14 @@ from textual.errors import TextualError
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Input, Label, Static
 
-from modules.shared.src.contract_registry_service_aggregate import (
-    IRegistryServiceAggregate,
-)
-from modules.shared.src.taxonomy_vision_vo import CommandName
-from modules.shared.src.taxonomy_xdg_paths_vo import XDGPaths
-from modules.shared.src.utility_config_handler import (
+from modules.shared.src.common.taxonomy_vision_vo import CommandName
+from modules.shared.src.common.taxonomy_xdg_paths_vo import XDGPaths
+from modules.shared.src.common.utility_config_handler import (
     save_config,
     scan_models,
+)
+from modules.shared.src.contract_registry_service_aggregate import (
+    IRegistryServiceAggregate,
 )
 
 _dispatcher: IRegistryServiceAggregate | None = None
@@ -55,7 +55,7 @@ class MainMenu(Screen):
     ]
 
     def compose(self) -> ComposeResult:
-        from modules.shared.src.utility_dependency_checker import (
+        from modules.shared.src.common.utility_dependency_checker import (
             check_all_dependencies,
         )
 
@@ -116,7 +116,7 @@ class ConfigScreen(Screen):
     BINDINGS: ClassVar[list[BindingType]] = [Binding("escape", "go_back", "Back")]
 
     def compose(self) -> ComposeResult:
-        from modules.shared.src.utility_config_handler import load_merged_config
+        from modules.shared.src.common.utility_config_handler import load_merged_config
 
         cfg = load_merged_config()
         ext = cfg.get("external", {})
@@ -146,7 +146,7 @@ class ConfigScreen(Screen):
             self.save_config()
 
     def save_config(self):
-        from modules.shared.src.utility_config_handler import load_merged_config
+        from modules.shared.src.common.utility_config_handler import load_merged_config
 
         cfg = load_merged_config()
         cfg["backend"] = "external"
@@ -255,8 +255,10 @@ class StatusScreen(Screen):
 
     def refresh_status(self) -> None:
         try:
-            from modules.shared.src.utility_config_handler import load_merged_config
-            from modules.shared.src.utility_dependency_checker import (
+            from modules.shared.src.common.utility_config_handler import (
+                load_merged_config,
+            )
+            from modules.shared.src.common.utility_dependency_checker import (
                 check_all_dependencies,
             )
 
@@ -369,7 +371,7 @@ class TestScreen(Screen):
 
         # 3. Video module
         try:
-            from modules.shared.src.utility_dependency_checker import (
+            from modules.shared.src.common.utility_dependency_checker import (
                 check_all_dependencies,
             )
 

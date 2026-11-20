@@ -10,10 +10,10 @@ from modules.cli.src.surface_cli_command import (
 )
 from modules.cli.src.surface_cli_controller import create_parser
 from modules.image.src.root_image_container import ImageContainer
+from modules.shared.src.common.taxonomy_command_vo import CommandDomain
 from modules.shared.src.contract_registry_service_aggregate import (
     IRegistryServiceAggregate,
 )
-from modules.shared.src.taxonomy_command_vo import CommandDomain
 from modules.system.src.root_system_container import SystemContainer
 from modules.video.src.root_video_container import VideoContainer
 

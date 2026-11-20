@@ -7,7 +7,7 @@ from typing import Any
 import cv2
 import numpy as np
 
-from modules.shared.src.utility_opencv_ops import (
+from modules.shared.src.common.utility_opencv_ops import (
     compute_abs_diff,
     compute_phash,
     find_contours,

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from modules.shared.src.taxonomy_xdg_paths_vo import XDGPaths
+from modules.shared.src.common.taxonomy_xdg_paths_vo import XDGPaths
 
 
 def ensure_xdg_dirs() -> None:
