@@ -321,11 +321,12 @@ if [[ "$CREATE_SYMLINKS" -eq 1 ]]; then
         [vision-arwaky-mcp]=vision-arwaky-mcp
         [vision-arwaky-tui]=vision-arwaky-tui
         [va]=vision-arwaky-cli
+        [vat]=vision-arwaky-tui
         [vision-arwaky]=vision-arwaky-cli
     )
 
     MISSING_EXES=0
-    for cmd in "vision-arwaky-cli" "vision-arwaky-mcp" "vision-arwaky-tui" "va" "vision-arwaky"; do
+    for cmd in "vision-arwaky-cli" "vision-arwaky-mcp" "vision-arwaky-tui" "va" "vat" "vision-arwaky"; do
         SRC_EXE="$XDG_VENV_DIR/bin/${SRC_MAP[$cmd]}"
         DEST_EXE="$BIN_DIR/$cmd"
         if [[ -x "$SRC_EXE" ]]; then
