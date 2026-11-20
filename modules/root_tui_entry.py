@@ -8,22 +8,26 @@ from modules.shared.src.common.taxonomy_vision_vo import (
     CommandOutput,
     SystemCommandParams,
 )
-from modules.shared.src.contract_registry_service_aggregate import (
-    IRegistryServiceAggregate,
-)
+from modules.shared.src.image.contract_image_aggregate import IImageAggregate
+from modules.shared.src.system.contract_system_aggregate import ISystemAggregate
+from modules.shared.src.video.contract_video_aggregate import IVideoAggregate
 from modules.system.src.root_system_container import SystemContainer
 from modules.video.src.root_video_container import VideoContainer
 
 
-class TuiDispatcher(IRegistryServiceAggregate):
-    """Aggregate dispatcher for TUI operations."""
+class TuiDispatcher(IImageAggregate):
+    """Composite dispatcher for TUI operations, routing by domain aggregate."""
 
     def __init__(self) -> None:
-        """Initialize dispatcher with orchestrator references."""
+        """Initialize dispatcher with domain orchestrator references."""
         image_feat = build_image_feature()
-        self._image = ImageContainer(llm_port=image_feat["llm"]).orchestrator
-        self._video = VideoContainer(llm_port=image_feat["llm"]).orchestrator
-        self._system = SystemContainer().orchestrator
+        self._image: IImageAggregate = ImageContainer(
+            llm_port=image_feat["llm"]
+        ).orchestrator
+        self._video: IVideoAggregate = VideoContainer(
+            llm_port=image_feat["llm"]
+        ).orchestrator
+        self._system: ISystemAggregate = SystemContainer().orchestrator
 
     def execute_in_process(
         self,

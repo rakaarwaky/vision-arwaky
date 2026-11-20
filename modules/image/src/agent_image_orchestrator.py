@@ -11,15 +11,13 @@ from modules.shared.src.common.taxonomy_vision_vo import (
     SystemCommandParams,
 )
 from modules.shared.src.common.utility_command_output import to_command_output
-from modules.shared.src.contract_registry_service_aggregate import (
-    IRegistryServiceAggregate,
-)
+from modules.shared.src.image.contract_image_aggregate import IImageAggregate
 from modules.shared.src.image.contract_image_protocol import (
     IImageProcessingProtocol,
 )
 
 
-class ImageOrchestrator(IRegistryServiceAggregate):
+class ImageOrchestrator(IImageAggregate):
     """Orchestrator for image processing domain (pure delegation facade)."""
 
     def __init__(

@@ -2,9 +2,7 @@
 
 from typing import TypedDict
 
-from modules.shared.src.contract_registry_service_aggregate import (
-    IRegistryServiceAggregate,
-)
+from modules.shared.src.system.contract_system_aggregate import ISystemAggregate
 from modules.shared.src.system.contract_system_protocol import (
     ISystemConfigurationProtocol,
     ISystemDoctorProtocol,
@@ -67,7 +65,7 @@ class SystemFeature(TypedDict):
     config: ISystemConfigurationProtocol
     job: ISystemJobProtocol
     doctor: ISystemDoctorProtocol
-    system_orchestrator: IRegistryServiceAggregate
+    system_orchestrator: ISystemAggregate
 
 
 class SystemContainer:
@@ -94,7 +92,7 @@ class SystemContainer:
         )
 
     @property
-    def orchestrator(self) -> IRegistryServiceAggregate:
+    def orchestrator(self) -> ISystemAggregate:
         """Return the wired System Agent Orchestrator (as its aggregate seam)."""
         return self._orchestrator
 

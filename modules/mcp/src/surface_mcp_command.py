@@ -10,22 +10,24 @@ except ImportError:
 FastMCP = _fastmcp_module.FastMCP
 
 from modules.shared.src.common.taxonomy_vision_vo import CommandName
-from modules.shared.src.contract_registry_service_aggregate import (
-    IRegistryServiceAggregate,
-)
+from modules.shared.src.image.contract_image_aggregate import IImageAggregate
+from modules.shared.src.system.contract_system_aggregate import ISystemAggregate
+from modules.shared.src.video.contract_video_aggregate import IVideoAggregate
+
+MCPDispatcher = IImageAggregate | ISystemAggregate | IVideoAggregate
 
 mcp = FastMCP("Vision")
 
-_dispatcher: IRegistryServiceAggregate | None = None
+_dispatcher: MCPDispatcher | None = None
 
 
-def set_mcp_dispatcher(dispatcher: IRegistryServiceAggregate | None) -> None:
+def set_mcp_dispatcher(dispatcher: MCPDispatcher | None) -> None:
     """Inject the aggregate facade used by MCP commands."""
     global _dispatcher
     _dispatcher = dispatcher
 
 
-def get_dispatcher() -> IRegistryServiceAggregate | None:
+def get_dispatcher() -> MCPDispatcher | None:
     """Return the injected aggregate facade if present."""
     return _dispatcher
 

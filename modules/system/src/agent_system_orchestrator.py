@@ -13,9 +13,7 @@ from modules.shared.src.common.taxonomy_vision_vo import (
     SystemCommandParams,
 )
 from modules.shared.src.common.utility_command_output import dict_to_command_output
-from modules.shared.src.contract_registry_service_aggregate import (
-    IRegistryServiceAggregate,
-)
+from modules.shared.src.system.contract_system_aggregate import ISystemAggregate
 from modules.shared.src.system.contract_system_protocol import (
     ISystemConfigurationProtocol,
     ISystemDoctorProtocol,
@@ -24,7 +22,7 @@ from modules.shared.src.system.contract_system_protocol import (
 )
 
 
-class SystemOrchestrator(IRegistryServiceAggregate):
+class SystemOrchestrator(ISystemAggregate):
     """Orchestrator for system domain (pure delegation facade)."""
 
     def __init__(

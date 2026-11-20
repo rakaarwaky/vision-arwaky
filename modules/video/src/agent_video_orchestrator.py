@@ -13,15 +13,13 @@ from modules.shared.src.common.taxonomy_vision_vo import (
 from modules.shared.src.common.utility_command_output import (
     to_command_output,
 )
-from modules.shared.src.contract_registry_service_aggregate import (
-    IRegistryServiceAggregate,
-)
+from modules.shared.src.video.contract_video_aggregate import IVideoAggregate
 from modules.shared.src.video.contract_video_protocol import (
     IVideoUnderstandingProtocol,
 )
 
 
-class VideoOrchestrator(IRegistryServiceAggregate):
+class VideoOrchestrator(IVideoAggregate):
     """Orchestrator for video processing domain (pure delegation facade)."""
 
     def __init__(

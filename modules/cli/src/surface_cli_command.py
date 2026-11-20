@@ -1,20 +1,24 @@
 """CLI surface — parse args into VOs, delegate to injected aggregate, print JSON."""
 
+from typing import Union
+
 from modules.shared.src.common.taxonomy_vision_vo import CommandName
-from modules.shared.src.contract_registry_service_aggregate import (
-    IRegistryServiceAggregate,
-)
+from modules.shared.src.image.contract_image_aggregate import IImageAggregate
+from modules.shared.src.system.contract_system_aggregate import ISystemAggregate
+from modules.shared.src.video.contract_video_aggregate import IVideoAggregate
 
-_dispatcher: IRegistryServiceAggregate | None = None
+CLIDispatcher = Union[IImageAggregate, ISystemAggregate, IVideoAggregate]
+
+_dispatcher: CLIDispatcher | None = None
 
 
-def set_cli_dispatcher(dispatcher: IRegistryServiceAggregate | None) -> None:
+def set_cli_dispatcher(dispatcher: CLIDispatcher | None) -> None:
     """Inject the aggregate facade used by CLI commands (optional)."""
     global _dispatcher
     _dispatcher = dispatcher
 
 
-def get_dispatcher() -> IRegistryServiceAggregate | None:
+def get_dispatcher() -> CLIDispatcher | None:
     """Return the injected aggregate facade if present."""
     return _dispatcher
 
@@ -22,7 +26,7 @@ def get_dispatcher() -> IRegistryServiceAggregate | None:
 def _execute(
     command: str,
     kwargs: dict,
-    orchestrator: IRegistryServiceAggregate | None = None,
+    orchestrator: CLIDispatcher | None = None,
 ) -> str:
     """Execute a command through the injected or provided orchestrator."""
     orch = orchestrator or _dispatcher
@@ -33,7 +37,7 @@ def _execute(
     return orch.execute_in_process(CommandName(value=command), kwargs).value
 
 
-def cmd_init(args, orchestrator: IRegistryServiceAggregate | None = None) -> int:
+def cmd_init(args, orchestrator: CLIDispatcher | None = None) -> int:
     """Initialize workspace directory and symlinks to XDG."""
     target_dir = getattr(args, "target_dir", ".") or "."
     result = _execute("init", {"target_dir": target_dir}, orchestrator=orchestrator)
@@ -41,7 +45,7 @@ def cmd_init(args, orchestrator: IRegistryServiceAggregate | None = None) -> int
     return 0
 
 
-def cmd_image(args, orchestrator: IRegistryServiceAggregate | None = None) -> int:
+def cmd_image(args, orchestrator: CLIDispatcher | None = None) -> int:
     """Analyze an image with AI vision."""
     image_path = args.image
     result = _execute("analyze", {"image": image_path}, orchestrator=orchestrator)
@@ -49,7 +53,7 @@ def cmd_image(args, orchestrator: IRegistryServiceAggregate | None = None) -> in
     return 0
 
 
-def cmd_video(args, orchestrator: IRegistryServiceAggregate | None = None) -> int:
+def cmd_video(args, orchestrator: CLIDispatcher | None = None) -> int:
     """Run VLM-backed smart video analysis."""
     video_path = args.video
     result = _execute("analyze-video", {"video": video_path}, orchestrator=orchestrator)
@@ -57,7 +61,7 @@ def cmd_video(args, orchestrator: IRegistryServiceAggregate | None = None) -> in
     return 0
 
 
-def cmd_doctor(args, orchestrator: IRegistryServiceAggregate | None = None) -> int:
+def cmd_doctor(args, orchestrator: CLIDispatcher | None = None) -> int:
     """Check system dependencies and readiness."""
     result = _execute("doctor", {}, orchestrator=orchestrator)
     print(result)

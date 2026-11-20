@@ -1,9 +1,7 @@
 from typing import Any
 
-from modules.shared.src.contract_registry_service_aggregate import (
-    IRegistryServiceAggregate,
-)
 from modules.shared.src.image.contract_image_protocol import ILLMVisionProtocol
+from modules.shared.src.video.contract_video_aggregate import IVideoAggregate
 from modules.video.src.agent_video_orchestrator import VideoOrchestrator
 from modules.video.src.capabilities_video_understanding import (
     VideoUnderstandingAnalyzer,
@@ -43,7 +41,7 @@ class VideoContainer:
         )
 
     @property
-    def orchestrator(self) -> IRegistryServiceAggregate:
+    def orchestrator(self) -> IVideoAggregate:
         """Return the wired Video Agent Orchestrator (as its aggregate seam)."""
         return self._orchestrator
 

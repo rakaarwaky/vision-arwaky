@@ -2,9 +2,7 @@
 
 import inspect
 
-from modules.shared.src.contract_registry_service_aggregate import (
-    IRegistryServiceAggregate,
-)
+from modules.shared.src.system.contract_system_aggregate import ISystemAggregate
 from modules.shared.src.system.contract_system_protocol import (
     ISystemConfigurationProtocol,
     ISystemJobProtocol,
@@ -31,7 +29,7 @@ class TestSystemContracts:
         assert issubclass(CapabilitiesSystemJob, ISystemJobProtocol)
 
     def test_orchestrator_implements_aggregate(self):
-        assert issubclass(SystemOrchestrator, IRegistryServiceAggregate)
+        assert issubclass(SystemOrchestrator, ISystemAggregate)
 
     def test_configuration_public_methods_present(self):
         methods = {

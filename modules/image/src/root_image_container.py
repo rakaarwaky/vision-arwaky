@@ -10,9 +10,7 @@ from modules.image.src.capabilities_image_processing_processor import (
     ImageProcessingProcessor,
 )
 from modules.image.src.capabilities_llm_vision_adapter import LLMVisionAdapter
-from modules.shared.src.contract_registry_service_aggregate import (
-    IRegistryServiceAggregate,
-)
+from modules.shared.src.image.contract_image_aggregate import IImageAggregate
 
 
 def build_llm() -> LLMVisionAdapter:
@@ -56,7 +54,7 @@ class ImageContainer:
         )
 
     @property
-    def orchestrator(self) -> IRegistryServiceAggregate:
+    def orchestrator(self) -> IImageAggregate:
         """Return the wired Image Agent Orchestrator (as its aggregate seam)."""
         return self._orchestrator
 

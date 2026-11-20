@@ -71,18 +71,19 @@ from modules.shared.src.common.utility_opencv_ops import (
 )
 from modules.shared.src.common.utility_version_resolver import get_package_version
 from modules.shared.src.common.utility_xdg_paths import ensure_xdg_dirs
-from modules.shared.src.contract_registry_service_aggregate import (
-    IRegistryServiceAggregate,
-)
+from modules.shared.src.image.contract_image_aggregate import IImageAggregate
 from modules.shared.src.image.contract_image_protocol import (
     IImageProcessingProtocol,
     ILLMVisionProtocol,
 )
+from modules.shared.src.system.contract_system_aggregate import ISystemAggregate
 from modules.shared.src.system.contract_system_protocol import (
     ISystemConfigurationProtocol,
+    ISystemDoctorProtocol,
     ISystemJobProtocol,
     IWorkspaceProtocol,
 )
+from modules.shared.src.video.contract_video_aggregate import IVideoAggregate
 from modules.shared.src.video.contract_video_protocol import (
     IVideoUnderstandingProtocol,
 )
@@ -111,11 +112,14 @@ __all__ = [
     "DependencyExecutionError",
     "FilePath",
     "FrameAnalysis",
+    "IImageAggregate",
     "IImageProcessingProtocol",
     "ILLMVisionProtocol",
-    "IRegistryServiceAggregate",
+    "ISystemAggregate",
     "ISystemConfigurationProtocol",
+    "ISystemDoctorProtocol",
     "ISystemJobProtocol",
+    "IVideoAggregate",
     "IVideoUnderstandingProtocol",
     "IWorkspaceProtocol",
     "ImageProcessingError",

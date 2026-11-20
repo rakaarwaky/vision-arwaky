@@ -18,24 +18,26 @@ from modules.shared.src.common.utility_config_handler import (
     save_config,
     scan_models,
 )
-from modules.shared.src.contract_registry_service_aggregate import (
-    IRegistryServiceAggregate,
-)
+from modules.shared.src.image.contract_image_aggregate import IImageAggregate
+from modules.shared.src.system.contract_system_aggregate import ISystemAggregate
+from modules.shared.src.video.contract_video_aggregate import IVideoAggregate
 
-_dispatcher: IRegistryServiceAggregate | None = None
+_dispatcher: IImageAggregate | ISystemAggregate | IVideoAggregate | None = None
 
 
 _UI_EXCEPTIONS = (OSError, ValueError, ImportError, KeyError, TypeError, TextualError)
 _BACK_LABEL = "⬅ Back"
 
 
-def set_tui_dispatcher(dispatcher: IRegistryServiceAggregate | None) -> None:
+def set_tui_dispatcher(
+    dispatcher: IImageAggregate | ISystemAggregate | IVideoAggregate | None,
+) -> None:
     """Inject the aggregate facade used by the TUI (optional)."""
     global _dispatcher
     _dispatcher = dispatcher
 
 
-def get_dispatcher() -> IRegistryServiceAggregate | None:
+def get_dispatcher() -> IImageAggregate | ISystemAggregate | IVideoAggregate | None:
     """Return the injected aggregate facade if present."""
     return _dispatcher
 

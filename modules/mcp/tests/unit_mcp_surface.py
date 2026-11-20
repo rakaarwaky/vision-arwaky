@@ -14,12 +14,10 @@ from modules.shared.src.common.taxonomy_vision_vo import (
     CommandOutput,
     SystemCommandParams,
 )
-from modules.shared.src.contract_registry_service_aggregate import (
-    IRegistryServiceAggregate,
-)
+from modules.shared.src.image.contract_image_aggregate import IImageAggregate
 
 
-class _MockDispatcher(IRegistryServiceAggregate):
+class _MockDispatcher(IImageAggregate):
     """Minimal mock dispatcher that captures the last command and kwargs."""
 
     def __init__(self) -> None:
@@ -37,7 +35,7 @@ class _MockDispatcher(IRegistryServiceAggregate):
         return self._result
 
 
-class _FailingDispatcher(IRegistryServiceAggregate):
+class _FailingDispatcher(IImageAggregate):
     """Dispatcher that raises on every call."""
 
     def execute_in_process(

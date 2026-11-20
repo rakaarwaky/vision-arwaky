@@ -15,13 +15,11 @@ from modules.shared.src.common.taxonomy_vision_vo import (
     CommandOutput,
     SystemCommandParams,
 )
-from modules.shared.src.contract_registry_service_aggregate import (
-    IRegistryServiceAggregate,
-)
+from modules.shared.src.image.contract_image_aggregate import IImageAggregate
 from modules.system.src.root_system_container import SystemContainer
 
 
-class _MockDispatcher(IRegistryServiceAggregate):
+class _MockDispatcher(IImageAggregate):
     """Captures the last command and kwargs for inspection."""
 
     def __init__(self) -> None:

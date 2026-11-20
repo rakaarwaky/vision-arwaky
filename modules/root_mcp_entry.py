@@ -26,24 +26,33 @@ from modules.shared.src.common.taxonomy_vision_vo import (
     CommandOutput,
     SystemCommandParams,
 )
-from modules.shared.src.contract_registry_service_aggregate import (
-    IRegistryServiceAggregate,
-)
+from modules.shared.src.image.contract_image_aggregate import IImageAggregate
+from modules.shared.src.system.contract_system_aggregate import ISystemAggregate
+from modules.shared.src.video.contract_video_aggregate import IVideoAggregate
 from modules.system.src.root_system_container import SystemContainer
 from modules.video.src.root_video_container import VideoContainer
 
 
-class RootMCPDispatcher(IRegistryServiceAggregate):
-    """Aggregate dispatcher routing MCP commands to domain orchestrators."""
+class RootMCPDispatcher(IImageAggregate):
+    """Composite dispatcher routing MCP commands to domain orchestrators.
+
+    Implements :class:`IImageAggregate` structurally; the surface accepts
+    any of the three per-domain aggregates and this dispatcher delegates
+    to the correct one at call time via :class:`CommandDomain`.
+    """
 
     # pylint: disable=too-few-public-methods
 
     def __init__(self) -> None:
         """Initialize domain orchestrators for MCP dispatch."""
         image_feat = build_image_feature()
-        self._image = ImageContainer(llm_port=image_feat["llm"]).orchestrator
-        self._video = VideoContainer(llm_port=image_feat["llm"]).orchestrator
-        self._system = SystemContainer().orchestrator
+        self._image: IImageAggregate = ImageContainer(
+            llm_port=image_feat["llm"]
+        ).orchestrator
+        self._video: IVideoAggregate = VideoContainer(
+            llm_port=image_feat["llm"]
+        ).orchestrator
+        self._system: ISystemAggregate = SystemContainer().orchestrator
 
     def execute_in_process(
         self,
